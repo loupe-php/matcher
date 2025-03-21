@@ -1,0 +1,38 @@
+{
+    "name": "loupe/context-cropper",
+    "description": "A simple library to crop highlighted context",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Loupe\\ContextCropper\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Loupe\\ContextCropper\\Tests\\": "tests/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Yanick Witschi",
+            "email": "yanick.witschi@terminal42.ch"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "symfony/string": "^5.4 || ^6.4 || ^7.0"
+    },
+    "require-dev": {
+        "symplify/easy-coding-standard": "^12.5",
+        "symfony/finder": "^6.2",
+        "phpunit/phpunit": "^10.5",
+        "phpstan/phpstan": "^2.0"
+    },
+    "scripts": {
+        "tests": "@php vendor/bin/phpunit",
+        "cs-fixer": "@php vendor/bin/ecs check --fix",
+        "ci-cs-fixer": "@php vendor/bin/ecs check",
+        "phpstan": "@php vendor/bin/phpstan analyse"
+    }
+}
