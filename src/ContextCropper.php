@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Loupe\ContextCropper;
+namespace Loupe\Matcher;
 
 use Symfony\Component\String\UnicodeString;
 

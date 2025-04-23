@@ -1,22 +1,26 @@
 {
-    "name": "loupe/context-cropper",
-    "description": "A simple library to crop highlighted context",
+    "name": "loupe/matcher",
+    "description": "Highlight and crop around search terms",
     "type": "library",
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Loupe\\ContextCropper\\": "src/"
+            "Loupe\\Matcher\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Loupe\\ContextCropper\\Tests\\": "tests/"
+            "Loupe\\Matcher\\Tests\\": "tests/"
         }
     },
     "authors": [
         {
             "name": "Yanick Witschi",
             "email": "yanick.witschi@terminal42.ch"
+        },
+        {
+            "name": "Philipp Daun",
+            "email": "daun@daun.ltd"
         }
     ],
     "require": {

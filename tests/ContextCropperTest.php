@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Loupe\ContextCropper\Tests;
+namespace Loupe\Matcher\Tests;
 
-use Loupe\ContextCropper\ContextCropper;
+use Loupe\Matcher\ContextCropper;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
