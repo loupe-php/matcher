@@ -18,7 +18,7 @@ composer require loupe/matcher
 ### Highlight matches
 
 ```php
-$highlighter = new \Loupe\Matcher\Highlighter(
+$highlighter = new \Loupe\Matcher\Formatting\Highlighter(
     'lorem ipsum',
     '<mark>',
     '</mark>'
