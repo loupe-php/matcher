@@ -65,17 +65,6 @@ final class MatcherTest extends TestCase
         $this->assertEmpty($spans);
     }
 
-    public function testStopWordsBetweenQueryTermsAreNotIncluded(): void
-    {
-        $text = 'quick the fox';
-        $query = 'quick fox';
-
-        $matches = $this->matcher->calculateMatches($text, $query);
-        $spans = $this->matcher->calculateMatchSpans($matches);
-
-        $this->assertCount(2, $spans);
-    }
-
     public function testStopWordsAmongQueryTermsAreIncluded(): void
     {
         $text = 'quick the fox';
@@ -85,5 +74,29 @@ final class MatcherTest extends TestCase
         $spans = $this->matcher->calculateMatchSpans($matches);
 
         $this->assertCount(1, $spans);
+    }
+
+    public function testStopWordsAroundQueryTermsAreIncluded(): void
+    {
+        $text = 'the quick fox is';
+        $query = 'the quick fox is';
+
+        $matches = $this->matcher->calculateMatches($text, $query);
+        $spans = $this->matcher->calculateMatchSpans($matches);
+
+        $this->assertCount(1, $spans);
+        $this->assertSame(0, $spans[0]->getStartPosition());
+        $this->assertSame(16, $spans[0]->getEndPosition());
+    }
+
+    public function testStopWordsBetweenQueryTermsAreNotIncluded(): void
+    {
+        $text = 'quick the fox';
+        $query = 'quick fox';
+
+        $matches = $this->matcher->calculateMatches($text, $query);
+        $spans = $this->matcher->calculateMatchSpans($matches);
+
+        $this->assertCount(2, $spans);
     }
 }
