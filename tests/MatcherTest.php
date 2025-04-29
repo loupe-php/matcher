@@ -65,7 +65,7 @@ final class MatcherTest extends TestCase
         $this->assertEmpty($spans);
     }
 
-    public function testStopWordsBetweenRealMatchesAreIncluded(): void
+    public function testStopWordsBetweenQueryTermsAreNotIncluded(): void
     {
         $text = 'quick the fox';
         $query = 'quick fox';
@@ -73,6 +73,6 @@ final class MatcherTest extends TestCase
         $matches = $this->matcher->calculateMatches($text, $query);
         $spans = $this->matcher->calculateMatchSpans($matches);
 
-        $this->assertCount(1, $spans); // This should not fail, should it?
+        $this->assertCount(2, $spans);
     }
 }
