@@ -15,31 +15,65 @@ composer require loupe/matcher
 
 ## Usage
 
-### Highlight matches
+### Tokenizer
+
+In order to work with string matching for both, highlighting and cropping, we need to tokenize a string into terms, 
+phrases etc. This library ships with a basic tokenizer built on top of the `ext-intl` rules but you can implement 
+your own tokenizer by implementing the `TokenizerInterface`. Its goal is to take a string and convert it into a 
+`TokenCollection`. It is also responsible to decide, whether a given `Token` instance matches any of the tokens in a 
+given `TokenCollection`:
 
 ```php
-$highlighter = new \Loupe\Matcher\Formatting\Highlighter(
-    'lorem ipsum',
-    '<mark>',
-    '</mark>'
-);
+$tokenizer = new \Loupe\Matcher\Tokenizer\Tokenizer(); // optionally takes a locale to improve tokenization
+$tokenCollection = $tokenizer->tokenize('this is my string');
 
-$context = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam eleifend, augue in dictum lacinia, nisi lacus mollis massa, a pulvinar felis dui nec nisl. Pellentesque justo erat, sollicitudin ac dolor finibus, dapibus lacinia diam.';
-
-echo $matcher->apply($context); // <mark>Lorem ipsum</mark> dolor sit amet, consectetur adipiscing elit. Etiam eleifend, augue in dictum lacinia, nisi lacus mollis massa, a pulvinar felis dui nec nisl. Pellentesque justo erat, sollicitudin ac dolor finibus, dapibus lacinia diam.
+// Now you can use all sorts of helper functions
+$tokenCollection->all(); // all Token instances
+$tokenCollection->allNegated(); // all negated terms (- prefixed)
+$tokenCollection->phraseGroups(); // tokens within phrase groups (inside quotation marks, e.g. "this is a phrase")
+// etc.
 ```
 
-### Crop text around matches
+### Matcher
+
+The `Matcher` helper is here to help you find matches between two `TokenCollection`s (or strings for simplicity):
 
 ```php
-$cropper = new \Loupe\Matcher\ContextCropper(
-    20, // Context length in characters
-    '[…]',
-    '<mark>',
-    '</mark>'
-);
+$matcher = new \Loupe\Matcher\Matcher();
+$matchingTokenCollection = $matcher->calculateMatches('This is my original text which I want to query.', 'query');
 
-$context = 'Lorem ipsum dolor sit amet, <mark>consectetur</mark> adipiscing elit. Etiam eleifend, augue in dictum lacinia, nisi lacus mollis <mark>massa</mark>, a pulvinar felis dui nec nisl. Pellentesque justo erat, sollicitudin ac dolor finibus, dapibus lacinia diam.';
+// $matchingTokenCollection will now contain all Token instances that match the query.
 
-echo $cropper->apply($context); // […]ipsum dolor sit amet, <mark>consectetur</mark> adipiscing elit. Etiam[…]lacinia, nisi lacus mollis <mark>massa</mark>, a pulvinar felis dui[…]
+// Sometimes you might be interested in the spans of the matches (the start and end positions of the tokens matched):
+$spans = $matcher->calculateMatchSpans($matchingTokenCollection);
+foreach ($spans as $span) {
+    echo 'This span started at:' . $span->getStartPosition();
+    echo 'This span ended at:' . $span->getEndPosition();
+    echo 'This span has a length of:' . $span->getLength();
+}
+```
+
+### Formatter
+
+The `Formatter` takes a `FormatterOptions` instance and formats directly on two strings (text and query) according to your
+configuration. You can also pass `TokenCollection` instances directly if you want and have tokenized those before.
+
+```php
+$tokenizer = new \Loupe\Matcher\Tokenizer\Tokenizer();
+$matcher = new Loupe\Matcher\Matcher($tokenizer);
+
+$formatter = new \Loupe\Matcher\Formatter($matcher);
+
+$options = (new \Loupe\Matcher\FormatterOptions())
+    ->withEnableHighlight() // enable highlighting
+    ->withHighlightStartTag('<b>') // default: <em>
+    ->withHighlightStartTag('</b>') // default: </em>
+    ->withEnableCrop() // enable cropping
+    ->withCropLength(40) // default: 50
+    ->withCropMarker('.......') // default: … 
+;
+
+$result = $formatter->format('This is my original text which I want to query.', 'query');
+
+echo 'This is the formatted result: ' . $result->getFormattedText();
 ```
