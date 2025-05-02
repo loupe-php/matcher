@@ -19,13 +19,13 @@ class Matcher
     ) {
     }
 
-    public function calculateMatches(string $text, TokenCollection|string $query): TokenCollection
+    public function calculateMatches(TokenCollection|string $text, TokenCollection|string $query): TokenCollection
     {
         if ($text === '') {
             return new TokenCollection();
         }
 
-        $textTokens = $this->tokenizer->tokenize($text, stopWords: $this->stopWords, includeStopWords: true);
+        $textTokens = $text instanceof TokenCollection ? $text : $this->tokenizer->tokenize($text, stopWords: $this->stopWords, includeStopWords: true);
         $queryTokens = $query instanceof TokenCollection ? $query : $this->tokenizer->tokenize($query);
 
         $matches = new TokenCollection();
