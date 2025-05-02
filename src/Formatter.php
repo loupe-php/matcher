@@ -17,11 +17,11 @@ class Formatter
     }
 
     public function format(
-        string $text,
-        TokenCollection $queryTerms,
+        TokenCollection|string $text,
+        TokenCollection|string $query,
         FormatterOptions $options
     ): FormatterResult {
-        $matches = $this->matcher->calculateMatches($text, $queryTerms);
+        $matches = $this->matcher->calculateMatches($text, $query);
 
         $transformers = [];
         if ($options->shouldHighlight() || $options->shouldCrop()) {
