@@ -26,7 +26,7 @@ class Matcher
         }
 
         $textTokens = $this->tokenizer->tokenize($text, stopWords: $this->stopWords, includeStopWords: true);
-        $queryTokens = $query instanceof TokenCollection ? $query : $this->tokenizer->tokenize($query, stopWords: $this->stopWords);
+        $queryTokens = $query instanceof TokenCollection ? $query : $this->tokenizer->tokenize($query);
 
         $matches = new TokenCollection();
         foreach ($textTokens->all() as $textToken) {
