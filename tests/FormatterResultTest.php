@@ -34,8 +34,16 @@ final class FormatterResultTest extends TestCase
         $result = new FormatterResult('text', $matches);
 
         $this->assertEquals([
-            ['start' => 0, 'length' => 3, 'stopword' => false],
-            ['start' => 8, 'length' => 3, 'stopword' => false],
+            [
+                'start' => 0,
+                'length' => 3,
+                'stopword' => false,
+            ],
+            [
+                'start' => 8,
+                'length' => 3,
+                'stopword' => false,
+            ],
         ], $result->getMatchesArray());
     }
 
@@ -45,9 +53,21 @@ final class FormatterResultTest extends TestCase
         $result = new FormatterResult('text', $matches);
 
         $this->assertEquals([
-            ['start' => 0, 'length' => 3, 'stopword' => false],
-            ['start' => 4, 'length' => 3, 'stopword' => true],
-            ['start' => 8, 'length' => 3, 'stopword' => false],
+            [
+                'start' => 0,
+                'length' => 3,
+                'stopword' => false,
+            ],
+            [
+                'start' => 4,
+                'length' => 3,
+                'stopword' => true,
+            ],
+            [
+                'start' => 8,
+                'length' => 3,
+                'stopword' => false,
+            ],
         ], $result->getMatchesArray());
     }
 }

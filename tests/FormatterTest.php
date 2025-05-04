@@ -30,61 +30,6 @@ class FormatterTest extends TestCase
         $this->queryTerms = $tokenizer->tokenize('test');
     }
 
-    public function testFormatWithCrop(): void
-    {
-        $options = (new FormatterOptions())
-            ->withEnableCrop()
-            ->withCropLength(10)
-            ->withCropMarker('...')
-        ;
-
-        $formatter = new Formatter($this->matcher);
-        $result = $formatter->format('This is a test string used for cropping.', $this->queryTerms, $options);
-
-        $this->assertSame('...a test string...', $result->getFormattedText());
-    }
-
-    public function testFormatWithHighlight(): void
-    {
-        $options = (new FormatterOptions())
-            ->withEnableHighlight()
-            ->withHighlightStartTag('<b>')
-            ->withHighlightEndTag('</b>')
-        ;
-
-        $formatter = new Formatter($this->matcher);
-        $result = $formatter->format('This is a test string.', $this->queryTerms, $options);
-
-        $this->assertSame('This is a <b>test</b> string.', $result->getFormattedText());
-    }
-
-    public function testFormatWithHighlightAndCrop(): void
-    {
-        $options = (new FormatterOptions())
-            ->withEnableHighlight()
-            ->withEnableCrop()
-            ->withHighlightStartTag('[')
-            ->withHighlightEndTag(']')
-            ->withCropLength(15)
-        ;
-
-        $formatter = new Formatter($this->matcher);
-        $result = $formatter->format('This is a test string and we use it to test the cropping and highlighting features combined.', $this->queryTerms, $options);
-
-        $this->assertSame('…his is a [test] string and…use it to [test] the cropping…', $result->getFormattedText());
-
-    }
-
-    public function testFormatWithoutHighlightOrCrop(): void
-    {
-        $options = new FormatterOptions();
-
-        $formatter = new Formatter($this->matcher);
-        $result = $formatter->format('This is a test string.', $this->queryTerms, $options);
-
-        $this->assertSame('This is a test string.', $result->getFormattedText());
-    }
-
     public static function croppingProvider(): \Generator
     {
         yield 'No cropping' => [
@@ -248,34 +193,6 @@ class FormatterTest extends TestCase
         ];
     }
 
-    #[DataProvider('highlightingProvider')]
-    public function testHighlighting(
-        string|TokenCollection $query,
-        string $text,
-        string $expectedResult,
-        bool $enableHighlight = false,
-        string $highlightStartTag = '<em>',
-        string $highlightEndTag = '</em>',
-    ): void {
-        $options = (new FormatterOptions());
-        if ($enableHighlight) {
-            $options = $options->withEnableHighlight()
-                ->withHighlightStartTag($highlightStartTag)
-                ->withHighlightEndTag($highlightEndTag);
-        } else {
-            $options = $options->withDisableHighlight();
-        }
-
-        $query = $query instanceof TokenCollection
-            ? $query
-            : (new Tokenizer())->tokenize($query, stopWords: $this->stopwords, includeStopWords: true);
-
-        $formatter = new Formatter($this->matcher);
-        $result = $formatter->format($text, $query, $options);
-
-        $this->assertSame($expectedResult, $result->getFormattedText());
-    }
-
     #[DataProvider('croppingProvider')]
     public function testCropping(
         string|TokenCollection $query,
@@ -292,6 +209,89 @@ class FormatterTest extends TestCase
                 ->withCropMarker($cropMarker);
         } else {
             $options = $options->withDisableCrop();
+        }
+
+        $query = $query instanceof TokenCollection
+            ? $query
+            : (new Tokenizer())->tokenize($query, stopWords: $this->stopwords, includeStopWords: true);
+
+        $formatter = new Formatter($this->matcher);
+        $result = $formatter->format($text, $query, $options);
+
+        $this->assertSame($expectedResult, $result->getFormattedText());
+    }
+
+    public function testFormatWithCrop(): void
+    {
+        $options = (new FormatterOptions())
+            ->withEnableCrop()
+            ->withCropLength(10)
+            ->withCropMarker('...')
+        ;
+
+        $formatter = new Formatter($this->matcher);
+        $result = $formatter->format('This is a test string used for cropping.', $this->queryTerms, $options);
+
+        $this->assertSame('...a test string...', $result->getFormattedText());
+    }
+
+    public function testFormatWithHighlight(): void
+    {
+        $options = (new FormatterOptions())
+            ->withEnableHighlight()
+            ->withHighlightStartTag('<b>')
+            ->withHighlightEndTag('</b>')
+        ;
+
+        $formatter = new Formatter($this->matcher);
+        $result = $formatter->format('This is a test string.', $this->queryTerms, $options);
+
+        $this->assertSame('This is a <b>test</b> string.', $result->getFormattedText());
+    }
+
+    public function testFormatWithHighlightAndCrop(): void
+    {
+        $options = (new FormatterOptions())
+            ->withEnableHighlight()
+            ->withEnableCrop()
+            ->withHighlightStartTag('[')
+            ->withHighlightEndTag(']')
+            ->withCropLength(15)
+        ;
+
+        $formatter = new Formatter($this->matcher);
+        $result = $formatter->format('This is a test string and we use it to test the cropping and highlighting features combined.', $this->queryTerms, $options);
+
+        $this->assertSame('…his is a [test] string and…use it to [test] the cropping…', $result->getFormattedText());
+
+    }
+
+    public function testFormatWithoutHighlightOrCrop(): void
+    {
+        $options = new FormatterOptions();
+
+        $formatter = new Formatter($this->matcher);
+        $result = $formatter->format('This is a test string.', $this->queryTerms, $options);
+
+        $this->assertSame('This is a test string.', $result->getFormattedText());
+    }
+
+    #[DataProvider('highlightingProvider')]
+    public function testHighlighting(
+        string|TokenCollection $query,
+        string $text,
+        string $expectedResult,
+        bool $enableHighlight = false,
+        string $highlightStartTag = '<em>',
+        string $highlightEndTag = '</em>',
+    ): void {
+        $options = (new FormatterOptions());
+        if ($enableHighlight) {
+            $options = $options->withEnableHighlight()
+                ->withHighlightStartTag($highlightStartTag)
+                ->withHighlightEndTag($highlightEndTag);
+        } else {
+            $options = $options->withDisableHighlight();
         }
 
         $query = $query instanceof TokenCollection
