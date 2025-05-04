@@ -19,11 +19,14 @@ class FormatterTest extends TestCase
 
     private TokenCollection $queryTerms;
 
+    private array $stopwords;
+
     protected function setUp(): void
     {
         $tokenizer = new Tokenizer();
 
-        $this->matcher = new Matcher($tokenizer, stopWords: ['a', 'of', 'the']);
+        $this->stopwords = ['a', 'of', 'the'];
+        $this->matcher = new Matcher($tokenizer, stopWords: $this->stopwords);
         $this->queryTerms = $tokenizer->tokenize('test');
     }
 
@@ -82,12 +85,88 @@ class FormatterTest extends TestCase
         $this->assertSame('This is a test string.', $result->getFormattedText());
     }
 
-    public static function formattingProvider(): \Generator
+    public static function croppingProvider(): \Generator
     {
-        yield 'No formatting' => [
+        yield 'No cropping' => [
+            'wonderful',
+            'A wonderful serenity has taken possession of my entire soul.',
+            'A wonderful serenity has taken possession of my entire soul.',
+        ];
+
+        yield 'Cropping with too much context and no change' => [
+            'taken',
+            'A wonderful serenity has taken possession of my entire soul, like these sweet mornings have taken all spring.',
+            'A wonderful serenity has taken possession of my entire soul, like these sweet mornings have taken all spring.',
+            true,
+        ];
+
+        yield 'Cropping with less context and change' => [
+            'taken',
+            'A wonderful serenity has taken possession of my entire soul, like these sweet mornings have taken all spring.',
+            '…serenity has taken possession…mornings have taken all spring…',
+            true,
+            25,
+        ];
+
+        yield 'Cropping around single term in center' => [
             'soul',
-            'A wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole heart. I am alone, and feel the charm of existence in this spot, which was created for the bliss of souls like mine.',
-            'A wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole heart. I am alone, and feel the charm of existence in this spot, which was created for the bliss of souls like mine.',
+            'A wonderful serenity has taken possession of my entire soul, like these sweet mornings have taken all spring.',
+            '…serenity has taken possession of my entire soul, like these sweet mornings have taken…',
+            true,
+        ];
+
+        yield 'Cropping around repeating term' => [
+            'soul',
+            'A wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole soul. I am alone, and feel the charm of existence in this spot, which was created for the bliss of a soul like mine.',
+            '…serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole soul. I am alone, and feel the charm of existence…which was created for the bliss of a soul like mine.',
+            true,
+        ];
+
+        yield 'Cropping around multiple terms' => [
+            'soul bliss',
+            'A wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole being. I am alone, and feel the charm of existence in this spot, which was created for the bliss of a heart like mine.',
+            '…serenity has taken possession of my entire soul, like these sweet mornings of spring…this spot, which was created for the bliss of a heart like mine.',
+            true,
+        ];
+
+        yield 'Cropping at start' => [
+            'Wonderful',
+            'Wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole soul.',
+            'Wonderful serenity has taken possession of…',
+            true,
+        ];
+
+        yield 'Cropping at end' => [
+            'panorama',
+            'Wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole panorama.',
+            '…spring which I enjoy with my whole panorama.',
+            true,
+        ];
+
+        yield 'Cropping with custom length' => [
+            'whole entire',
+            'Wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole panorama.',
+            '…my entire soul…with my whole pano…',
+            true,
+            15,
+        ];
+
+        yield 'Cropping with custom marker' => [
+            'whole entire',
+            'Wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole panorama.',
+            ' --- possession of my entire soul, like --- enjoy with my whole panorama.',
+            true,
+            25,
+            ' --- ',
+        ];
+    }
+
+    public static function highlightingProvider(): \Generator
+    {
+        yield 'No highlighting' => [
+            'soul',
+            'A wonderful serenity has taken possession of my entire soul.',
+            'A wonderful serenity has taken possession of my entire soul.',
         ];
 
         yield 'Highlighting' => [
@@ -169,8 +248,8 @@ class FormatterTest extends TestCase
         ];
     }
 
-    #[DataProvider('formattingProvider')]
-    public function testFormatting(
+    #[DataProvider('highlightingProvider')]
+    public function testHighlighting(
         string|TokenCollection $query,
         string $text,
         string $expectedResult,
@@ -189,7 +268,35 @@ class FormatterTest extends TestCase
 
         $query = $query instanceof TokenCollection
             ? $query
-            : (new Tokenizer())->tokenize($query, stopWords: ['a', 'of', 'the'], includeStopWords: true);
+            : (new Tokenizer())->tokenize($query, stopWords: $this->stopwords, includeStopWords: true);
+
+        $formatter = new Formatter($this->matcher);
+        $result = $formatter->format($text, $query, $options);
+
+        $this->assertSame($expectedResult, $result->getFormattedText());
+    }
+
+    #[DataProvider('croppingProvider')]
+    public function testCropping(
+        string|TokenCollection $query,
+        string $text,
+        string $expectedResult,
+        bool $enableCrop = false,
+        int $cropLength = 50,
+        string $cropMarker = '…',
+    ): void {
+        $options = (new FormatterOptions());
+        if ($enableCrop) {
+            $options = $options->withEnableCrop()
+                ->withCropLength($cropLength)
+                ->withCropMarker($cropMarker);
+        } else {
+            $options = $options->withDisableCrop();
+        }
+
+        $query = $query instanceof TokenCollection
+            ? $query
+            : (new Tokenizer())->tokenize($query, stopWords: $this->stopwords, includeStopWords: true);
 
         $formatter = new Formatter($this->matcher);
         $result = $formatter->format($text, $query, $options);
