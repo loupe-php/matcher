@@ -19,6 +19,9 @@ class FormatterTest extends TestCase
 
     private TokenCollection $queryTerms;
 
+    /**
+     * @var array<string>
+     */
     private array $stopwords;
 
     protected function setUp(): void
