@@ -16,11 +16,8 @@ class Formatter
     ) {
     }
 
-    public function format(
-        TokenCollection|string $text,
-        TokenCollection|string $query,
-        FormatterOptions $options
-    ): FormatterResult {
+    public function format(string $text, TokenCollection|string $query, FormatterOptions $options): FormatterResult
+    {
         $matches = $this->matcher->calculateMatches($text, $query);
 
         $transformers = [];

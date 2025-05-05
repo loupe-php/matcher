@@ -56,7 +56,8 @@ foreach ($spans as $span) {
 ### Formatter
 
 The `Formatter` takes a `FormatterOptions` instance and formats directly on two strings (text and query) according to your
-configuration. You can also pass `TokenCollection` instances directly if you want and have tokenized those before.
+configuration. You can also pass a `TokenCollection` for the `$query` directly if you want and have tokenized those 
+before. The `$text`, however, has to be a string.
 
 ```php
 $tokenizer = new \Loupe\Matcher\Tokenizer\Tokenizer();
