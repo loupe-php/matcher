@@ -21,6 +21,48 @@ final class FormatterOptionsTest extends TestCase
         $this->assertEquals('</em>', $options->getHighlightEndTag());
     }
 
+    public function testFromArrayWithCustomValues(): void
+    {
+        $options = FormatterOptions::fromArray([
+            'crop_length' => 20,
+            'crop_marker' => '...',
+            'enable_crop' => true,
+            'enable_highlight' => true,
+            'highlight_start_tag' => '<strong>',
+            'highlight_end_tag' => '</strong>',
+        ]);
+
+        $this->assertEquals(20, $options->getCropLength());
+        $this->assertEquals('...', $options->getCropMarker());
+        $this->assertTrue($options->shouldCrop());
+        $this->assertTrue($options->shouldHighlight());
+        $this->assertEquals('<strong>', $options->getHighlightStartTag());
+        $this->assertEquals('</strong>', $options->getHighlightEndTag());
+    }
+
+    public function testFromArrayWithDefaults(): void
+    {
+        $options = FormatterOptions::fromArray([]);
+
+        $this->assertEquals(50, $options->getCropLength());
+        $this->assertEquals('…', $options->getCropMarker());
+        $this->assertFalse($options->shouldCrop());
+        $this->assertFalse($options->shouldHighlight());
+        $this->assertEquals('<em>', $options->getHighlightStartTag());
+        $this->assertEquals('</em>', $options->getHighlightEndTag());
+    }
+
+    public function testFromArrayWithDisablingOptions(): void
+    {
+        $options = FormatterOptions::fromArray([
+            'enable_crop' => false,
+            'enable_highlight' => false,
+        ]);
+
+        $this->assertFalse($options->shouldCrop());
+        $this->assertFalse($options->shouldHighlight());
+    }
+
     public function testWithCropLength(): void
     {
         $options = new FormatterOptions();

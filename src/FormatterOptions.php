@@ -18,6 +18,51 @@ class FormatterOptions
 
     private bool $shouldHighlight = false;
 
+    /**
+     * @param array{
+     *     crop_length?: int,
+     *     crop_marker?: string,
+     *     enable_crop?: bool,
+     *     enable_highlight?: bool,
+     *     highlight_start_tag?: string,
+     *     highlight_end_tag?: string
+     * } $options
+     */
+    public static function fromArray(array $options): self
+    {
+        $formatterOptions = new self();
+
+        if (isset($options['crop_length'])) {
+            $formatterOptions = $formatterOptions->withCropLength((int) $options['crop_length']);
+        }
+
+        if (isset($options['crop_marker'])) {
+            $formatterOptions = $formatterOptions->withCropMarker($options['crop_marker']);
+        }
+
+        if (\array_key_exists('enable_crop', $options)) {
+            $formatterOptions = $options['enable_crop']
+                ? $formatterOptions->withEnableCrop()
+                : $formatterOptions->withDisableCrop();
+        }
+
+        if (\array_key_exists('enable_highlight', $options)) {
+            $formatterOptions = $options['enable_highlight']
+                ? $formatterOptions->withEnableHighlight()
+                : $formatterOptions->withDisableHighlight();
+        }
+
+        if (isset($options['highlight_start_tag'])) {
+            $formatterOptions = $formatterOptions->withHighlightStartTag($options['highlight_start_tag']);
+        }
+
+        if (isset($options['highlight_end_tag'])) {
+            $formatterOptions = $formatterOptions->withHighlightEndTag($options['highlight_end_tag']);
+        }
+
+        return $formatterOptions;
+    }
+
     public function getCropLength(): int
     {
         return $this->cropLength;
