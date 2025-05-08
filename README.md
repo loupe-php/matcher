@@ -78,3 +78,19 @@ $result = $formatter->format('This is my original text which I want to query.', 
 
 echo 'This is the formatted result: ' . $result->getFormattedText();
 ```
+
+### Cropping pre-highlighted results
+
+Sometimes, you have a pre-highlighted text that needs cropping (e.g. because your search engine supports highlighting
+but not context cropping), you can use the `Cropper` formatter directly in this case:
+
+```php
+$cropper = new \Loupe\Matcher\Formatting\Cropper(
+    $cropLength = 10,
+    $cropMarker = '…',
+    $highlightStartTag = '<em>',
+    $highlightEndTag = '</em>',
+);
+
+echo $cropper->cropHighlightedText('This is a <em>test</em> string.'); // Outputs: …a <em>test</em> st…
+```

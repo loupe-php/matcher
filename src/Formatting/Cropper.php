@@ -17,9 +17,9 @@ class Cropper implements Transformer
     ) {
     }
 
-    public function transform(string $text, TokenCollection $matches): string
+    public function cropHighlightedText(string $text): string
     {
-        if (!$text || !$matches->count() || $this->cropLength <= 0) {
+        if (!$text || $this->cropLength <= 0) {
             return $text;
         }
 
@@ -95,9 +95,16 @@ class Cropper implements Transformer
         }
 
         // Remove duplicate crop markers
-        $result = str_replace($this->cropMarker . $this->cropMarker, $this->cropMarker, $result);
+        return str_replace($this->cropMarker . $this->cropMarker, $this->cropMarker, $result);
+    }
 
-        return $result;
+    public function transform(string $text, TokenCollection $matches): string
+    {
+        if (!$matches->count()) {
+            return $text;
+        }
+
+        return $this->cropHighlightedText($text);
     }
 
     private function closestWordBoundary(string $string, int $position, bool $forward = true): int
