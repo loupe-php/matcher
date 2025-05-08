@@ -89,7 +89,7 @@ $cropper = new \Loupe\Matcher\Formatting\Cropper(
     $cropLength = 10,
     $cropMarker = '…',
     $highlightStartTag = '<em>',
-    $highlightStartTag = '</em>',
+    $highlightEndTag = '</em>',
 );
 
 echo $cropper->cropHighlightedText('This is a <em>test</em> string.'); // Outputs: …a <em>test</em> st…
