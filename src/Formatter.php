@@ -16,9 +16,9 @@ class Formatter
     ) {
     }
 
-    public function format(string $text, TokenCollection|string $query, FormatterOptions $options): FormatterResult
+    public function format(string $text, TokenCollection|string $query, FormatterOptions $options, TokenCollection|null $matches = null): FormatterResult
     {
-        $matches = $this->matcher->calculateMatches($text, $query);
+        $matches = $matches ?? $this->matcher->calculateMatches($text, $query);
 
         $transformers = [];
         if ($options->shouldHighlight() || $options->shouldCrop()) {
