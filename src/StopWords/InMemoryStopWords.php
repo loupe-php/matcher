@@ -1,0 +1,18 @@
+<?php
+
+namespace Loupe\Matcher\StopWords;
+
+use Loupe\Matcher\Tokenizer\Token;
+
+class InMemoryStopWords implements StopWordsInterface
+{
+    public function __construct(private array $stopWords = [])
+    {
+
+    }
+
+    public function isStopWord(Token $token): bool
+    {
+        return \in_array($token->getTerm(), $this->stopWords, true);
+    }
+}

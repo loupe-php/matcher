@@ -19,7 +19,6 @@ class Token
         private int $startPosition,
         private bool $isPartOfPhrase,
         private bool $isNegated,
-        private bool $isStopWord,
     ) {
         $this->length = mb_strlen($this->term, 'UTF-8');
     }
@@ -104,18 +103,6 @@ class Token
     public function isPartOfPhrase(): bool
     {
         return $this->isPartOfPhrase;
-    }
-
-    public function isStopWord(): bool
-    {
-        return $this->isStopWord;
-    }
-
-    public function withMarkAsStopWord(): self
-    {
-        $clone = clone $this;
-        $clone->isStopWord = true;
-        return $clone;
     }
 
     /**

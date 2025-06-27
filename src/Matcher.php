@@ -4,19 +4,21 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher;
 
+use Loupe\Matcher\StopWords\InMemoryStopWords;
+use Loupe\Matcher\StopWords\StopWordsInterface;
 use Loupe\Matcher\Tokenizer\Span;
 use Loupe\Matcher\Tokenizer\TokenCollection;
 use Loupe\Matcher\Tokenizer\TokenizerInterface;
 
 class Matcher
 {
-    /**
-     * @param array<string> $stopWords
-     */
+    private StopWordsInterface $stopWords;
+
     public function __construct(
         private TokenizerInterface $tokenizer,
-        private array $stopWords = []
+        StopWordsInterface|array $stopWords = []
     ) {
+        $this->stopWords = $stopWords instanceof StopWordsInterface ? $stopWords : new InMemoryStopWords($stopWords);
     }
 
     public function calculateMatches(TokenCollection|string $text, TokenCollection|string $query): TokenCollection
@@ -25,7 +27,7 @@ class Matcher
             return new TokenCollection();
         }
 
-        $textTokens = $text instanceof TokenCollection ? $text : $this->tokenizer->tokenize($text, stopWords: $this->stopWords, includeStopWords: true);
+        $textTokens = $text instanceof TokenCollection ? $text : $this->tokenizer->tokenize($text);
         $queryTokens = $query instanceof TokenCollection ? $query : $this->tokenizer->tokenize($query);
 
         $matches = new TokenCollection();
@@ -41,8 +43,15 @@ class Matcher
     /**
      * @return Span[]
      */
-    public function calculateMatchSpans(TokenCollection $matches): array
+    public function calculateMatchSpans(TokenCollection $text, TokenCollection $matches): array
     {
+        foreach ($text->all() as $textToken) {
+            // TODO: check if $textToken is a match (part of $matches with the correct position)
+            // If not, check if previous token was a match and this is a stopword etc.:
+           // if ($this->stopWords->isStopWord($textToken)) {
+        }
+
+
         $matches = $this->removeSolitaryStopWords($matches);
 
         $spans = [];
