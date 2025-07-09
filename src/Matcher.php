@@ -55,29 +55,33 @@ class Matcher
 
         $spans = [];
         $currentSpan = null;
-        $prevWasRelevant = false;
-        $nextIsRelevant = null;
+        $currentSpanHasMatch = false;
 
-        foreach ($textTokens->all() as $i => $textToken) {
-            $isRelevant = $nextIsRelevant ?? $this->isRelevantToken($textToken, $queryTokens, $matches);
-            $nextIsRelevant = $textTokens->atIndex($i + 1)
-                ? $this->isRelevantToken($textTokens->atIndex($i + 1), $queryTokens, $matches)
-                : false;
+        foreach ($textTokens->all() as $textToken) {
+            $isMatch = $this->isMatch($textToken, $matches);
+            $isStopword = $this->isRelevantStopword($textToken, $queryTokens);
+            $isRelevant = $isMatch || $isStopword;
+
+            if ($isMatch) {
+                $currentSpanHasMatch = true;
+            }
 
             switch (true) {
+                case !$isRelevant:
+                    // Close the current span
+                    if ($currentSpan && $currentSpanHasMatch) {
+                        $spans[] = $currentSpan;
+                    }
+                    $currentSpan = null;
+                    $currentSpanHasMatch = false;
+                    break;
                 case $currentSpan && $isRelevant:
-                case $currentSpan && $prevWasRelevant:
                     // Extend the current span
                     $currentSpan = $currentSpan->withEndPosition($textToken->getEndPosition());
                     break;
                 case !$currentSpan && $isRelevant:
                     // Start a new span
                     $currentSpan = new Span($textToken->getStartPosition(), $textToken->getEndPosition());
-                    break;
-                case $currentSpan && !$isRelevant:
-                    // Close the current span
-                    $spans[] = $currentSpan;
-                    $currentSpan = null;
                     break;
                 default:
                     // No action needed, continue
@@ -86,25 +90,22 @@ class Matcher
         }
 
         // If we have an open span at the end, close it
-        if ($currentSpan) {
+        if ($currentSpan && $currentSpanHasMatch) {
             $spans[] = $currentSpan;
         }
 
         return $spans;
     }
 
-    private function isRelevantToken(Token $token, TokenCollection $query, TokenCollection $matches): bool
+    private function isMatch(Token $token, TokenCollection $matches): bool
     {
         // Must be in the matches at exactly the same position
-        if ($matches->contains($token, checkPosition: true)) {
-            return true;
-        }
+        return $matches->contains($token, checkPosition: true);
+    }
 
+    private function isRelevantStopWord(Token $token, TokenCollection $query): bool
+    {
         // Must be a stopword and at any position in the query
-        if ($this->stopWords->isStopWord($token) && $query->contains($token, checkPosition: false)) {
-            return true;
-        }
-
-        return false;
+        return $this->stopWords->isStopWord($token) && $query->contains($token, checkPosition: false);
     }
 }
