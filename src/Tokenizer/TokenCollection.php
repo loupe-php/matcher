@@ -105,6 +105,17 @@ class TokenCollection implements \Countable
         return $this->tokens[$index] ?? null;
     }
 
+    public function contains(Token $token): bool
+    {
+        foreach ($this->all() as $t) {
+            if ($t->equals($token)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function count(): int
     {
         return \count($this->tokens);
