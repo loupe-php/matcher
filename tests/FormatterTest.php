@@ -22,14 +22,14 @@ class FormatterTest extends TestCase
     /**
      * @var array<string>
      */
-    private array $stopwords;
+    private array $stopWords;
 
     protected function setUp(): void
     {
         $tokenizer = new Tokenizer();
 
-        $this->stopwords = ['a', 'of', 'the'];
-        $this->matcher = new Matcher($tokenizer, stopWords: $this->stopwords);
+        $this->stopWords = ['a', 'of', 'the'];
+        $this->matcher = new Matcher($tokenizer, stopWords: $this->stopWords);
         $this->queryTerms = $tokenizer->tokenize('test');
     }
 
@@ -214,9 +214,7 @@ class FormatterTest extends TestCase
             $options = $options->withDisableCrop();
         }
 
-        $query = $query instanceof TokenCollection
-            ? $query
-            : (new Tokenizer())->tokenize($query, stopWords: $this->stopwords, includeStopWords: true);
+        $query = $query instanceof TokenCollection ? $query : (new Tokenizer())->tokenize($query);
 
         $formatter = new Formatter($this->matcher);
         $result = $formatter->format($text, $query, $options);
@@ -297,9 +295,7 @@ class FormatterTest extends TestCase
             $options = $options->withDisableHighlight();
         }
 
-        $query = $query instanceof TokenCollection
-            ? $query
-            : (new Tokenizer())->tokenize($query, stopWords: $this->stopwords, includeStopWords: true);
+        $query = $query instanceof TokenCollection ? $query : (new Tokenizer())->tokenize($query);
 
         $formatter = new Formatter($this->matcher);
         $result = $formatter->format($text, $query, $options);
