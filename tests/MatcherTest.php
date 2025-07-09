@@ -55,18 +55,6 @@ final class MatcherTest extends TestCase
         $this->assertContains('dog', $words);
     }
 
-    public function testStopWordsNotPartOfMatches(): void
-    {
-        $text = 'The quick brown fox jumps over the lazy dog';
-        $query = 'the quick fox dog';
-        $matches = $this->matcher->calculateMatches($text, $query);
-
-        $this->assertEquals(3, \count($matches->all()));
-        $words = array_map(fn ($t) => $t->getTerm(), $matches->all());
-
-        $this->assertNotContains('the', $words);
-    }
-
     public function testStopWordsAloneDoNotCreateSpan(): void
     {
         $text = 'the is at which on';
@@ -110,5 +98,17 @@ final class MatcherTest extends TestCase
         $spans = $this->matcher->calculateMatchSpans($text, $query, $matches);
 
         $this->assertCount(2, $spans);
+    }
+
+    public function testStopWordsNotPartOfMatches(): void
+    {
+        $text = 'The quick brown fox jumps over the lazy dog';
+        $query = 'the quick fox dog';
+        $matches = $this->matcher->calculateMatches($text, $query);
+
+        $this->assertEquals(3, \count($matches->all()));
+        $words = array_map(fn ($t) => $t->getTerm(), $matches->all());
+
+        $this->assertNotContains('the', $words);
     }
 }

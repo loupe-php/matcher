@@ -62,31 +62,26 @@ class Matcher
             $isStopword = $this->isRelevantStopWord($textToken, $queryTokens);
             $isRelevant = $isMatch || $isStopword;
 
-            // Only count as a real match if it's not just a stopword
             if ($isMatch) {
                 $currentSpanHasMatch = true;
             }
 
-            switch (true) {
-                case !$isRelevant:
-                    // Close the current span
-                    if ($currentSpan && $currentSpanHasMatch) {
-                        $spans[] = $currentSpan;
-                    }
-                    $currentSpan = null;
-                    $currentSpanHasMatch = false;
-                    break;
-                case $currentSpan && $isRelevant:
-                    // Extend the current span
-                    $currentSpan = $currentSpan->withEndPosition($textToken->getEndPosition());
-                    break;
-                case !$currentSpan && $isRelevant:
-                    // Start a new span
-                    $currentSpan = new Span($textToken->getStartPosition(), $textToken->getEndPosition());
-                    break;
-                default:
-                    // No action needed, continue
-                    break;
+            if (!$isRelevant) {
+                // Close the current span
+                if ($currentSpan && $currentSpanHasMatch) {
+                    $spans[] = $currentSpan;
+                }
+                $currentSpan = null;
+                $currentSpanHasMatch = false;
+                continue;
+            }
+
+            if ($currentSpan) {
+                // Extend the current span
+                $currentSpan = $currentSpan->withEndPosition($textToken->getEndPosition());
+            } else {
+                // Start a new span
+                $currentSpan = new Span($textToken->getStartPosition(), $textToken->getEndPosition());
             }
         }
 
