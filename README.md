@@ -36,16 +36,20 @@ $tokenCollection->phraseGroups(); // tokens within phrase groups (inside quotati
 
 ### Matcher
 
-The `Matcher` helper is here to help you find matches between two `TokenCollection`s (or strings for simplicity):
+The `Matcher` helper is here to help you find matches between two `TokenCollection`s (or strings for simplicity). It requires a `Tokenizer` and optionally accepts stop words:
 
 ```php
-$matcher = new \Loupe\Matcher\Matcher();
-$matchingTokenCollection = $matcher->calculateMatches('This is my original text which I want to query.', 'query');
+$tokenizer = new \Loupe\Matcher\Tokenizer\Tokenizer();
+$matcher = new \Loupe\Matcher\Matcher($tokenizer, ['a', 'and', 'the']);
+$matchingTokenCollection = $matcher->calculateMatches('The text to query', 'query');
+```
 
-// $matchingTokenCollection will now contain all Token instances that match the query.
+`$matchingTokenCollection` will now contain all Token instances that match the query.
 
-// Sometimes you might be interested in the spans of the matches (the start and end positions of the tokens matched):
-$spans = $matcher->calculateMatchSpans($matchingTokenCollection);
+Sometimes you might be interested in the spans of the matches (the start and end positions of the tokens matched). The spans will include any matching words as well as stop words around or in between the matching tokens.
+
+```php
+$spans = $matcher->calculateMatchSpans('This is my original text which I want to query.', 'query', $matchingTokenCollection);
 foreach ($spans as $span) {
     echo 'This span started at:' . $span->getStartPosition();
     echo 'This span ended at:' . $span->getEndPosition();
@@ -56,25 +60,25 @@ foreach ($spans as $span) {
 ### Formatter
 
 The `Formatter` takes a `FormatterOptions` instance and formats directly on two strings (text and query) according to your
-configuration. You can also pass a `TokenCollection` for the `$query` directly if you want and have tokenized those 
+configuration. You can also pass a `TokenCollection` for the `$query` directly if you want and have tokenized those
 before. The `$text`, however, has to be a string.
 
 ```php
 $tokenizer = new \Loupe\Matcher\Tokenizer\Tokenizer();
-$matcher = new Loupe\Matcher\Matcher($tokenizer);
+$matcher = new \Loupe\Matcher\Matcher($tokenizer);
 
 $formatter = new \Loupe\Matcher\Formatter($matcher);
 
 $options = (new \Loupe\Matcher\FormatterOptions())
     ->withEnableHighlight() // enable highlighting
     ->withHighlightStartTag('<b>') // default: <em>
-    ->withHighlightStartTag('</b>') // default: </em>
+    ->withHighlightEndTag('</b>') // default: </em>
     ->withEnableCrop() // enable cropping
     ->withCropLength(40) // default: 50
-    ->withCropMarker('.......') // default: … 
+    ->withCropMarker('.......') // default: …
 ;
 
-$result = $formatter->format('This is my original text which I want to query.', 'query');
+$result = $formatter->format('This is my original text which I want to query.', 'query', $options);
 
 echo 'This is the formatted result: ' . $result->getFormattedText();
 ```
