@@ -109,9 +109,10 @@ class TokenCollection implements \Countable
     {
         foreach ($this->all() as $t) {
             if ($t->getTerm() === $token->getTerm()) {
-                if ($checkPosition) {
-                    return $t->getStartPosition() === $token->getStartPosition();
-                } else {
+                if (!$checkPosition) {
+                    return true;
+                }
+                if ($t->getStartPosition() === $token->getStartPosition()) {
                     return true;
                 }
             }
