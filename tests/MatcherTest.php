@@ -22,15 +22,15 @@ final class MatcherTest extends TestCase
 
     public function testCalculateMatchSpansMergesAdjacentTokens(): void
     {
-        $text = 'quick brown fox';
+        $text = 'awfully quick brown fox sighted';
         $query = 'quick brown fox';
 
         $matches = $this->matcher->calculateMatches($text, $query);
         $spans = $this->matcher->calculateMatchSpans($matches);
 
         $this->assertCount(1, $spans);
-        $this->assertSame(0, $spans[0]->getStartPosition());
-        $this->assertSame(15, $spans[0]->getEndPosition());
+        $this->assertSame(8, $spans[0]->getStartPosition());
+        $this->assertSame(23, $spans[0]->getEndPosition());
         $this->assertSame(15, $spans[0]->getLength());
     }
 
@@ -58,7 +58,7 @@ final class MatcherTest extends TestCase
     public function testStopWordsAloneDoNotCreateSpan(): void
     {
         $text = 'the is at which on';
-        $query = 'the is at';
+        $query = 'is at';
         $matches = $this->matcher->calculateMatches($text, $query);
         $spans = $this->matcher->calculateMatchSpans($matches);
 
@@ -67,8 +67,8 @@ final class MatcherTest extends TestCase
 
     public function testStopWordsAmongQueryTermsAreIncluded(): void
     {
-        $text = 'quick the fox';
-        $query = 'quick the fox';
+        $text = 'another quick fox in sight now';
+        $query = 'quick fox in sight';
 
         $matches = $this->matcher->calculateMatches($text, $query);
         $spans = $this->matcher->calculateMatchSpans($matches);
@@ -78,20 +78,20 @@ final class MatcherTest extends TestCase
 
     public function testStopWordsAroundQueryTermsAreIncluded(): void
     {
-        $text = 'the quick fox is';
+        $text = 'checking if the quick fox is visible';
         $query = 'the quick fox is';
 
         $matches = $this->matcher->calculateMatches($text, $query);
         $spans = $this->matcher->calculateMatchSpans($matches);
 
         $this->assertCount(1, $spans);
-        $this->assertSame(0, $spans[0]->getStartPosition());
-        $this->assertSame(16, $spans[0]->getEndPosition());
+        $this->assertSame(12, $spans[0]->getStartPosition());
+        $this->assertSame(28, $spans[0]->getEndPosition());
     }
 
     public function testStopWordsBetweenQueryTermsAreNotIncluded(): void
     {
-        $text = 'quick the fox';
+        $text = 'maybe the fox is quick and brown';
         $query = 'quick fox';
 
         $matches = $this->matcher->calculateMatches($text, $query);
