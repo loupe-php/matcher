@@ -16,9 +16,9 @@ class Highlighter implements Transformer
     ) {
     }
 
-    public function transform(string $text, TokenCollection $matches): string
+    public function transform(string $text, TokenCollection|string $query, TokenCollection $matches): string
     {
-        $spans = $this->matcher->calculateMatchSpans($matches);
+        $spans = $this->matcher->calculateMatchSpans($text, $query, $matches);
 
         if (empty($spans)) {
             return $text;

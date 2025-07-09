@@ -105,11 +105,15 @@ class TokenCollection implements \Countable
         return $this->tokens[$index] ?? null;
     }
 
-    public function contains(Token $token): bool
+    public function contains(Token $token, bool $checkPosition = false): bool
     {
         foreach ($this->all() as $t) {
-            if ($t->equals($token)) {
-                return true;
+            if ($t->getTerm() === $token->getTerm()) {
+                if ($checkPosition) {
+                    return $t->getStartPosition() === $token->getStartPosition();
+                } else {
+                    return true;
+                }
             }
         }
 

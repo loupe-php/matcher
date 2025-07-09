@@ -11,5 +11,5 @@ interface Transformer
     /**
      * Transform the text according to the transformer's rules.
      */
-    public function transform(string $text, TokenCollection $matches): string;
+    public function transform(string $text, TokenCollection|string $query, TokenCollection $matches): string;
 }

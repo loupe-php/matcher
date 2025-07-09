@@ -98,7 +98,7 @@ class Cropper implements Transformer
         return str_replace($this->cropMarker . $this->cropMarker, $this->cropMarker, $result);
     }
 
-    public function transform(string $text, TokenCollection $matches): string
+    public function transform(string $text, TokenCollection|string $query, TokenCollection $matches): string
     {
         if (!$matches->count()) {
             return $text;

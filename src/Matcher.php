@@ -7,6 +7,7 @@ namespace Loupe\Matcher;
 use Loupe\Matcher\StopWords\InMemoryStopWords;
 use Loupe\Matcher\StopWords\StopWordsInterface;
 use Loupe\Matcher\Tokenizer\Span;
+use Loupe\Matcher\Tokenizer\Token;
 use Loupe\Matcher\Tokenizer\TokenCollection;
 use Loupe\Matcher\Tokenizer\TokenizerInterface;
 
@@ -44,63 +45,66 @@ class Matcher
     }
 
     /**
+     * Merge adjacent matching tokens, including any surrounding stopwords.
      * @return Span[]
      */
-    public function calculateMatchSpans(TokenCollection $matches): array
+    public function calculateMatchSpans(TokenCollection|string $text, TokenCollection|string $query, TokenCollection $matches): array
     {
-        $matches = $this->removeSolitaryStopWords($matches);
+        $textTokens = $text instanceof TokenCollection ? $text : $this->tokenizer->tokenize($text);
+        $queryTokens = $query instanceof TokenCollection ? $query : $this->tokenizer->tokenize($query);
 
         $spans = [];
-        $prevMatch = null;
+        $currentSpan = null;
+        $prevWasRelevant = false;
+        $nextIsRelevant = null;
 
-        foreach ($matches->all() as $match) {
-            // Merge matches that are exactly after one another
-            $prevSpan = end($spans);
-            if ($prevSpan && $prevMatch && $prevMatch->getEndPosition() === $match->getStartPosition() - 1) {
-                array_splice($spans, -1, 1, [$prevSpan->withEndPosition($match->getEndPosition())]);
-            } else {
-                $spans[] = new Span($match->getStartPosition(), $match->getEndPosition());
+        foreach ($textTokens->all() as $i => $textToken) {
+            $isRelevant = $nextIsRelevant ?? $this->isRelevantToken($textToken, $queryTokens, $matches);
+            $nextIsRelevant = $textTokens->atIndex($i + 1)
+                ? $this->isRelevantToken($textTokens->atIndex($i + 1), $queryTokens, $matches)
+                : false;
+
+            switch (true) {
+                case $currentSpan && $isRelevant:
+                case $currentSpan && $prevWasRelevant:
+                    // Extend the current span
+                    $currentSpan = $currentSpan->withEndPosition($textToken->getEndPosition());
+                    break;
+                case !$currentSpan && $isRelevant:
+                    // Start a new span
+                    $currentSpan = new Span($textToken->getStartPosition(), $textToken->getEndPosition());
+                    break;
+                case $currentSpan && !$isRelevant:
+                    // Close the current span
+                    $spans[] = $currentSpan;
+                    $currentSpan = null;
+                    break;
+                default:
+                    // No action needed, continue
+                    break;
             }
+        }
 
-            $prevMatch = $match;
+        // If we have an open span at the end, close it
+        if ($currentSpan) {
+            $spans[] = $currentSpan;
         }
 
         return $spans;
     }
 
-    private function removeSolitaryStopWords(TokenCollection $matches): TokenCollection
+    private function isRelevantToken(Token $token, TokenCollection $query, TokenCollection $matches): bool
     {
-        $maxCharDistance = 1;
-        $maxWordDistance = 1;
-
-        $result = new TokenCollection();
-
-        foreach ($matches->all() as $i => $match) {
-            if (!$this->stopWords->isStopWord($match)) {
-                $result->add($match);
-                continue;
-            }
-
-            $hasNonStopWordNeighbor = false;
-
-            for ($j = 1; $j <= $maxWordDistance; $j++) {
-                $prevMatch = $matches->atIndex($i - $j);
-                $nextMatch = $matches->atIndex($i + $j);
-
-                // Keep stopword matches between non-stopword matches of interest
-                $hasNonStopWordNeighbor = ($prevMatch && !$this->stopWords->isStopWord($prevMatch) && $prevMatch->getEndPosition() >= $match->getStartPosition() - $maxCharDistance)
-                    || ($nextMatch && !$this->stopWords->isStopWord($nextMatch) && $nextMatch->getStartPosition() <= $match->getEndPosition() + $maxCharDistance);
-
-                if ($hasNonStopWordNeighbor) {
-                    break;
-                }
-            }
-
-            if ($hasNonStopWordNeighbor) {
-                $result->add($match);
-            }
+        // Must be in the matches at exactly the same position
+        if ($matches->contains($token, checkPosition: true)) {
+            return true;
         }
 
-        return $result;
+        // Must be a stopword and at any position in the query
+        if ($this->stopWords->isStopWord($token) && $query->contains($token, checkPosition: false)) {
+            return true;
+        }
+
+        return false;
     }
 }

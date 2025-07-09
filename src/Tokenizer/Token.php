@@ -42,13 +42,6 @@ class Token
         return array_unique(array_merge([$this->getTerm()], $this->getVariants()));
     }
 
-    public function equals(self $token): bool
-    {
-        return $this->getTerm() === $token->getTerm()
-            && $this->getStartPosition() === $token->getStartPosition()
-            && $this->getLength() === $token->getLength();
-    }
-
     public function getEndPosition(): int
     {
         return $this->startPosition + $this->length;

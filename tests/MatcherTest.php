@@ -26,7 +26,7 @@ final class MatcherTest extends TestCase
         $query = 'quick brown fox';
 
         $matches = $this->matcher->calculateMatches($text, $query);
-        $spans = $this->matcher->calculateMatchSpans($matches);
+        $spans = $this->matcher->calculateMatchSpans($text, $query, $matches);
 
         $this->assertCount(1, $spans);
         $this->assertSame(8, $spans[0]->getStartPosition());
@@ -60,7 +60,7 @@ final class MatcherTest extends TestCase
         $text = 'the is at which on';
         $query = 'is at';
         $matches = $this->matcher->calculateMatches($text, $query);
-        $spans = $this->matcher->calculateMatchSpans($matches);
+        $spans = $this->matcher->calculateMatchSpans($text, $query, $matches);
 
         $this->assertEmpty($spans);
     }
@@ -71,7 +71,7 @@ final class MatcherTest extends TestCase
         $query = 'quick fox in sight';
 
         $matches = $this->matcher->calculateMatches($text, $query);
-        $spans = $this->matcher->calculateMatchSpans($matches);
+        $spans = $this->matcher->calculateMatchSpans($text, $query, $matches);
 
         $this->assertCount(1, $spans);
     }
@@ -82,7 +82,7 @@ final class MatcherTest extends TestCase
         $query = 'the quick fox is';
 
         $matches = $this->matcher->calculateMatches($text, $query);
-        $spans = $this->matcher->calculateMatchSpans($matches);
+        $spans = $this->matcher->calculateMatchSpans($text, $query, $matches);
 
         $this->assertCount(1, $spans);
         $this->assertSame(12, $spans[0]->getStartPosition());
@@ -95,7 +95,7 @@ final class MatcherTest extends TestCase
         $query = 'quick fox';
 
         $matches = $this->matcher->calculateMatches($text, $query);
-        $spans = $this->matcher->calculateMatchSpans($matches);
+        $spans = $this->matcher->calculateMatchSpans($text, $query, $matches);
 
         $this->assertCount(2, $spans);
     }
