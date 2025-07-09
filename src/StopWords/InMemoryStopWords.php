@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Loupe\Matcher\StopWords;
 
 use Loupe\Matcher\Tokenizer\Token;
 
 class InMemoryStopWords implements StopWordsInterface
 {
-    public function __construct(private array $stopWords = [])
-    {
+    public function __construct(
+        private array $stopWords = []
+    ) {
 
     }
 

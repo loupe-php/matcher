@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Loupe\Matcher\StopWords;
 
 use Loupe\Matcher\Tokenizer\Token;

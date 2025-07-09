@@ -42,7 +42,7 @@ class Token
         return array_unique(array_merge([$this->getTerm()], $this->getVariants()));
     }
 
-    public function equals(Token $token): bool
+    public function equals(self $token): bool
     {
         return $this->getTerm() === $token->getTerm()
             && $this->getStartPosition() === $token->getStartPosition()
