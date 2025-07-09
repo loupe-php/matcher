@@ -59,9 +59,10 @@ class Matcher
 
         foreach ($textTokens->all() as $textToken) {
             $isMatch = $this->isMatch($textToken, $matches);
-            $isStopword = $this->isRelevantStopword($textToken, $queryTokens);
+            $isStopword = $this->isRelevantStopWord($textToken, $queryTokens);
             $isRelevant = $isMatch || $isStopword;
 
+            // Only count as a real match if it's not just a stopword
             if ($isMatch) {
                 $currentSpanHasMatch = true;
             }
@@ -100,7 +101,7 @@ class Matcher
     private function isMatch(Token $token, TokenCollection $matches): bool
     {
         // Must be in the matches at exactly the same position
-        return $matches->contains($token, checkPosition: true);
+        return !$this->stopWords->isStopWord($token) && $matches->contains($token, checkPosition: true);
     }
 
     private function isRelevantStopWord(Token $token, TokenCollection $query): bool
