@@ -174,9 +174,9 @@ class FormatterTest extends TestCase
         yield 'Highlighting with token variants' => [
             new TokenCollection(
                 [
-                    (new Token(0, 'my', 0, false, false, false)),
-                    (new Token(1, 'wonder', 3, false, false, false))->withVariants(['wonders']),
-                    (new Token(2, 'soul', 10, false, false, false))->withVariants(['souls']),
+                    (new Token(0, 'my', 0, false, false)),
+                    (new Token(1, 'wonder', 3, false, false))->withVariants(['wonders']),
+                    (new Token(2, 'soul', 10, false, false))->withVariants(['souls']),
                 ],
             ),
             'A wonder of wonders has taken possession of my entire soul, like some souls\' mornings of spring.',
