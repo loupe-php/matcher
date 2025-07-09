@@ -36,7 +36,7 @@ class Matcher
 
         $matches = new TokenCollection();
         foreach ($textTokens->all() as $textToken) {
-            if ($this->tokenizer->matches($textToken, $queryTokens)) {
+            if (!$this->stopWords->isStopWord($textToken) && $this->tokenizer->matches($textToken, $queryTokens)) {
                 $matches->add($textToken);
             }
         }
