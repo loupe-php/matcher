@@ -43,15 +43,8 @@ class Matcher
     /**
      * @return Span[]
      */
-    public function calculateMatchSpans(TokenCollection $text, TokenCollection $matches): array
+    public function calculateMatchSpans(TokenCollection $matches): array
     {
-        foreach ($text->all() as $textToken) {
-            // TODO: check if $textToken is a match (part of $matches with the correct position)
-            // If not, check if previous token was a match and this is a stopword etc.:
-           // if ($this->stopWords->isStopWord($textToken)) {
-        }
-
-
         $matches = $this->removeSolitaryStopWords($matches);
 
         $spans = [];
@@ -80,7 +73,7 @@ class Matcher
         $result = new TokenCollection();
 
         foreach ($matches->all() as $i => $match) {
-            if (!$match->isStopWord()) {
+            if (!$this->stopWords->isStopWord($match)) {
                 $result->add($match);
                 continue;
             }
@@ -92,8 +85,8 @@ class Matcher
                 $nextMatch = $matches->atIndex($i + $j);
 
                 // Keep stopword matches between non-stopword matches of interest
-                $hasNonStopWordNeighbor = ($prevMatch && !$prevMatch->isStopWord() && $prevMatch->getEndPosition() >= $match->getStartPosition() - $maxCharDistance)
-                    || ($nextMatch && !$nextMatch->isStopWord() && $nextMatch->getStartPosition() <= $match->getEndPosition() + $maxCharDistance);
+                $hasNonStopWordNeighbor = ($prevMatch && !$this->stopWords->isStopWord($prevMatch) && $prevMatch->getEndPosition() >= $match->getStartPosition() - $maxCharDistance)
+                    || ($nextMatch && !$this->stopWords->isStopWord($nextMatch) && $nextMatch->getStartPosition() <= $match->getEndPosition() + $maxCharDistance);
 
                 if ($hasNonStopWordNeighbor) {
                     break;
