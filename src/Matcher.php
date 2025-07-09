@@ -14,6 +14,9 @@ class Matcher
 {
     private StopWordsInterface $stopWords;
 
+    /**
+     * @param StopWordsInterface|array<string> $stopWords
+     */
     public function __construct(
         private TokenizerInterface $tokenizer,
         StopWordsInterface|array $stopWords = []

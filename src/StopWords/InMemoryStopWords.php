@@ -8,6 +8,9 @@ use Loupe\Matcher\Tokenizer\Token;
 
 class InMemoryStopWords implements StopWordsInterface
 {
+    /**
+     * @param array<string> $stopWords
+     */
     public function __construct(
         private array $stopWords = []
     ) {
