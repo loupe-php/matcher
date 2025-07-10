@@ -162,6 +162,24 @@ class FormatterTest extends TestCase
             ']',
         ];
 
+        yield 'Highlighting single word' => [
+            'juice',
+            'Juice',
+            '[Juice]',
+            true,
+            '[',
+            ']',
+        ];
+
+        yield 'Highlighting single word with whitespace' => [
+            'juice',
+            ' Juice ',
+            ' [Juice] ',
+            true,
+            '[',
+            ']',
+        ];
+
         yield 'Highlighting with subwords' => [
             'wonder',
             'Wonderful serenity has taken possession of my entire soul, like a sweet morning wonder of spring.',
