@@ -121,6 +121,10 @@ class CustomTokenizer implements TokenizerInterface {
     public function tokenize(string $text): TokenCollection {
         // Your custom tokenization logic
     }
+
+    public function matches(Token $token, TokenCollection $tokens): bool {
+        // Your custom logic for checking if a token is a match
+    }
 }
 ```
 
