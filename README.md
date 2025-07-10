@@ -2,8 +2,7 @@
 
 A PHP library for search term highlighting and text snippet generation. Transform search results into user-friendly formatted text with highlighted matches and contextual cropping.
 
-**Example output:**
-> **Lorem ipsum** dolor sit amet, consetetur [...] no sea takimata sanctus est **lorem** est **ipsum** dolor sit amet.
+> <mark>Lorem ipsum</mark> dolor sit amet, consetetur [...] no sea takimata sanctus est <mark>lorem</mark> est <mark>ipsum</mark> dolor sit amet. <mark>Lorem ipsum</mark> dolor sit amet, consetetur [...] dolore te feugait nulla facilisi <mark>lorem ipsum</mark> dolor sit amet, consectetuer [...]
 
 > [!CAUTION]
 > Work in progress. Expect frequent changes to API and functionality.
