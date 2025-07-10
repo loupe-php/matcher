@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher\Tokenizer;
 
+use Loupe\Matcher\StopWords\StopWordsInterface;
+
 class TokenCollection implements \Countable
 {
     /**
@@ -169,5 +171,22 @@ class TokenCollection implements \Countable
         }
 
         return $groups;
+    }
+
+    public function withoutStopWords(StopWordsInterface $stopWords, bool $keepOriginalIfEmpty = false): self
+    {
+        $reduced = new self();
+
+        foreach ($this->tokens as $token) {
+            if (!$stopWords->isStopWord($token)) {
+                $reduced->add($token);
+            }
+        }
+
+        if ($reduced->empty() && $keepOriginalIfEmpty) {
+            return $this;
+        }
+
+        return $reduced;
     }
 }
