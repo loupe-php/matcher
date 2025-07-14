@@ -30,43 +30,21 @@ final class FormatterResultTest extends TestCase
 
     public function testMatchesArray(): void
     {
-        $matches = (new Tokenizer())->tokenize('foo bar baz', stopWords: ['bar']);
+        $matches = (new Tokenizer())->tokenize('foo bar baz');
         $result = new FormatterResult('text', $matches);
 
         $this->assertEquals([
             [
                 'start' => 0,
                 'length' => 3,
-                'stopword' => false,
-            ],
-            [
-                'start' => 8,
-                'length' => 3,
-                'stopword' => false,
-            ],
-        ], $result->getMatchesArray());
-    }
-
-    public function testStopwordMatchesArray(): void
-    {
-        $matches = (new Tokenizer())->tokenize('foo bar baz', stopWords: ['bar'], includeStopWords: true);
-        $result = new FormatterResult('text', $matches);
-
-        $this->assertEquals([
-            [
-                'start' => 0,
-                'length' => 3,
-                'stopword' => false,
             ],
             [
                 'start' => 4,
                 'length' => 3,
-                'stopword' => true,
             ],
             [
                 'start' => 8,
                 'length' => 3,
-                'stopword' => false,
             ],
         ], $result->getMatchesArray());
     }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher\Tokenizer;
 
+use Loupe\Matcher\StopWords\StopWordsInterface;
+
 class TokenCollection implements \Countable
 {
     /**
@@ -105,6 +107,22 @@ class TokenCollection implements \Countable
         return $this->tokens[$index] ?? null;
     }
 
+    public function contains(Token $token, bool $checkPosition = false): bool
+    {
+        foreach ($this->all() as $t) {
+            if ($t->getTerm() === $token->getTerm()) {
+                if (!$checkPosition) {
+                    return true;
+                }
+                if ($t->getStartPosition() === $token->getStartPosition()) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     public function count(): int
     {
         return \count($this->tokens);
@@ -153,5 +171,22 @@ class TokenCollection implements \Countable
         }
 
         return $groups;
+    }
+
+    public function withoutStopWords(StopWordsInterface $stopWords, bool $keepOriginalIfEmpty = false): self
+    {
+        $reduced = new self();
+
+        foreach ($this->tokens as $token) {
+            if (!$stopWords->isStopWord($token)) {
+                $reduced->add($token);
+            }
+        }
+
+        if ($reduced->empty() && $keepOriginalIfEmpty) {
+            return $this;
+        }
+
+        return $reduced;
     }
 }

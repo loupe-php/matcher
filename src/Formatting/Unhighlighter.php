@@ -14,7 +14,7 @@ class Unhighlighter implements Transformer
     ) {
     }
 
-    public function transform(string $text, TokenCollection $matches): string
+    public function transform(string $text, TokenCollection|string $query, TokenCollection $matches): string
     {
         return str_replace([$this->startTag, $this->endTag], ['', ''], $text);
     }

@@ -25,15 +25,11 @@ class Tokenizer implements TokenizerInterface
         return false;
     }
 
-    /**
-     * @param array<string> $stopWords
-     */
-    public function tokenize(string $string, ?int $maxTokens = null, array $stopWords = [], bool $includeStopWords = false): TokenCollection
+    public function tokenize(string $string, ?int $maxTokens = null): TokenCollection
     {
         $iterator = \IntlRuleBasedBreakIterator::createWordInstance($this->locale); // @phpstan-ignore-line - null is allowed
         $iterator->setText($string);
 
-        $all = new TokenCollection();
         $tokens = new TokenCollection();
         $id = 0;
         $position = 0;
@@ -72,7 +68,6 @@ class Tokenizer implements TokenizerInterface
             }
 
             $term = mb_strtolower($term, 'UTF-8');
-            $stopword = \in_array($term, $stopWords, true);
 
             $token = new Token(
                 $id++,
@@ -80,25 +75,13 @@ class Tokenizer implements TokenizerInterface
                 $position,
                 $phrase,
                 $negated,
-                $stopword
             );
 
             $position += $token->getLength();
-
-            // Collect all tokens regardless of stop word status
-            $all->add($token);
-
-            // Skip stop words
-            if ($stopword && !$includeStopWords) {
-                continue;
-            }
-
-            // Only add non-stop words to the result
             $tokens->add($token);
         }
 
-        // If removing stop words resulted in an empty collection, return all tokens
-        return $tokens->empty() ? $all : $tokens;
+        return $tokens;
     }
 
     private function isWhitespace(?int $status, string $token): bool

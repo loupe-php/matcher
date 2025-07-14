@@ -8,8 +8,5 @@ interface TokenizerInterface
 {
     public function matches(Token $token, TokenCollection $tokens): bool;
 
-    /**
-     * @param array<string> $stopWords
-     */
-    public function tokenize(string $string, ?int $maxTokens = null, array $stopWords = [], bool $includeStopWords = false): TokenCollection;
+    public function tokenize(string $string, ?int $maxTokens = null): TokenCollection;
 }

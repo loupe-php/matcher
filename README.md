@@ -1,11 +1,11 @@
-## Loupe Matcher
+# Loupe Matcher
 
-> [!CAUTION]
-> Work in progress
-
-A utility to identify and highlight search terms and create snippets around matched sections.
+A PHP library for search term highlighting and text snippet generation. Transform search results into user-friendly formatted text with highlighted matches and contextual cropping.
 
 > <mark>Lorem ipsum</mark> dolor sit amet, consetetur [...] no sea takimata sanctus est <mark>lorem</mark> est <mark>ipsum</mark> dolor sit amet. <mark>Lorem ipsum</mark> dolor sit amet, consetetur [...] dolore te feugait nulla facilisi <mark>lorem ipsum</mark> dolor sit amet, consectetuer [...]
+
+> [!CAUTION]
+> Work in progress. Expect frequent changes to API and functionality.
 
 ## Installation
 
@@ -13,84 +13,155 @@ A utility to identify and highlight search terms and create snippets around matc
 composer require loupe/matcher
 ```
 
-## Usage
+## Quick Start
+
+Here's a simple example of how to use Loupe Matcher to highlight search terms in a text document and crop around the highlights:
+
+```php
+use Loupe\Matcher\Tokenizer\Tokenizer;
+use Loupe\Matcher\Matcher;
+use Loupe\Matcher\Formatter;
+use Loupe\Matcher\FormatterOptions;
+
+$tokenizer = new Tokenizer();
+$matcher = new Matcher($tokenizer);
+$formatter = new Formatter($matcher);
+
+$options = (new FormatterOptions())
+    ->withEnableHighlight()
+    ->withEnableCrop()
+    ->withCropLength(10);
+
+$result = $formatter->format(
+    'This is a long document with many words to search through and compare.',
+    'search words',
+    $options
+);
+
+// "...with many <em>words</em> to <em>search</em> through..."
+echo $result->getFormattedText();
+```
+
+## Core Components
 
 ### Tokenizer
 
-In order to work with string matching for both, highlighting and cropping, we need to tokenize a string into terms, 
-phrases etc. This library ships with a basic tokenizer built on top of the `ext-intl` rules but you can implement 
-your own tokenizer by implementing the `TokenizerInterface`. Its goal is to take a string and convert it into a 
-`TokenCollection`. It is also responsible to decide, whether a given `Token` instance matches any of the tokens in a 
-given `TokenCollection`:
+**Purpose:** Breaks text into searchable tokens (words, phrases, terms) for accurate matching.
+
+The `Tokenizer` converts strings into `TokenCollection` objects, handling:
+
+- Word boundaries using `ext-intl` rules
+- Phrase groups (quoted terms like `"exact phrase"`)
+- Negated terms (prefixed with `-`)
+- Locale-specific tokenization
 
 ```php
-$tokenizer = new \Loupe\Matcher\Tokenizer\Tokenizer(); // optionally takes a locale to improve tokenization
-$tokenCollection = $tokenizer->tokenize('this is my string');
+$tokenizer = new Tokenizer('en_US'); // Optional locale
+$tokens = $tokenizer->tokenize('search for "exact phrase" -exclude');
 
-// Now you can use all sorts of helper functions
-$tokenCollection->all(); // all Token instances
-$tokenCollection->allNegated(); // all negated terms (- prefixed)
-$tokenCollection->phraseGroups(); // tokens within phrase groups (inside quotation marks, e.g. "this is a phrase")
-// etc.
+$tokens->all();          // All tokens
+$tokens->phraseGroups(); // Quoted phrases only
+$tokens->allNegated();   // Terms to exclude
 ```
 
 ### Matcher
 
-The `Matcher` helper is here to help you find matches between two `TokenCollection`s (or strings for simplicity):
+**Purpose:** Finds which tokens in your text match the search query.
+
+The `Matcher` compares tokenized text against search terms, with support for:
+
+- Stop word filtering (ignore common words like "the", "and")
+- Match span calculation (start/end positions)
+- Flexible matching between token collections
 
 ```php
-$matcher = new \Loupe\Matcher\Matcher();
-$matchingTokenCollection = $matcher->calculateMatches('This is my original text which I want to query.', 'query');
+$matcher = new Matcher($tokenizer, ['the', 'and', 'or']); // Stop words
+$matches = $matcher->calculateMatches('Text to search', 'search query');
 
-// $matchingTokenCollection will now contain all Token instances that match the query.
-
-// Sometimes you might be interested in the spans of the matches (the start and end positions of the tokens matched):
-$spans = $matcher->calculateMatchSpans($matchingTokenCollection);
+// Get position information for highlighting
+$spans = $matcher->calculateMatchSpans('Text to search', 'query', $matches);
 foreach ($spans as $span) {
-    echo 'This span started at:' . $span->getStartPosition();
-    echo 'This span ended at:' . $span->getEndPosition();
-    echo 'This span has a length of:' . $span->getLength();
+    echo "Match at position {$span->getStartPosition()}-{$span->getEndPosition()}";
 }
 ```
 
 ### Formatter
 
-The `Formatter` takes a `FormatterOptions` instance and formats directly on two strings (text and query) according to your
-configuration. You can also pass a `TokenCollection` for the `$query` directly if you want and have tokenized those 
-before. The `$text`, however, has to be a string.
+**Purpose:** Combines matching and highlighting to create formatted output with context.
+
+The `Formatter` orchestrates the entire process:
+
+- Highlights matched terms with HTML tags
+- Crops text to show relevant context around matches
+- Configurable through `FormatterOptions`
 
 ```php
-$tokenizer = new \Loupe\Matcher\Tokenizer\Tokenizer();
-$matcher = new Loupe\Matcher\Matcher($tokenizer);
+$formatter = new Formatter($matcher);
 
-$formatter = new \Loupe\Matcher\Formatter($matcher);
+$options = (new FormatterOptions())
+    ->withEnableHighlight()
+    ->withHighlightStartTag('<mark>')
+    ->withHighlightEndTag('</mark>')
+    ->withEnableCrop()
+    ->withCropLength(150)
+    ->withCropMarker('...');
 
-$options = (new \Loupe\Matcher\FormatterOptions())
-    ->withEnableHighlight() // enable highlighting
-    ->withHighlightStartTag('<b>') // default: <em>
-    ->withHighlightStartTag('</b>') // default: </em>
-    ->withEnableCrop() // enable cropping
-    ->withCropLength(40) // default: 50
-    ->withCropMarker('.......') // default: … 
-;
-
-$result = $formatter->format('This is my original text which I want to query.', 'query');
-
-echo 'This is the formatted result: ' . $result->getFormattedText();
+$result = $formatter->format($text, $query, $options);
+echo $result->getFormattedText();
 ```
 
-### Cropping pre-highlighted results
+## Advanced Usage
 
-Sometimes, you have a pre-highlighted text that needs cropping (e.g. because your search engine supports highlighting
-but not context cropping), you can use the `Cropper` formatter directly in this case:
+### Custom Tokenizer
+
+Implement `TokenizerInterface` for specialized tokenization:
+
+```php
+class CustomTokenizer implements TokenizerInterface {
+    public function tokenize(string $text): TokenCollection {
+        // Your custom tokenization logic
+    }
+
+    public function matches(Token $token, TokenCollection $tokens): bool {
+        // Your custom logic for checking if a token is a match
+    }
+}
+```
+
+### Pre-highlighted Text Cropping
+
+When you already have highlighted text that needs cropping:
 
 ```php
 $cropper = new \Loupe\Matcher\Formatting\Cropper(
-    $cropLength = 10,
-    $cropMarker = '…',
-    $highlightStartTag = '<em>',
-    $highlightEndTag = '</em>',
+    cropLength: 50,
+    cropMarker: '…',
+    highlightStartTag: '<em>',
+    highlightEndTag: '</em>'
 );
 
-echo $cropper->cropHighlightedText('This is a <em>test</em> string.'); // Outputs: …a <em>test</em> st…
+// "...text with <em>highlighted</em> terms."
+echo $cropper->cropHighlightedText('Long text with <em>highlighted</em> terms.');
+```
+
+### Using Pre-calculated Matches
+
+When you already have a `TokenCollection` of matches (e.g., from a previous search operation or external source), you can format text directly without re-calculating matches. This approach is useful when your search engine already provides match information or you want to cache match results for performance.
+
+```php
+// Assume you already have matches from somewhere else
+$existingMatches = new TokenCollection(/* ... */);
+
+// Set up the tokenizer, matcher, and formatter as usual
+$tokenizer = new Tokenizer();
+$matcher = new Matcher($tokenizer);
+$formatter = new Formatter($matcher);
+$options = (new FormatterOptions())
+    ->withEnableHighlight()
+    ->withEnableCrop()
+    ->withCropLength(100);
+
+// Format using the existing matches - no duplicate processing
+$result = $formatter->format($text, $query, $options, matches: $existingMatches);
+echo $result->getFormattedText();
 ```

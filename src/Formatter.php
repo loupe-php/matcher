@@ -33,7 +33,7 @@ class Formatter
 
         $formattedText = $text;
         foreach ($transformers as $transformer) {
-            $formattedText = $transformer->transform($formattedText, $matches);
+            $formattedText = $transformer->transform($formattedText, $query, $matches);
         }
 
         return new FormatterResult($formattedText, $matches);

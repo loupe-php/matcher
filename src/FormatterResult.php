@@ -26,14 +26,13 @@ class FormatterResult
     }
 
     /**
-     * @return array<int, array{start: int, length: int, stopword: bool}>
+     * @return array<int, array{start: int, length: int}>
      */
     public function getMatchesArray(): array
     {
         return array_map(fn (Token $token) => [
             'start' => $token->getStartPosition(),
             'length' => $token->getLength(),
-            'stopword' => $token->isStopWord(),
         ], $this->matches->all());
     }
 
