@@ -6,6 +6,8 @@ namespace Loupe\Matcher\Tokenizer;
 
 class Tokenizer implements TokenizerInterface
 {
+    public const VERSION = '0.3.0'; // Increase this whenever the logic changes so it gives e.g. Loupe the opportunity to detect when a reindex is needed
+
     public function __construct(
         private ?string $locale = null
     ) {
@@ -67,6 +69,13 @@ class Tokenizer implements TokenizerInterface
                 break;
             }
 
+            // Normalize (NFKC)
+            $term = \Normalizer::normalize($term, \Normalizer::NFKC);
+            // Decompose accents
+            $term = \Normalizer::normalize($term, \Normalizer::FORM_D);
+            // Remove diacritics
+            $term = preg_replace('/\p{Mn}+/u', '', $term);
+            // Lowercase
             $term = mb_strtolower($term, 'UTF-8');
 
             $token = new Token(

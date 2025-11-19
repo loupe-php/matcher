@@ -154,4 +154,16 @@ class TokenizerTest extends TestCase
         ], $tokenizer->tokenize('Hallo, mein "Name ist Hase" und ich weiß von nichts.')
             ->allTermsWithVariants());
     }
+
+    public function testNormalizationAndDiacritics(): void
+    {
+        $tokenizer = new Tokenizer();
+        $this->assertSame([
+            'on',
+            'isiel',
+            'do',
+            'krcmy',
+        ], $tokenizer->tokenize('On išiel do krčmy')
+            ->allTermsWithVariants());
+    }
 }
