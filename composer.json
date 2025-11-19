@@ -25,7 +25,8 @@
     ],
     "require": {
         "php": "^8.1",
-        "ext-intl": "*"
+        "ext-intl": "*",
+        "ext-mbstring": "*"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.0",
