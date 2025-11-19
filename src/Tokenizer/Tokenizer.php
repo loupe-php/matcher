@@ -70,11 +70,11 @@ class Tokenizer implements TokenizerInterface
             }
 
             // Normalize (NFKC)
-            $term = \Normalizer::normalize($term, \Normalizer::NFKC);
+            $term = (string) \Normalizer::normalize($term, \Normalizer::NFKC);
             // Decompose accents
-            $term = \Normalizer::normalize($term, \Normalizer::FORM_D);
+            $term = (string) \Normalizer::normalize($term, \Normalizer::FORM_D);
             // Remove diacritics
-            $term = preg_replace('/\p{Mn}+/u', '', $term);
+            $term = (string) preg_replace('/\p{Mn}+/u', '', $term);
             // Lowercase
             $term = mb_strtolower($term, 'UTF-8');
 
