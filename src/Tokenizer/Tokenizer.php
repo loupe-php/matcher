@@ -8,9 +8,12 @@ class Tokenizer implements TokenizerInterface
 {
     public const VERSION = '0.3.0'; // Increase this whenever the logic changes so it gives e.g. Loupe the opportunity to detect when a reindex is needed
 
+    private \IntlRuleBasedBreakIterator $breakIterator;
+
     public function __construct(
         private ?string $locale = null
     ) {
+        $this->breakIterator = \IntlRuleBasedBreakIterator::createWordInstance($this->locale); // @phpstan-ignore-line - null is allowed
 
     }
 
@@ -29,8 +32,7 @@ class Tokenizer implements TokenizerInterface
 
     public function tokenize(string $string, ?int $maxTokens = null): TokenCollection
     {
-        $iterator = \IntlRuleBasedBreakIterator::createWordInstance($this->locale); // @phpstan-ignore-line - null is allowed
-        $iterator->setText($string);
+        $this->breakIterator->setText($string);
 
         $tokens = new TokenCollection();
         $id = 0;
@@ -39,7 +41,7 @@ class Tokenizer implements TokenizerInterface
         $negated = false;
         $whitespace = true;
 
-        foreach ($iterator->getPartsIterator() as $term) {
+        foreach ($this->breakIterator->getPartsIterator() as $term) {
             // Set negation if the previous token was not a word and we're not in a phrase
             if (!$phrase && $whitespace) {
                 $negated = false;
@@ -56,7 +58,7 @@ class Tokenizer implements TokenizerInterface
                 }
             }
 
-            $status = $iterator->getRuleStatus();
+            $status = $this->breakIterator->getRuleStatus();
             $word = $this->isWord($status);
             $whitespace = $this->isWhitespace($status, $term);
 
