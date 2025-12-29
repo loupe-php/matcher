@@ -10,6 +10,8 @@ class Tokenizer implements TokenizerInterface
 
     private \IntlRuleBasedBreakIterator $breakIterator;
 
+    private static ?\Transliterator $transliterator = null;
+
     public function __construct(
         private ?string $locale = null
     ) {
@@ -75,7 +77,9 @@ class Tokenizer implements TokenizerInterface
             $term = (string) \Normalizer::normalize($term, \Normalizer::NFKC);
             // Decompose accents
             $term = (string) \Normalizer::normalize($term, \Normalizer::FORM_D);
-            // Remove diacritics
+            // Transliterate to ASCII (handles characters like ß, Ł/ł, å/ä/ö that Normalizer doesn't decompose)
+            $term = $this->transliterateToAscii($term);
+            // Remove any remaining diacritics
             $term = (string) preg_replace('/\p{Mn}+/u', '', $term);
             // Lowercase
             $term = mb_strtolower($term, 'UTF-8');
@@ -103,5 +107,16 @@ class Tokenizer implements TokenizerInterface
     private function isWord(?int $status): bool
     {
         return $status >= \IntlBreakIterator::WORD_NONE_LIMIT;
+    }
+
+    private function transliterateToAscii(string $term): string
+    {
+        if (self::$transliterator === null) {
+            self::$transliterator = \Transliterator::create('NFKD; [:Nonspacing Mark:] Remove; Latin-ASCII');
+        }
+
+        $result = self::$transliterator->transliterate($term);
+
+        return $result !== false ? $result : $term;
     }
 }
