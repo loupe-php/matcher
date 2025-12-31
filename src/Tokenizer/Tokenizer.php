@@ -10,7 +10,7 @@ class Tokenizer implements TokenizerInterface
 
     private \IntlRuleBasedBreakIterator $breakIterator;
 
-    private static ?\Transliterator $transliterator = null;
+    private ?\Transliterator $transliterator = null;
 
     public function __construct(
         private ?string $locale = null
@@ -111,11 +111,17 @@ class Tokenizer implements TokenizerInterface
 
     private function transliterateToAscii(string $term): string
     {
-        if (self::$transliterator === null) {
-            self::$transliterator = \Transliterator::create('NFKD; [:Nonspacing Mark:] Remove; Latin-ASCII');
+        $transliterator = $this->transliterator;
+
+        if ($transliterator === null) {
+            $transliterator = \Transliterator::create('NFKD; [:Nonspacing Mark:] Remove; Latin-ASCII');
+            if (!$transliterator instanceof \Transliterator) {
+                return $term;
+            }
+            $this->transliterator = $transliterator;
         }
 
-        $result = self::$transliterator->transliterate($term);
+        $result = $transliterator->transliterate($term);
 
         return $result !== false ? $result : $term;
     }
