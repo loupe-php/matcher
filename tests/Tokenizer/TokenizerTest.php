@@ -9,6 +9,37 @@ use PHPUnit\Framework\TestCase;
 
 class TokenizerTest extends TestCase
 {
+    public function testGermanEszettNormalization(): void
+    {
+        $tokenizer = new Tokenizer();
+        // ß should normalize to ss
+        $this->assertSame([
+            'die',
+            'strasse',
+            'ist',
+            'neben',
+            'dem',
+            'grosseren',
+            'gebaude',
+        ], $tokenizer->tokenize('Die Straße ist neben dem größeren Gebäude.')
+            ->allTermsWithVariants());
+    }
+
+    public function testIcelandicSpecialCharacters(): void
+    {
+        $tokenizer = new Tokenizer();
+        // ð (eth) and þ (thorn) are special characters that should normalize to d and th
+        $this->assertSame([
+            'thad',
+            'er',
+            'gott',
+            'ad',
+            'lesa',
+            'islenska',
+        ], $tokenizer->tokenize('Það er gott að lesa íslenska.')
+            ->allTermsWithVariants());
+    }
+
     public function testMaximumTokens(): void
     {
         $tokenizer = new Tokenizer();
@@ -137,6 +168,20 @@ class TokenizerTest extends TestCase
         ], $tokens->allNegatedTermsWithVariants());
     }
 
+    public function testPolishLNormalization(): void
+    {
+        $tokenizer = new Tokenizer();
+        // Ł/ł should normalize to l
+        $this->assertSame([
+            'lodz',
+            'ma',
+            'piekne',
+            'zolte',
+            'lodzie',
+        ], $tokenizer->tokenize('Łódź ma piękne żółte łodzie.')
+            ->allTermsWithVariants());
+    }
+
     public function testSlovakDiacriticsNormalization(): void
     {
         $tokenizer = new Tokenizer();
@@ -153,36 +198,6 @@ class TokenizerTest extends TestCase
             ->allTermsWithVariants());
     }
 
-    public function testGermanEszettNormalization(): void
-    {
-        $tokenizer = new Tokenizer();
-        // ß should normalize to ss
-        $this->assertSame([
-            'die',
-            'strasse',
-            'ist',
-            'neben',
-            'dem',
-            'grosseren',
-            'gebaude',
-        ], $tokenizer->tokenize('Die Straße ist neben dem größeren Gebäude.')
-            ->allTermsWithVariants());
-    }
-
-    public function testPolishLNormalization(): void
-    {
-        $tokenizer = new Tokenizer();
-        // Ł/ł should normalize to l
-        $this->assertSame([
-            'lodz',
-            'ma',
-            'piekne',
-            'zolte',
-            'lodzie',
-        ], $tokenizer->tokenize('Łódź ma piękne żółte łodzie.')
-            ->allTermsWithVariants());
-    }
-
     public function testSwedishDiacriticsNormalization(): void
     {
         $tokenizer = new Tokenizer();
@@ -194,21 +209,6 @@ class TokenizerTest extends TestCase
             'och',
             'sot',
         ], $tokenizer->tokenize('Blåbärssoppa är god och söt.')
-            ->allTermsWithVariants());
-    }
-
-    public function testIcelandicSpecialCharacters(): void
-    {
-        $tokenizer = new Tokenizer();
-        // ð (eth) and þ (thorn) are special characters that should normalize to d and th
-        $this->assertSame([
-            'thad',
-            'er',
-            'gott',
-            'ad',
-            'lesa',
-            'islenska',
-        ], $tokenizer->tokenize('Það er gott að lesa íslenska.')
             ->allTermsWithVariants());
     }
 
