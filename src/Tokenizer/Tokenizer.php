@@ -4,19 +4,41 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher\Tokenizer;
 
+use Loupe\Matcher\Locale;
+use Loupe\Matcher\Tokenizer\Decompounder\Decompounder;
+use Loupe\Matcher\Tokenizer\LocaleConfiguration\Dutch;
+use Loupe\Matcher\Tokenizer\LocaleConfiguration\German;
+use Loupe\Matcher\Tokenizer\LocaleConfiguration\LocaleConfigurationInterface;
+use Loupe\Matcher\Tokenizer\Normalizer\Normalizer;
+use Loupe\Matcher\Tokenizer\Normalizer\NormalizerInterface;
+
 class Tokenizer implements TokenizerInterface
 {
     public const VERSION = '0.3.0'; // Increase this whenever the logic changes so it gives e.g. Loupe the opportunity to detect when a reindex is needed
 
     private \IntlRuleBasedBreakIterator $breakIterator;
 
-    private ?\Transliterator $transliterator = null;
+    private ?Decompounder $decompounder = null;
+
+    private NormalizerInterface $normalizer;
 
     public function __construct(
-        private ?string $locale = null
+        private ?LocaleConfigurationInterface $localeConfiguration = null
     ) {
-        $this->breakIterator = \IntlRuleBasedBreakIterator::createWordInstance($this->locale); // @phpstan-ignore-line - null is allowed
+        $this->breakIterator = \IntlRuleBasedBreakIterator::createWordInstance($this->localeConfiguration?->getLocale()->toString()); // @phpstan-ignore-line - null is allowed
+        $this->decompounder = $this->localeConfiguration === null ? null : new Decompounder($this->localeConfiguration);
+        $this->normalizer = $this->localeConfiguration?->getNormalizer() ?? new Normalizer();
+    }
 
+    public static function createFromPreconfiguredLocaleConfiguration(Locale $locale): self
+    {
+        $localeConfiguration = match ($locale->getPrimaryLanguage()) {
+            'de' => new German(),
+            'nl' => new Dutch(),
+            default => null,
+        };
+
+        return new self($localeConfiguration);
     }
 
     public function matches(Token $token, TokenCollection $tokens): bool
@@ -73,16 +95,7 @@ class Tokenizer implements TokenizerInterface
                 break;
             }
 
-            // Normalize (NFKC)
-            $term = (string) \Normalizer::normalize($term, \Normalizer::NFKC);
-            // Decompose accents
-            $term = (string) \Normalizer::normalize($term, \Normalizer::FORM_D);
-            // Transliterate to ASCII (handles characters like ß, Ł/ł, å/ä/ö that Normalizer doesn't decompose)
-            $term = $this->transliterateToAscii($term);
-            // Remove any remaining diacritics
-            $term = (string) preg_replace('/\p{Mn}+/u', '', $term);
-            // Lowercase
-            $term = mb_strtolower($term, 'UTF-8');
+            $term = $this->normalizer->normalize($term);
 
             $token = new Token(
                 $id++,
@@ -91,6 +104,8 @@ class Tokenizer implements TokenizerInterface
                 $phrase,
                 $negated,
             );
+
+            $token = $token->withAddedVariants($this->decompounder?->decompoundTerm($term) ?? []);
 
             $position += $token->getLength();
             $tokens->add($token);
@@ -107,22 +122,5 @@ class Tokenizer implements TokenizerInterface
     private function isWord(?int $status): bool
     {
         return $status >= \IntlBreakIterator::WORD_NONE_LIMIT;
-    }
-
-    private function transliterateToAscii(string $term): string
-    {
-        $transliterator = $this->transliterator;
-
-        if ($transliterator === null) {
-            $transliterator = \Transliterator::create('NFKD; [:Nonspacing Mark:] Remove; Latin-ASCII');
-            if (!$transliterator instanceof \Transliterator) {
-                return $term;
-            }
-            $this->transliterator = $transliterator;
-        }
-
-        $result = $transliterator->transliterate($term);
-
-        return $result !== false ? $result : $term;
     }
 }

@@ -1,0 +1,11 @@
+#!/usr/bin/env php
+<?php
+
+require __DIR__.'/../vendor/autoload.php';
+
+use Loupe\Matcher\Build\Command\UpdateDictionariesCommand;
+use Symfony\Component\Console\Application;
+
+$application = new Application();
+$application->addCommand(new UpdateDictionariesCommand());
+$application->run();

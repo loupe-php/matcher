@@ -108,6 +108,16 @@ class Token
     /**
      * @param array<string> $variants
      */
+    public function withAddedVariants(array $variants): self
+    {
+        $clone = clone $this;
+        $clone->variants = array_unique(array_merge($this->variants, $variants));
+        return $clone;
+    }
+
+    /**
+     * @param array<string> $variants
+     */
     public function withVariants(array $variants): self
     {
         $clone = clone $this;
