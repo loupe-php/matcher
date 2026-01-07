@@ -4,11 +4,74 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher\Tests\Tokenizer;
 
+use Loupe\Matcher\Locale;
 use Loupe\Matcher\Tokenizer\Tokenizer;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 class TokenizerTest extends TestCase
 {
+    public static function decompositionProvider(): \Generator
+    {
+        yield 'German Donaudampfschifffahrtsgesellschaftskapitän' => [
+            'de',
+            'Ich bin von Beruf Donaudampfschifffahrtsgesellschaftskapitän.',
+            [
+                'ich',
+                'bin',
+                'von',
+                'beruf',
+                'donaudampfschifffahrtsgesellschaftskapitan',
+                'dampf',
+                'donau',
+                'ell', // This is a municipality in Luxembourg (noun)
+                'fahrt',
+                'ges', // In German, the note G♭ is "Ges"
+                'kapitan',
+                'schaft',
+                'schiff',
+            ],
+        ];
+
+        yield 'German Wartungsvertrag' => [
+            'de',
+            'Ein Wartungsvertrag',
+            [
+                'ein',
+                'wartungsvertrag',
+                'vertrag',
+                'wartung',
+            ],
+        ];
+
+        yield 'Dutch' => [
+            'nl',
+            'De ziektekostenverzekering is duur.',
+            [
+                'de',
+                'ziektekostenverzekering',
+                'kost',
+                'kosten',
+                'ver',
+                'zekering',
+                'ziekte',
+                'is',
+                'duur',
+            ],
+        ];
+    }
+
+    /**
+     * @param array<string> $expectedTermsWithVariants
+     */
+    #[DataProvider('decompositionProvider')]
+    public function testDecomposition(string $locale, string $string, array $expectedTermsWithVariants): void
+    {
+        $tokenizer = Tokenizer::createFromPreconfiguredLocaleConfiguration(Locale::fromString($locale));
+
+        $this->assertSame($expectedTermsWithVariants, $tokenizer->tokenize($string)->allTermsWithVariants());
+    }
+
     public function testGermanEszettNormalization(): void
     {
         $tokenizer = new Tokenizer();
