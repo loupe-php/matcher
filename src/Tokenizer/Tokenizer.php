@@ -32,13 +32,16 @@ class Tokenizer implements TokenizerInterface
 
     public static function createFromPreconfiguredLocaleConfiguration(Locale $locale): self
     {
-        $localeConfiguration = match ($locale->getPrimaryLanguage()) {
+        return new self(self::getPreconfiguredLocaleConfigurationForLocale($locale));
+    }
+
+    public static function getPreconfiguredLocaleConfigurationForLocale(Locale $locale): ?LocaleConfigurationInterface
+    {
+        return match ($locale->getPrimaryLanguage()) {
             'de' => new German(),
             'nl' => new Dutch(),
             default => null,
         };
-
-        return new self($localeConfiguration);
     }
 
     public function matches(Token $token, TokenCollection $tokens): bool
