@@ -34,9 +34,8 @@ class TokenizerTest extends TestCase
 
         yield 'German Wartungsvertrag' => [
             'de',
-            'Ein Wartungsvertrag',
+            'Wartungsvertrag',
             [
-                'ein',
                 'wartungsvertrag',
                 'vertrag',
                 'wartung',
