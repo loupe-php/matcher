@@ -295,7 +295,7 @@ abstract class AbstractBinaryFileDictionary implements DictionaryInterface
 
     private function offsetAt(int $index): int
     {
-        return unpack('Voffset', substr($this->index, $index * 4, 4))['offset'] ?? 0;
+        return unpack('Voffset', $this->index, $index * 4)['offset'] ?? 0;
     }
 
     private function termAt(int $index): string
