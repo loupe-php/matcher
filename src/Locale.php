@@ -32,6 +32,11 @@ class Locale implements \Stringable
         return (string) \Locale::getPrimaryLanguage($this->locale);
     }
 
+    public function matches(self $other): bool
+    {
+        return $other->toString() === $this->toString();
+    }
+
     public function toString(): string
     {
         return $this->locale;

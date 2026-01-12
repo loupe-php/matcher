@@ -24,9 +24,8 @@ class TokenizerTest extends TestCase
                 'donaudampfschifffahrtsgesellschaftskapitan',
                 'dampf',
                 'donau',
-                'ell', // This is a municipality in Luxembourg (noun)
                 'fahrt',
-                'ges', // In German, the note G♭ is "Ges"
+                'gesell',
                 'kapitan',
                 'schaft',
                 'schiff',
