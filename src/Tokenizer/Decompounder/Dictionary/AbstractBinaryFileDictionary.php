@@ -8,6 +8,12 @@ use Loupe\Matcher\Locale;
 
 abstract class AbstractBinaryFileDictionary implements DictionaryInterface
 {
+    private const FILE_NAME_INDEX = 'index';
+
+    private const FILE_NAME_PREFIX2_BUCKETS = 'prefix_buckets_2';
+
+    private const FILE_NAME_TERMS = 'terms';
+
     private const MAX_LENGTH_IN_BYTES = 256;
 
     private const U32_NONE = 0xFFFFFFFF;
@@ -18,7 +24,17 @@ abstract class AbstractBinaryFileDictionary implements DictionaryInterface
 
     private string $index = '';
 
-    private string $prefixBuckets = '';
+    /**
+     * 2 byte prefix index to split the entire index into max. 65,535
+     * entries. However, due to the nature of natural language dictionaries,
+     * only a fraction of those will be used and there will be still rather
+     * big buckets. For German, for example, the buckets "sc", "ge" or "st"
+     * will still contain lots of entries. Hence, we have an additional
+     * prefix3 index that contains the third byte. However, there we implement
+     * a sparse index so we can load it in array while here, we have to be
+     * able to address all 65,535 spaces.
+     */
+    private string $prefix2Buckets = '';
 
     /**
      * @param array<string> $dictionary
@@ -58,7 +74,7 @@ abstract class AbstractBinaryFileDictionary implements DictionaryInterface
         $byte1 = isset($term[1]) ? \ord($term[1]) : 0;
         $key = ($byte0 << 8) | $byte1;
 
-        $bucket = unpack('Vlow/Vhigh', substr($this->prefixBuckets, $key * 8, 8));
+        $bucket = unpack('Vlow/Vhigh', substr($this->prefix2Buckets, $key * 8, 8));
         $lowerIndex = $bucket['low'] ?? self::U32_NONE;
 
         // If no term exists for that prefix2, we can return immediately
@@ -141,33 +157,33 @@ abstract class AbstractBinaryFileDictionary implements DictionaryInterface
 
     protected function loadFromDirectory(string $directory): void
     {
-        $termsPath = $directory . '/terms';
-        $indexPath = $directory . '/index';
-        $prefixPath = $directory . '/prefix_buckets';
+        $termsPath = $directory . '/' . self::FILE_NAME_TERMS;
+        $indexPath = $directory . '/' . self::FILE_NAME_INDEX;
+        $prefix2Path = $directory . '/' . self::FILE_NAME_PREFIX2_BUCKETS;
         $blob = null;
         $index = null;
-        $prefixBuckets = null;
+        $prefix2Buckets = null;
 
-        $load = function (bool $decode = true) use (&$load, $directory, $termsPath, $indexPath, $prefixPath, &$blob, &$index, &$prefixBuckets) {
+        $load = function (bool $decode = true) use (&$load, $directory, $termsPath, $indexPath, $prefix2Path, &$blob, &$index, &$prefix2Buckets) {
             $blob = @file_get_contents($termsPath);
             $index = @file_get_contents($indexPath);
-            $prefixBuckets = @file_get_contents($prefixPath);
+            $prefix2Buckets = @file_get_contents($prefix2Path);
 
-            if ($decode && ($blob === false || $index === false || $prefixBuckets === false)) {
+            if ($decode && ($blob === false || $index === false || $prefix2Buckets === false)) {
                 $this->decodeDictionary($directory);
                 $load(false);
             }
         };
         $load();
 
-        if (!\is_string($blob) || !\is_string($index) || !\is_string($prefixBuckets)) {
+        if (!\is_string($blob) || !\is_string($index) || !\is_string($prefix2Buckets)) {
             throw new \RuntimeException('Cannot load blob from directory.');
         }
 
         $this->blob = $blob;
         $this->index = $index;
-        $this->prefixBuckets = $prefixBuckets;
         $this->count = intdiv(\strlen($index), 4);
+        $this->prefix2Buckets = $prefix2Buckets;
     }
 
     private static function calculateCommonPrefixLengthInBytes(string $a, string $b): int
@@ -190,24 +206,13 @@ abstract class AbstractBinaryFileDictionary implements DictionaryInterface
             throw new \RuntimeException('Cannot open dictionary.gz for reading');
         }
 
-        $termsOut = fopen($directory . '/terms', 'wb');
-        if ($termsOut === false) {
-            throw new \RuntimeException('Cannot open terms for writing');
-        }
-
-        $indexOut = fopen($directory . '/index', 'wb');
-        if ($indexOut === false) {
-            throw new \RuntimeException('Cannot open index for writing');
-        }
-
-        $prefixBucketsOut = fopen($directory . '/prefix_buckets', 'wb');
-        if ($prefixBucketsOut === false) {
-            throw new \RuntimeException('Cannot open prefix_buckets for writing');
-        }
+        $termsOut = $this->openFileHandleForWriting($directory, self::FILE_NAME_TERMS);
+        $indexOut = $this->openFileHandleForWriting($directory, self::FILE_NAME_INDEX);
+        $prefix2BucketsOut = $this->openFileHandleForWriting($directory, self::FILE_NAME_PREFIX2_BUCKETS);
 
         $previous = '';
         $position = 0;
-        $prefixRanges = [];
+        $prefix2Ranges = [];
         $termIndex = 0;
 
         while (!gzeof($directoryHandle)) {
@@ -235,11 +240,11 @@ abstract class AbstractBinaryFileDictionary implements DictionaryInterface
             $key = ($byte0 << 8) | $byte1;
 
             // If we don't have this prefix yet, set lower and higher position the to the same value
-            if (!isset($prefixRanges[$key])) {
-                $prefixRanges[$key] = [$termIndex, $termIndex];
+            if (!isset($prefix2Ranges[$key])) {
+                $prefix2Ranges[$key] = [$termIndex, $termIndex];
             } else {
                 // Otherwise, update the higher value only (the range increases)
-                $prefixRanges[$key][1] = $termIndex;
+                $prefix2Ranges[$key][1] = $termIndex;
             }
             $termIndex++;
 
@@ -247,17 +252,17 @@ abstract class AbstractBinaryFileDictionary implements DictionaryInterface
             $previous = $term;
         }
 
-        // Write our prefix buckets index that contains the low and high index positions for all prefixes (the first 2 bytes)
+        // Write our prefix2 buckets index that contains the low and high index positions for all prefixes (the first 2 bytes)
         // for faster lookups
         for ($k = 0; $k < 65536; $k++) {
-            if (!isset($prefixRanges[$k])) {
-                fwrite($prefixBucketsOut, pack('V', self::U32_NONE) . pack('V', self::U32_NONE));
+            if (!isset($prefix2Ranges[$k])) {
+                fwrite($prefix2BucketsOut, pack('V', self::U32_NONE) . pack('V', self::U32_NONE));
             } else {
-                [$low, $high] = $prefixRanges[$k];
-                fwrite($prefixBucketsOut, pack('V', $low) . pack('V', $high));
+                [$low, $high] = $prefix2Ranges[$k];
+                fwrite($prefix2BucketsOut, pack('V', $low) . pack('V', $high));
             }
         }
-        fclose($prefixBucketsOut);
+        fclose($prefix2BucketsOut);
         fclose($termsOut);
         fclose($indexOut);
         gzclose($directoryHandle);
@@ -296,6 +301,19 @@ abstract class AbstractBinaryFileDictionary implements DictionaryInterface
     private function offsetAt(int $index): int
     {
         return unpack('Voffset', $this->index, $index * 4)['offset'] ?? 0;
+    }
+
+    /**
+     * @return resource
+     */
+    private function openFileHandleForWriting(string $directory, string $filename)
+    {
+        $handle = fopen($directory . '/' . $filename, 'wb');
+        if ($handle === false) {
+            throw new \RuntimeException(\sprintf('Cannot open "%s" for writing.', $filename));
+        }
+
+        return $handle;
     }
 
     private function termAt(int $index): string
