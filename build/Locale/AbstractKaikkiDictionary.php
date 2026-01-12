@@ -52,6 +52,18 @@ abstract class AbstractKaikkiDictionary implements DictionaryBuilderInterface
      */
     abstract protected function getDumpUrl(): string;
 
+    protected function hasHypernym(array $json, string $hypernym): bool
+    {
+        $hypernyms = $json['hypernyms'] ?? [];
+        foreach ($hypernyms as $hypernymEntry) {
+            if ($hypernym === strtolower((string) $hypernymEntry['word'] ?? '')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     protected function hasTag(array $json, string $tag): bool
     {
         $topTags = $json['tags'] ?? [];
