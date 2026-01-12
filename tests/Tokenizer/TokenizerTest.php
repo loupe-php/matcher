@@ -32,6 +32,17 @@ class TokenizerTest extends TestCase
             ],
         ];
 
+        yield 'German Künstlerinnengespräch' => [
+            'de',
+            'Künstlerinnengespräch',
+            [
+                'kunstlerinnengesprach',
+                'gesprach',
+                'inn',
+                'kunstler',
+            ],
+        ];
+
         yield 'German Wartungsvertrag' => [
             'de',
             'Wartungsvertrag',
