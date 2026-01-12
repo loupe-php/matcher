@@ -8,6 +8,10 @@ use Loupe\Matcher\Locale;
 
 class German extends AbstractKaikkiDictionary
 {
+    private const EXCLUDE_LIST = [
+        'Ges', // "Ges" in German is the note G♭ but there's never a compound word with it
+    ];
+
     public function getLocale(): Locale
     {
         return Locale::fromString('de');
@@ -38,6 +42,10 @@ class German extends AbstractKaikkiDictionary
 
         // Skip "Gemeinden" because we don't want stuff like "Ell" in here
         if ($this->hasHypernym($json, 'gemeinde')) {
+            return false;
+        }
+
+        if (\in_array($term, self::EXCLUDE_LIST, true)) {
             return false;
         }
 
