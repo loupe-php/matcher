@@ -20,6 +20,10 @@ class Decompounder
      */
     public function decompoundTerm(string $term): array
     {
+        if (mb_strlen($term) <= $this->localeConfiguration->getMinimumDecompositionTermLength()) {
+            return [];
+        }
+
         $variants = $this->split($term);
 
         // Never return the term itself
