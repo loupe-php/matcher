@@ -26,12 +26,6 @@ class Decompounder
 
         $variants = $this->split($term);
 
-        // Never return the term itself
-        $key = array_search($term, $variants, true);
-        if ($key !== false) {
-            unset($variants[$key]);
-        }
-
         // Keep a stable order
         sort($variants, SORT_STRING);
 
@@ -136,7 +130,11 @@ class Decompounder
 
         $result = $this->collectLeafTerms($term, $leafCache, $decomposableCache);
 
-        // If the term cannot be fully decomposed, return an empty list
+        // Ignore ourselves
+        if ([$term] === $result) {
+            return [];
+        }
+
         return $result ?? [];
     }
 
