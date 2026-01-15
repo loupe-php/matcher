@@ -1,6 +1,7 @@
 {
     "name": "loupe/matcher",
     "description": "Highlight and crop around search terms",
+    "keywords": ["search", "tokenize", "tokenizer", "crop", "highlight", "decomposition", "decompose", "dictionary"],
     "type": "library",
     "license": "MIT",
     "autoload": {
@@ -10,6 +11,7 @@
     },
     "autoload-dev": {
         "psr-4": {
+            "Loupe\\Matcher\\Build\\": "build/",
             "Loupe\\Matcher\\Tests\\": "tests/"
         }
     },
@@ -24,14 +26,20 @@
         }
     ],
     "require": {
-        "php": "^8.1",
+        "php": "^8.3",
         "ext-intl": "*",
-        "ext-mbstring": "*"
+        "ext-mbstring": "*",
+        "ext-zlib": "*",
+        "toflar/fast-set": "dev-main"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.0",
-        "phpunit/phpunit": "^10.5",
-        "symfony/finder": "^6.2",
+        "phpunit/phpunit": "^11.5.46",
+        "symfony/console": "^7.4 || ^8.0",
+        "symfony/filesystem": "^7.4 || ^8.0",
+        "symfony/finder": "^7.4 || ^8.0",
+        "symfony/http-client": "^7.4 || ^8.0",
+        "symfony/var-dumper": "^7.4 || ^8.0",
         "symplify/easy-coding-standard": "^12.5"
     },
     "scripts": {

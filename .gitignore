@@ -1,3 +1,10 @@
 /vendor
 /.phpunit.result.cache
 /composer.lock
+/var
+
+# Ignore everything in the dictionaries repository (unpacked stuff) except for the compressed dictionaries
+/dictionaries/*
+!/dictionaries/*/
+/dictionaries/*/*
+!/dictionaries/*/dictionary.gz
