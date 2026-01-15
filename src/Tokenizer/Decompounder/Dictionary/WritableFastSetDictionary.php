@@ -6,7 +6,7 @@ namespace Loupe\Matcher\Tokenizer\Decompounder\Dictionary;
 
 use Loupe\Matcher\Locale;
 
-class WritableBinaryFileDictionary extends AbstractBinaryFileDictionary implements WritableDictionaryInterface
+class WritableFastSetDictionary extends AbstractFastSetDictionary implements WritableDictionaryInterface
 {
     public static function create(Locale $locale): self
     {
