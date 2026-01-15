@@ -6,8 +6,8 @@ namespace Loupe\Matcher\Build\Locale;
 
 use Loupe\Matcher\Build\DictionaryBuilderInterface;
 use Loupe\Matcher\Locale;
-use Loupe\Matcher\Tokenizer\Decompounder\Dictionary\WritableBinaryFileDictionary;
 use Loupe\Matcher\Tokenizer\Decompounder\Dictionary\WritableDictionaryInterface;
+use Loupe\Matcher\Tokenizer\Decompounder\Dictionary\WritableFastSetDictionary;
 use Loupe\Matcher\Tokenizer\Normalizer\Normalizer;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Filesystem\Filesystem;
@@ -27,7 +27,7 @@ abstract class AbstractKaikkiDictionary implements DictionaryBuilderInterface
         $gz = gzopen($rawDumpPath, 'rb');
 
         $normalizer = new Normalizer();
-        $dictionary = WritableBinaryFileDictionary::create($this->getLocale());
+        $dictionary = WritableFastSetDictionary::create($this->getLocale());
 
         $io->progressStart();
         while (!gzeof($gz)) {
