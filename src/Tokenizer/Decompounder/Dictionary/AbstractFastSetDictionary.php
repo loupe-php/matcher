@@ -83,15 +83,17 @@ abstract class AbstractFastSetDictionary implements DictionaryInterface
 
     protected function loadFromDirectory(string $directory): void
     {
-        $this->fastSet = new FastSet($directory);
+        $fastSet = new FastSet($directory);
 
         try {
-            $this->fastSet->initialize();
+            $fastSet->initialize();
         } catch (\Throwable) {
             $this->decodeDictionary($directory);
-            $this->fastSet->build($directory . '/' . self::FILE_NAME_TERMS);
-            $this->fastSet->initialize();
+            $fastSet->build($directory . '/' . self::FILE_NAME_TERMS);
+            $fastSet->initialize();
         }
+
+        $this->fastSet = $fastSet;
     }
 
     private static function calculateCommonPrefixLengthInBytes(string $a, string $b): int
