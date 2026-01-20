@@ -68,6 +68,16 @@ class TokenizerTest extends TestCase
                 'duur',
             ],
         ];
+
+        yield 'English toothpaste' => [
+            'en',
+            'toothpaste',
+            [
+                'toothpaste',
+                'paste',
+                'tooth',
+            ],
+        ];
     }
 
     /**
