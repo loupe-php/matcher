@@ -11,13 +11,14 @@ use Loupe\Matcher\Build\Locale\German;
 use Loupe\Matcher\Locale;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(name: 'update-dictionaries', description: 'Updates all dictionaries')]
 class UpdateDictionariesCommand
 {
-    public function __invoke(SymfonyStyle $io, #[Argument] string|null $locale = null): int
+    public function __invoke(SymfonyStyle $io, #[Argument] string|null $locale = null, #[Option] bool $debug = false): int
     {
         $builders = [
             new German(),
@@ -36,7 +37,11 @@ class UpdateDictionariesCommand
             }
 
             $this->info($io, $builder->getLocale(), 'Building directory now.');
-            $builder->buildDirectory($io, __DIR__ . '/../../dictionaries/' . $builder->getLocale()->toString());
+            $builder->buildDirectory(
+                $io,
+                __DIR__ . '/../../dictionaries/' . $builder->getLocale()->toString(),
+                $debug
+            );
         }
 
         return Command::SUCCESS;

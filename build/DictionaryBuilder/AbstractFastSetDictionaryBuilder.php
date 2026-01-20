@@ -11,9 +11,15 @@ use Toflar\FastSet\SetBuilder;
 
 abstract class AbstractFastSetDictionaryBuilder implements DictionaryBuilderInterface
 {
-    public function buildDirectory(SymfonyStyle $io, string $targetDirectory): void
+    public function buildDirectory(SymfonyStyle $io, string $targetDirectory, bool $debug): void
     {
-        SetBuilder::buildFromArray($this->doBuildTerms($io), $targetDirectory . '/' . FastSetDictionary::DICTIONARY_FILE_NAME);
+        $terms = array_unique($this->doBuildTerms($io));
+
+        if ($debug) {
+            file_put_contents($targetDirectory . '/debug.txt', implode("\n", $terms));
+        }
+
+        SetBuilder::buildFromArray($terms, $targetDirectory . '/' . FastSetDictionary::DICTIONARY_FILE_NAME);
     }
 
     /**
