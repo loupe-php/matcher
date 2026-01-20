@@ -9,7 +9,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 interface DictionaryBuilderInterface
 {
-    public function buildDirectory(SymfonyStyle $io, string $targetDirectory): void;
+    public function buildDirectory(SymfonyStyle $io, string $targetDirectory, bool $debug): void;
 
     public function getLocale(): Locale;
 }
