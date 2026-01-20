@@ -15,7 +15,7 @@ abstract class AbstractPreconfiguredLocale implements LocaleConfigurationInterfa
 
     public function __construct()
     {
-        $this->dictionary = FastSetDictionary::create(
+        $this->dictionary = new FastSetDictionary(
             $this->getLocale(),
             __DIR__ . '/../../../dictionaries/' . $this->getLocale()->toString()
         );

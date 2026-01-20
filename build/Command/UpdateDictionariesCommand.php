@@ -34,10 +34,7 @@ class UpdateDictionariesCommand
             }
 
             $this->info($io, $builder->getLocale(), 'Building directory now.');
-            $directory = $builder->buildDirectory($io);
-            $this->info($io, $builder->getLocale(), 'Done building directory.');
-            $this->info($io, $builder->getLocale(), 'Writing to disk now.');
-            $directory->write(__DIR__ . '/../../dictionaries/' . $directory->getLocale()->toString());
+            $builder->buildDirectory($io, __DIR__ . '/../../dictionaries/' . $builder->getLocale()->toString());
         }
 
         return Command::SUCCESS;

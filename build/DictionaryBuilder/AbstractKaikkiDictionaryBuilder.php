@@ -2,20 +2,21 @@
 
 declare(strict_types=1);
 
-namespace Loupe\Matcher\Build\Locale;
+namespace Loupe\Matcher\Build\DictionaryBuilder;
 
-use Loupe\Matcher\Build\DictionaryBuilderInterface;
-use Loupe\Matcher\Locale;
-use Loupe\Matcher\Tokenizer\Decompounder\Dictionary\WritableDictionaryInterface;
-use Loupe\Matcher\Tokenizer\Decompounder\Dictionary\WritableFastSetDictionary;
 use Loupe\Matcher\Tokenizer\Normalizer\Normalizer;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpClient\HttpClient;
 
-abstract class AbstractKaikkiDictionary implements DictionaryBuilderInterface
+abstract class AbstractKaikkiDictionaryBuilder extends AbstractFastSetDictionaryBuilder
 {
-    public function buildDirectory(SymfonyStyle $io): WritableDictionaryInterface
+    abstract protected function allowTerm(string $term, array $json): bool;
+
+    /**
+     * @return array<string>
+     */
+    protected function doBuildTerms(SymfonyStyle $io): array
     {
         $rawDumpPath = __DIR__ . '/../../var/kaikki_' . $this->getLocale()->toString() . '.gz';
 
@@ -27,25 +28,23 @@ abstract class AbstractKaikkiDictionary implements DictionaryBuilderInterface
         $gz = gzopen($rawDumpPath, 'rb');
 
         $normalizer = new Normalizer();
-        $dictionary = WritableFastSetDictionary::create($this->getLocale());
-
+        $terms = [];
         $io->progressStart();
+
         while (!gzeof($gz)) {
             $term = $this->convertLineIntoTerm(gzgets($gz));
 
             if ($term) {
                 $io->progressAdvance();
-                $dictionary->add($normalizer->normalize($term));
+                $terms[] = $normalizer->normalize($term);
             }
         }
         $io->progressFinish();
 
         gzclose($gz);
 
-        return $dictionary;
+        return $terms;
     }
-
-    abstract protected function allowTerm(string $term, array $json): bool;
 
     /**
      * Take the correct URLs from https://kaikki.org/dictionary/rawdata.html.

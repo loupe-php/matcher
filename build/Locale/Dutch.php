@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher\Build\Locale;
 
+use Loupe\Matcher\Build\DictionaryBuilder\AbstractKaikkiDictionaryBuilder;
 use Loupe\Matcher\Locale;
 
-class Dutch extends AbstractKaikkiDictionary
+class Dutch extends AbstractKaikkiDictionaryBuilder
 {
     public function getLocale(): Locale
     {
