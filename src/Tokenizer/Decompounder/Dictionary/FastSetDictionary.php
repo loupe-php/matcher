@@ -9,7 +9,7 @@ use Toflar\FastSet\FastSet;
 
 class FastSetDictionary implements DictionaryInterface
 {
-    private const FILE_NAME_TERMS = 'terms';
+    public const DICTIONARY_FILE_NAME = 'dictionary.gz';
 
     private FastSet $fastSet;
 
@@ -22,7 +22,7 @@ class FastSetDictionary implements DictionaryInterface
         try {
             $this->fastSet->initialize();
         } catch (\Throwable) {
-            $this->fastSet->build($directory . '/' . self::FILE_NAME_TERMS);
+            $this->fastSet->build($directory . '/' . self::DICTIONARY_FILE_NAME);
             $this->fastSet->initialize();
         }
     }
