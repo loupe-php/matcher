@@ -14,5 +14,6 @@ class EnglishTest extends TestCase
         $dictionary = new English();
         $this->assertTrue($dictionary->getDictionary()->has('classroom'));
         $this->assertTrue($dictionary->getDictionary()->has('toothpaste'));
+        $this->assertFalse($dictionary->getDictionary()->has('ting'));
     }
 }

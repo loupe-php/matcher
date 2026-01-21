@@ -17,7 +17,8 @@ class GermanBuilder extends AbstractKaikkiDictionaryBuilder
 
     protected function allowTerm(string $term, array $json): bool
     {
-        if (!preg_match('/^[A-ZÄÖÜa-zäöüß]{' . German::MIN_DECOMPOSITION_TERM_LENGTH . ',}$/u', $term)) {
+        // No need for umlauts and ß, this is already normalized at this stage
+        if (!preg_match('/^[A-Za-z]{' . German::MIN_DECOMPOSITION_TERM_LENGTH . ',}$/u', $term)) {
             return false;
         }
 
