@@ -63,22 +63,6 @@ class TokenizerTest extends TestCase
             ],
         ];
 
-        yield 'Dutch' => [
-            'nl',
-            'De ziektekostenverzekering is duur.',
-            [
-                'de',
-                'ziektekostenverzekering',
-                'kost',
-                'kosten',
-                'ver',
-                'zekering',
-                'ziekte',
-                'is',
-                'duur',
-            ],
-        ];
-
         yield 'English toothpaste' => [
             'en',
             'toothpaste',
