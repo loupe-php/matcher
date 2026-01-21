@@ -1,2 +1,5 @@
 toothpaste,tooth,paste
 airflow,air,flow
+classroom,class,room
+# Test that "starting" not decomposed into "star" and "ting" but remains complete
+starting

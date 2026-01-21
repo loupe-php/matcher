@@ -17,7 +17,12 @@ class TokenizerTest extends TestCase
     {
         $tokenizer = Tokenizer::createFromPreconfiguredLocaleConfiguration(Locale::fromString($locale));
         $fixture = file_get_contents(__DIR__ . '/Fixtures/Decomposition/' . $locale . '.txt');
-        $tests = array_filter(explode("\n", $fixture));
+        $tests = [];
+        foreach (array_filter(explode("\n", $fixture)) as $line) {
+            if (!str_starts_with($line, '#')) {
+                $tests[] = $line;
+            }
+        }
 
         foreach ($tests as $test) {
             $terms = explode(',', $test);
