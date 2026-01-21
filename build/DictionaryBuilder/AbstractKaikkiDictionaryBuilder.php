@@ -32,11 +32,11 @@ abstract class AbstractKaikkiDictionaryBuilder extends AbstractFastSetDictionary
         $io->progressStart();
 
         while (!gzeof($gz)) {
-            $term = $this->convertLineIntoTerm(gzgets($gz));
+            $term = $this->convertLineIntoTerm(gzgets($gz), $normalizer);
 
             if ($term) {
                 $io->progressAdvance();
-                $terms[] = $normalizer->normalize($term);
+                $terms[] = $term;
             }
         }
         $io->progressFinish();
@@ -92,7 +92,7 @@ abstract class AbstractKaikkiDictionaryBuilder extends AbstractFastSetDictionary
         return \in_array($pos, $allowedPos, true);
     }
 
-    private function convertLineIntoTerm(string $line): ?string
+    private function convertLineIntoTerm(string $line, Normalizer $normalizer): ?string
     {
         $line = trim($line);
 
@@ -115,6 +115,8 @@ abstract class AbstractKaikkiDictionaryBuilder extends AbstractFastSetDictionary
         if (!\is_string($term) || $term === '') {
             return null;
         }
+
+        $term = $normalizer->normalize($term);
 
         if (!$this->allowTerm($term, $json)) {
             return null;

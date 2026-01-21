@@ -10,6 +10,10 @@ use Loupe\Matcher\Tokenizer\LocaleConfiguration\English;
 
 class EnglishBuilder extends AbstractKaikkiDictionaryBuilder
 {
+    private const DISALLOW_LIST = [
+        'ting', // apparently the sound made when a small bell is struck, that makes no sense to decompose and it makes for bad splits as a lot of "ing" words end on "ting".
+    ];
+
     public function getLocale(): Locale
     {
         return Locale::fromString('en');
@@ -26,6 +30,10 @@ class EnglishBuilder extends AbstractKaikkiDictionaryBuilder
         }
 
         if ($this->hasTag($json, 'form-of')) {
+            return false;
+        }
+
+        if (\in_array($term, self::DISALLOW_LIST, true)) {
             return false;
         }
 
