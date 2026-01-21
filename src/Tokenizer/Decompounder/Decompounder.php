@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher\Tokenizer\Decompounder;
 
-use Loupe\Matcher\Tokenizer\LocaleConfiguration\LocaleConfigurationInterface;
-
 class Decompounder
 {
     public function __construct(
-        private LocaleConfigurationInterface $localeConfiguration
+        private Configuration $configuration
     ) {
     }
 
@@ -18,9 +16,10 @@ class Decompounder
      * and never returns the term itself.
      * @return array<string>
      */
-    public function decompoundTerm(string $term): array
+    public function decompoundTerm(string $term, int|null $termLength = null): array
     {
-        if (mb_strlen($term) <= $this->localeConfiguration->getMinimumDecompositionTermLength()) {
+        $termLength = $termLength ?? mb_strlen($term);
+        if ($termLength <= $this->configuration->getMinimumDecompositionTermLength()) {
             return [];
         }
 
@@ -33,8 +32,8 @@ class Decompounder
     }
 
     /**
-     * Collect unique leaf terms for $term, but ONLY from COMPLETE decomposition paths.
-     * Returns null if $term cannot be fully decomposed into dictionary-valid leaves.
+     * Collect unique leaf terms for given term.
+     * Returns null if the term cannot be fully decomposed into dictionary-valid (or allow listed) leaves.
      *
      * @param array<mixed> $leafCache
      * @param array<mixed> $decomposableCache
@@ -47,35 +46,30 @@ class Decompounder
             return $leafCache[$term];
         }
 
-        // Base case: dictionary-valid AND not further decomposable => leaf itself
-        if ($this->dictionaryHas($term) && !$this->isDecomposable($term, $decomposableCache)) {
+        $minLength = $this->configuration->getMinimumDecompositionTermLength();
+
+        // Base case: valid AND not further decomposable => leaf itself
+        if ($this->isValidCandidateSide($term, $minLength) && !$this->isDecomposable($term, $minLength, $decomposableCache)) {
             return $leafCache[$term] = [$term];
         }
 
-        $minLength = $this->localeConfiguration->getMinimumDecompositionTermLength();
         $leafTerms = [];
 
         foreach ($this->splitCandidates($term, $minLength) as [$left, $right]) {
-            // splitCandidates guarantees $left is dictionary-valid.
-            // Determine left contribution:
-            // - if left is a leaf: [left]
-            // - if left is decomposable: its leaf terms, but only if it can be fully decomposed
-            if (!$this->isDecomposable($left, $decomposableCache)) {
+            if (!$this->isDecomposable($left, $minLength, $decomposableCache)) {
                 $leftLeaves = [$left];
             } else {
                 $leftLeaves = $this->collectLeafTerms($left, $leafCache, $decomposableCache);
                 if ($leftLeaves === null) {
-                    continue; // left can't be fully decomposed => dead end branch
+                    continue;
                 }
             }
 
-            // Right must be fully decomposable too
             $rightLeaves = $this->collectLeafTerms($right, $leafCache, $decomposableCache);
             if ($rightLeaves === null) {
-                continue; // dead end branch (partial split)
+                continue;
             }
 
-            // This split represents a COMPLETE decomposition path => merge leaves
             foreach ($leftLeaves as $leafTerm) {
                 $leafTerms[$leafTerm] = true;
             }
@@ -84,7 +78,6 @@ class Decompounder
             }
         }
 
-        // No complete decomposition path found => not fully decomposable
         if ($leafTerms === []) {
             return $leafCache[$term] = null;
         }
@@ -92,35 +85,41 @@ class Decompounder
         return $leafCache[$term] = array_keys($leafTerms);
     }
 
-    private function dictionaryHas(string $term): bool
-    {
-        return $this->localeConfiguration->getDictionary()->has($term);
-    }
-
     /**
-     * True if $term can be split into two dictionary-valid terms,
+     * True if term can be split into two valid terms (dictionary-valid OR allow-listed),
      * either directly (left|right) or by removing an interfix at the boundary (left|interfix|right).
+     *
      * @param array<string, bool> $decomposableCache
      */
-    private function isDecomposable(string $term, array &$decomposableCache): bool
+    private function isDecomposable(string $term, int $minLength, array &$decomposableCache): bool
     {
         if (isset($decomposableCache[$term])) {
             return $decomposableCache[$term];
         }
 
-        foreach ($this->splitCandidates($term, $this->localeConfiguration->getMinimumDecompositionTermLength()) as [$left, $right]) {
-            if ($this->dictionaryHas($right)) {
-                return $decomposableCache[$term] = true;
-            }
+        foreach ($this->splitCandidates($term, $minLength) as [$left, $right]) {
+            // splitCandidates already guarantees both sides are valid; any yielded pair means decomposable.
+            return $decomposableCache[$term] = true;
         }
 
         return $decomposableCache[$term] = false;
     }
 
     /**
-     * Return unique "leaf" dictionary terms that appear in any COMPLETE decomposition of $term.
-     * Leaf = dictionary-valid term that cannot be further decomposed (directly or via interfix removal).
-     *
+     * A side is valid if:
+     * - if shorter than minLength => must be allow-listed
+     * - otherwise => must be in dictionary
+     */
+    private function isValidCandidateSide(string $term, int $minLength): bool
+    {
+        if (mb_strlen($term) < $minLength) {
+            return $this->configuration->isTermOnAllowList($term);
+        }
+
+        return $this->configuration->getDictionary()->has($term);
+    }
+
+    /**
      * @return array<string>
      */
     private function split(string $term): array
@@ -139,33 +138,37 @@ class Decompounder
     }
 
     /**
-     * Yield all candidate (left, right) pairs where:
-     * - left is dictionary-valid
-     * - right is the remainder, either direct or with an interfix removed
+     * Yield all candidate (left, right) pairs where both sides are valid:
+     * - each side is either allow-listed (if shorter than min length) or in the dictionary (if longer than or equal to min length)
      *
      * @return iterable<array{0:string,1:string}>
      */
     private function splitCandidates(string $term, int $minLength): iterable
     {
-        $interfixes = $this->localeConfiguration->getInterfixes();
-
+        $interfixes = $this->configuration->getInterfixes();
         $termLength = mb_strlen($term);
 
-        for ($i = $minLength; $i <= $termLength - $minLength; $i++) {
+        if ($termLength < 2) {
+            return;
+        }
+
+        for ($i = 1; $i <= $termLength - 1; $i++) {
             $left = mb_substr($term, 0, $i);
-            if (!$this->dictionaryHas($left)) {
+            if (!$this->isValidCandidateSide($left, $minLength)) {
                 continue;
             }
 
             // Direct boundary: left | right
             $right = mb_substr($term, $i, $termLength - $i);
-            yield [$left, $right];
+            if ($this->isValidCandidateSide($right, $minLength)) {
+                yield [$left, $right];
+            }
 
             // Interfix boundary: left | interfix | rightAfterInterfix
             foreach ($interfixes as $interfix) {
                 $interfixLength = mb_strlen($interfix);
 
-                if ($i + $interfixLength > $termLength - $minLength) {
+                if ($i + $interfixLength > $termLength) {
                     continue;
                 }
 
@@ -179,7 +182,9 @@ class Decompounder
                     $termLength - ($i + $interfixLength)
                 );
 
-                yield [$left, $rightAfterInterfix];
+                if ($this->isValidCandidateSide($rightAfterInterfix, $minLength)) {
+                    yield [$left, $rightAfterInterfix];
+                }
             }
         }
     }

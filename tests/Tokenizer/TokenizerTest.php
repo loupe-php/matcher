@@ -38,8 +38,7 @@ class TokenizerTest extends TestCase
             [
                 'kunstlerinnengesprach',
                 'gesprach',
-                'inn',
-                'kunstler',
+                'kunstlerinnen',
             ],
         ];
 
