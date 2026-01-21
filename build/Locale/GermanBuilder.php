@@ -15,10 +15,9 @@ class GermanBuilder extends AbstractKaikkiDictionaryBuilder
         return Locale::fromString('de');
     }
 
-    protected function allowTerm(string $term, array $json): bool
+    protected function allowTermPreNormalize(string $term, array $json): bool
     {
-        // No need for umlauts and ß, this is already normalized at this stage
-        if (!preg_match('/^[A-Za-z]{' . German::MIN_DECOMPOSITION_TERM_LENGTH . ',}$/u', $term)) {
+        if (!preg_match('/^[A-ZÄÖÜa-zäöüß]{' . German::MIN_DECOMPOSITION_TERM_LENGTH . ',}$/u', $term)) {
             return false;
         }
 
@@ -39,6 +38,11 @@ class GermanBuilder extends AbstractKaikkiDictionaryBuilder
             return false;
         }
 
+        return true;
+    }
+
+    protected function allowTermPostNormalize(string $term, array $json): bool
+    {
         return true;
     }
 
