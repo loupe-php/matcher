@@ -68,7 +68,7 @@ class Configuration
                 throw new \InvalidArgumentException('Invalid allow list format.');
             }
 
-            if (mb_strlen($k) > $this->minimumDecompositionTermLength) {
+            if (mb_strlen($k) >= $this->minimumDecompositionTermLength) {
                 throw new \LogicException('Terms on the allow list must be shorter than the minimum allowed length.');
             }
         }

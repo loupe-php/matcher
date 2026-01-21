@@ -6,8 +6,9 @@ namespace Loupe\Matcher\Build\Locale;
 
 use Loupe\Matcher\Build\DictionaryBuilder\AbstractKaikkiDictionaryBuilder;
 use Loupe\Matcher\Locale;
+use Loupe\Matcher\Tokenizer\LocaleConfiguration\English;
 
-class English extends AbstractKaikkiDictionaryBuilder
+class EnglishBuilder extends AbstractKaikkiDictionaryBuilder
 {
     public function getLocale(): Locale
     {
@@ -16,8 +17,7 @@ class English extends AbstractKaikkiDictionaryBuilder
 
     protected function allowTerm(string $term, array $json): bool
     {
-        // At least 3 letters total
-        if (!preg_match('/^[a-z]{3,}$/u', $term)) {
+        if (!preg_match('/^[a-z]{' . English::MIN_DECOMPOSITION_TERM_LENGTH . ',}$/u', $term)) {
             return false;
         }
 
