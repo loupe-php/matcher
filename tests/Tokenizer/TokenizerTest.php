@@ -52,6 +52,17 @@ class TokenizerTest extends TestCase
             ],
         ];
 
+        yield 'German Eierbecher' => [
+            'de',
+            'Eierbecher',
+            [
+                'eierbecher',
+                'becher',
+                'ei',
+                'eier',
+            ],
+        ];
+
         yield 'Dutch' => [
             'nl',
             'De ziektekostenverzekering is duur.',
@@ -75,6 +86,16 @@ class TokenizerTest extends TestCase
                 'toothpaste',
                 'paste',
                 'tooth',
+            ],
+        ];
+
+        yield 'English airflow' => [
+            'en',
+            'airflow',
+            [
+                'airflow',
+                'air',
+                'flow',
             ],
         ];
     }

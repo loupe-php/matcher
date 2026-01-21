@@ -6,13 +6,10 @@ namespace Loupe\Matcher\Build\Locale;
 
 use Loupe\Matcher\Build\DictionaryBuilder\AbstractKaikkiDictionaryBuilder;
 use Loupe\Matcher\Locale;
+use Loupe\Matcher\Tokenizer\LocaleConfiguration\German;
 
-class German extends AbstractKaikkiDictionaryBuilder
+class GermanBuilder extends AbstractKaikkiDictionaryBuilder
 {
-    private const EXCLUDE_LIST = [
-        'Ges', // "Ges" in German is the note G♭ but there's never a compound word with it
-    ];
-
     public function getLocale(): Locale
     {
         return Locale::fromString('de');
@@ -20,8 +17,7 @@ class German extends AbstractKaikkiDictionaryBuilder
 
     protected function allowTerm(string $term, array $json): bool
     {
-        // At least 3 letters total
-        if (!preg_match('/^[A-ZÄÖÜa-zäöüß]{3,}$/u', $term)) {
+        if (!preg_match('/^[A-ZÄÖÜa-zäöüß]{' . German::MIN_DECOMPOSITION_TERM_LENGTH . ',}$/u', $term)) {
             return false;
         }
 
@@ -39,10 +35,6 @@ class German extends AbstractKaikkiDictionaryBuilder
 
         // Skip "Gemeinden" because we don't want stuff like "Ell" in here
         if ($this->hasHypernym($json, 'gemeinde')) {
-            return false;
-        }
-
-        if (\in_array($term, self::EXCLUDE_LIST, true)) {
             return false;
         }
 

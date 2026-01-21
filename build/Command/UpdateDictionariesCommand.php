@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Loupe\Matcher\Build\Command;
 
 use Loupe\Matcher\Build\DictionaryBuilderInterface;
-use Loupe\Matcher\Build\Locale\Dutch;
-use Loupe\Matcher\Build\Locale\English;
-use Loupe\Matcher\Build\Locale\German;
+use Loupe\Matcher\Build\Locale\DutchBuilder;
+use Loupe\Matcher\Build\Locale\EnglishBuilder;
+use Loupe\Matcher\Build\Locale\GermanBuilder;
 use Loupe\Matcher\Locale;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -21,9 +21,9 @@ class UpdateDictionariesCommand
     public function __invoke(SymfonyStyle $io, #[Argument] string|null $locale = null, #[Option] bool $debug = false): int
     {
         $builders = [
-            new German(),
-            new Dutch(),
-            new English(),
+            new GermanBuilder(),
+            new DutchBuilder(),
+            new EnglishBuilder(),
         ];
 
         foreach ($builders as $builder) {
