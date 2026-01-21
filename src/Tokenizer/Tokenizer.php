@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Loupe\Matcher\Tokenizer;
 
 use Loupe\Matcher\Locale;
-use Loupe\Matcher\Tokenizer\LocaleConfiguration\Dutch;
 use Loupe\Matcher\Tokenizer\LocaleConfiguration\English;
 use Loupe\Matcher\Tokenizer\LocaleConfiguration\German;
 use Loupe\Matcher\Tokenizer\LocaleConfiguration\LocaleConfigurationInterface;
@@ -36,7 +35,6 @@ class Tokenizer implements TokenizerInterface
     {
         return match ($locale->getPrimaryLanguage()) {
             'de' => new German(),
-            'nl' => new Dutch(),
             'en' => new English(),
             default => null,
         };
