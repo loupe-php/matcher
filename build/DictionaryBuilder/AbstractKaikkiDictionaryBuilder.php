@@ -11,8 +11,9 @@ use Symfony\Component\HttpClient\HttpClient;
 
 abstract class AbstractKaikkiDictionaryBuilder extends AbstractFastSetDictionaryBuilder
 {
-    abstract protected function allowTermPreNormalize(string $term, array $json): bool;
     abstract protected function allowTermPostNormalize(string $term, array $json): bool;
+
+    abstract protected function allowTermPreNormalize(string $term, array $json): bool;
 
     /**
      * @return array<string>
