@@ -16,7 +16,7 @@ class TokenizerTest extends TestCase
     public function testDecomposition(string $locale): void
     {
         $tokenizer = Tokenizer::createFromPreconfiguredLocaleConfiguration(Locale::fromString($locale));
-        $fixture = file_get_contents(__DIR__ . '/Fixtures/Decomposition/' . $locale . '.txt');
+        $fixture = (string) file_get_contents(__DIR__ . '/Fixtures/Decomposition/' . $locale . '.txt');
         $tests = [];
         foreach (array_filter(explode("\n", $fixture)) as $line) {
             if (!str_starts_with($line, '#')) {
