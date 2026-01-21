@@ -21,7 +21,11 @@ class English extends AbstractKaikkiDictionaryBuilder
             return false;
         }
 
-        if (!$this->isAllowedPos($json, ['noun', 'verb', 'adj'])) {
+        if (!$this->isAllowedPos($json, ['noun', 'adj'])) {
+            return false;
+        }
+
+        if ($this->hasTag($json, 'form-of')) {
             return false;
         }
 
