@@ -19,6 +19,15 @@ class EnglishBuilder extends AbstractKaikkiDictionaryBuilder
         return Locale::fromString('en');
     }
 
+    protected function allowTermPostNormalize(string $term, array $json): bool
+    {
+        if (\in_array($term, self::DISALLOW_LIST, true)) {
+            return false;
+        }
+
+        return true;
+    }
+
     protected function allowTermPreNormalize(string $term, array $json): bool
     {
         // This already filters out anything that does e.g. start with capital letters
@@ -31,15 +40,6 @@ class EnglishBuilder extends AbstractKaikkiDictionaryBuilder
         }
 
         if ($this->hasTag($json, 'form-of')) {
-            return false;
-        }
-
-        return true;
-    }
-
-    protected function allowTermPostNormalize(string $term, array $json): bool
-    {
-        if (\in_array($term, self::DISALLOW_LIST, true)) {
             return false;
         }
 
