@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Loupe\Matcher\Build\Command;
 
 use Loupe\Matcher\Build\DictionaryBuilderInterface;
-use Loupe\Matcher\Build\Locale\DutchBuilder;
 use Loupe\Matcher\Build\Locale\EnglishBuilder;
 use Loupe\Matcher\Build\Locale\GermanBuilder;
 use Loupe\Matcher\Locale;
@@ -22,7 +21,6 @@ class UpdateDictionariesCommand
     {
         $builders = [
             new GermanBuilder(),
-            new DutchBuilder(),
             new EnglishBuilder(),
         ];
 
