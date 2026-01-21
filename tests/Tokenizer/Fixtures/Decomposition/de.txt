@@ -1,0 +1,4 @@
+eierbecher,ei,eier,becher
+wartungsvertrag,wartung,vertrag
+kunstlerinnengesprach,kunstlerinnen,gesprach
+donaudampfschifffahrtsgesellschaftskapitan,donau,dampf,schiff,fahrt,gesell,schaft,kapitan
