@@ -6,93 +6,29 @@ namespace Loupe\Matcher\Tests\Tokenizer;
 
 use Loupe\Matcher\Locale;
 use Loupe\Matcher\Tokenizer\Tokenizer;
-use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 
 class TokenizerTest extends TestCase
 {
-    public static function decompositionProvider(): \Generator
-    {
-        yield 'German Donaudampfschifffahrtsgesellschaftskapitän' => [
-            'de',
-            'Ich bin von Beruf Donaudampfschifffahrtsgesellschaftskapitän.',
-            [
-                'ich',
-                'bin',
-                'von',
-                'beruf',
-                'donaudampfschifffahrtsgesellschaftskapitan',
-                'dampf',
-                'donau',
-                'fahrt',
-                'gesell',
-                'kapitan',
-                'schaft',
-                'schiff',
-            ],
-        ];
-
-        yield 'German Künstlerinnengespräch' => [
-            'de',
-            'Künstlerinnengespräch',
-            [
-                'kunstlerinnengesprach',
-                'gesprach',
-                'kunstlerinnen',
-            ],
-        ];
-
-        yield 'German Wartungsvertrag' => [
-            'de',
-            'Wartungsvertrag',
-            [
-                'wartungsvertrag',
-                'vertrag',
-                'wartung',
-            ],
-        ];
-
-        yield 'German Eierbecher' => [
-            'de',
-            'Eierbecher',
-            [
-                'eierbecher',
-                'becher',
-                'ei',
-                'eier',
-            ],
-        ];
-
-        yield 'English toothpaste' => [
-            'en',
-            'toothpaste',
-            [
-                'toothpaste',
-                'paste',
-                'tooth',
-            ],
-        ];
-
-        yield 'English airflow' => [
-            'en',
-            'airflow',
-            [
-                'airflow',
-                'air',
-                'flow',
-            ],
-        ];
-    }
-
-    /**
-     * @param array<string> $expectedTermsWithVariants
-     */
-    #[DataProvider('decompositionProvider')]
-    public function testDecomposition(string $locale, string $string, array $expectedTermsWithVariants): void
+    #[TestWith(['de'])]
+    #[TestWith(['en'])]
+    public function testDecomposition(string $locale): void
     {
         $tokenizer = Tokenizer::createFromPreconfiguredLocaleConfiguration(Locale::fromString($locale));
+        $fixture = file_get_contents(__DIR__ . '/Fixtures/Decomposition/' . $locale . '.txt');
+        $tests = array_filter(explode("\n", $fixture));
 
-        $this->assertSame($expectedTermsWithVariants, $tokenizer->tokenize($string)->allTermsWithVariants());
+        foreach ($tests as $test) {
+            $terms = explode(',', $test);
+            $compound = $terms[0];
+            $withVariants = $tokenizer->tokenize($compound)->allTermsWithVariants();
+
+            sort($terms, SORT_STRING);
+            sort($withVariants, SORT_STRING);
+
+            $this->assertSame($terms, $withVariants);
+        }
     }
 
     public function testGermanEszettNormalization(): void
