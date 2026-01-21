@@ -5,21 +5,20 @@ declare(strict_types=1);
 namespace Loupe\Matcher\Tokenizer\LocaleConfiguration;
 
 use Loupe\Matcher\Locale;
+use Loupe\Matcher\Tokenizer\Decompounder\Configuration;
 
 class English extends AbstractPreconfiguredLocale
 {
-    public function getInterfixes(): array
-    {
-        return [];
-    }
-
     public function getLocale(): Locale
     {
         return Locale::fromString('en');
     }
 
-    public function getMinimumDecompositionTermLength(): int
+    protected function getDecompounderConfiguration(): Configuration
     {
-        return 3;
+        return new Configuration(
+            $this->getDictionary(),
+            3
+        );
     }
 }

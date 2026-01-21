@@ -31,10 +31,6 @@ class German extends AbstractKaikkiDictionaryBuilder
             return false;
         }
 
-        if ($this->hasTag($json, 'form-of')) {
-            return false;
-        }
-
         // Skip cities because yes, there are compound words like "Parisreise" but it's much more likely
         // that you would write "Paris-Reise" and thus, there's no benefit of having them in the dictionary
         if ($this->hasHypernym($json, 'stadt')) {

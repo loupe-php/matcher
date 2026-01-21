@@ -5,21 +5,17 @@ declare(strict_types=1);
 namespace Loupe\Matcher\Tokenizer\LocaleConfiguration;
 
 use Loupe\Matcher\Locale;
-use Loupe\Matcher\Tokenizer\Decompounder\Dictionary\DictionaryInterface;
 use Loupe\Matcher\Tokenizer\Normalizer\NormalizerInterface;
+use Loupe\Matcher\Tokenizer\Token;
 
 interface LocaleConfigurationInterface
 {
-    public function getDictionary(): DictionaryInterface;
-
     /**
-     * @return array<string>
+     * Use this method to add variants (e.g. decomposition) to the token.
      */
-    public function getInterfixes(): array;
+    public function enhanceToken(Token $token): Token;
 
     public function getLocale(): Locale;
-
-    public function getMinimumDecompositionTermLength(): int;
 
     public function getNormalizer(): NormalizerInterface;
 }

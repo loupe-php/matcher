@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Loupe\Matcher\Tokenizer;
 
 use Loupe\Matcher\Locale;
-use Loupe\Matcher\Tokenizer\Decompounder\Decompounder;
 use Loupe\Matcher\Tokenizer\LocaleConfiguration\Dutch;
 use Loupe\Matcher\Tokenizer\LocaleConfiguration\English;
 use Loupe\Matcher\Tokenizer\LocaleConfiguration\German;
@@ -19,15 +18,12 @@ class Tokenizer implements TokenizerInterface
 
     private \IntlRuleBasedBreakIterator $breakIterator;
 
-    private ?Decompounder $decompounder = null;
-
     private NormalizerInterface $normalizer;
 
     public function __construct(
         private ?LocaleConfigurationInterface $localeConfiguration = null
     ) {
         $this->breakIterator = \IntlRuleBasedBreakIterator::createWordInstance($this->localeConfiguration?->getLocale()->toString()); // @phpstan-ignore-line - null is allowed
-        $this->decompounder = $this->localeConfiguration === null ? null : new Decompounder($this->localeConfiguration);
         $this->normalizer = $this->localeConfiguration?->getNormalizer() ?? new Normalizer();
     }
 
@@ -110,7 +106,9 @@ class Tokenizer implements TokenizerInterface
                 $negated,
             );
 
-            $token = $token->withAddedVariants($this->decompounder?->decompoundTerm($term) ?? []);
+            if ($this->localeConfiguration !== null) {
+                $token = $this->localeConfiguration->enhanceToken($token);
+            }
 
             $position += $token->getLength();
             $tokens->add($token);
