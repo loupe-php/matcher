@@ -30,6 +30,7 @@ class German extends AbstractPreconfiguredLocale
         'ruf' => true,
         'see' => true,
         'tag' => true,
+        'tee' => true,
         'tal' => true,
         'tor' => true,
         'typ' => true,
