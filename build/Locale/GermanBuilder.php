@@ -12,6 +12,10 @@ class GermanBuilder extends AbstractKaikkiDictionaryBuilder
 {
     private const DISALLOW_LIST = [
         'date', // There is no compound word with date. This would split "datenbank" into "date", "daten" and "bank"
+        'tuck',
+        'stag',
+        'klass',
+        'rege',
     ];
 
     public function getLocale(): Locale
@@ -37,6 +41,12 @@ class GermanBuilder extends AbstractKaikkiDictionaryBuilder
         // We do need adjectives too otherwise stuff like "Hochhaus" would not work [adj + noun]
         // We also need names, otherwise "Donaudampfschiff" would not work [name + noun + noun]
         if (!$this->isAllowedPos($json, ['noun', 'adj', 'name'])) {
+            return false;
+        }
+
+        // This reduces the dictionary by multiple 100k terms. Try not removing this unless there's a very
+        // good reason (or find out what exactly we need of those)
+        if ($this->hasTag($json, 'form-of')) {
             return false;
         }
 
