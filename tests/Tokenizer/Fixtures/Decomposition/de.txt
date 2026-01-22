@@ -10,7 +10,7 @@ benutzerkonto,benutzer,konto
 dampf
 #datenbankserver,daten,bank,server
 #datensicherheit,daten,sicherheit
-donaudampfschifffahrtsgesellschaftskapitan,donau,dampf,schiff,fahrt,gesell,schaft,kapitan
+donaudampfschifffahrtsgesellschaftskapitan,donau,dampf,schiff,fahrt,gesell,schaft,kapitan,dampfschiff,schifffahrt,dampfschifffahrtsgesellschaft,schifffahrtsgesellschaft,donaudampfschifffahrtsgesellschaft,dampfschifffahrt,gesellschaft
 dorfplatz,dorf,platz
 eierbecher,ei,eier,becher
 #einkaufsliste,einkauf,liste
@@ -46,12 +46,12 @@ luftfeuchtigkeit,luft,feuchtigkeit
 #mittagspause,mittag,pause
 mondschein,mond,schein
 #muelltrennung,muell,trennung
-netzwerkverbindung,netz,werk,verbindung
+netzwerkverbindung,netz,werk,verbindung,netzwerk
 #osterfest,oster,fest
-passwortschutz,pass,wort,schutz
+passwortschutz,pass,wort,schutz,passwort
 programmcode,programm,code
 #pruefungsordnung,pruefung,ordnung
-quelltextdatei,quell,text,datei
+quelltextdatei,quell,text,datei,quelltext,textdatei
 #regenwolke,regen,wolke
 reinigungsmittel,reinigung,mittel
 #reisebuero,reise,buero
@@ -59,7 +59,7 @@ restaurantbesuch,restaurant,besuch
 schneefall,schnee,fall
 schreibtisch
 schulhof
-silvesterfeuerwerk,silvester,feuer,werk
+silvesterfeuerwerk,silvester,feuer,werk,feuerwerk
 softwareentwicklung,software,entwicklung
 solarpanel,solar,panel
 sommer
@@ -79,10 +79,9 @@ waschmaschine
 wasserflasche,wasser,flasche
 #weihnachtsbaum,weihnacht,baum
 wettervorhersage,wetter,vorhersage
-windenergieanlage,wind,energie,anlage
+windenergieanlage,wind,energie,anlage,windenergie
 winter
-# TODO: we should also have a valid "wissenschaft" split, otherwise when searching for "wissenschaft" you wouldn't find this
-wissenschaftsverlag,wissen,schaft,verlag
+wissenschaftsverlag,wissen,schaft,verlag,wissenschaft
 #wochenende,woche,ende
 zeitungspapier,zeitung,papier
 #zugriffsrecht,zugriff,recht

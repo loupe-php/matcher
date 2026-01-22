@@ -17,9 +17,9 @@ abstract class AbstractPreconfiguredLocale implements LocaleConfigurationInterfa
 {
     private Decompounder $decompounder;
 
-    public function __construct()
+    public function __construct(bool $keepIntermediateTerms = true)
     {
-        $this->decompounder = new Decompounder($this->getDecompounderConfiguration());
+        $this->decompounder = new Decompounder($this->getDecompounderConfiguration()->withIntermediateTerms($keepIntermediateTerms));
     }
 
     public function enhanceToken(Token $token): Token

@@ -48,15 +48,24 @@ class Decompounder
 
         $minLength = $this->configuration->getMinimumDecompositionTermLength();
 
-        // Base case: valid AND not further decomposable => leaf itself
-        if ($this->isValidCandidateSide($term, $minLength) && !$this->isDecomposable($term, $minLength, $decomposableCache)) {
+        $termIsValid = $this->isValidCandidateSide($term, $minLength);
+        $termIsDecomposable = $this->isDecomposable($term, $minLength, $decomposableCache);
+
+        // If we only want leaves: a valid, non-decomposable term is a leaf.
+        if ($termIsValid && !$this->configuration->includeIntermediateTerms() && !$termIsDecomposable) {
             return $leafCache[$term] = [$term];
         }
 
-        $leafTerms = [];
+        // If we want intermediate terms: start with the term itself if it is valid.
+        $uniqueTerms = [];
+        if ($termIsValid && $this->configuration->includeIntermediateTerms()) {
+            $uniqueTerms[$term] = true;
+        }
 
         foreach ($this->splitCandidates($term, $minLength) as [$left, $right]) {
-            if (!$this->isDecomposable($left, $minLength, $decomposableCache)) {
+            $leftIsDecomposable = $this->isDecomposable($left, $minLength, $decomposableCache);
+
+            if (!$leftIsDecomposable) {
                 $leftLeaves = [$left];
             } else {
                 $leftLeaves = $this->collectLeafTerms($left, $leafCache, $decomposableCache);
@@ -71,18 +80,18 @@ class Decompounder
             }
 
             foreach ($leftLeaves as $leafTerm) {
-                $leafTerms[$leafTerm] = true;
+                $uniqueTerms[$leafTerm] = true;
             }
             foreach ($rightLeaves as $leafTerm) {
-                $leafTerms[$leafTerm] = true;
+                $uniqueTerms[$leafTerm] = true;
             }
         }
 
-        if ($leafTerms === []) {
+        if ($uniqueTerms === []) {
             return $leafCache[$term] = null;
         }
 
-        return $leafCache[$term] = array_keys($leafTerms);
+        return $leafCache[$term] = array_keys($uniqueTerms);
     }
 
     /**
