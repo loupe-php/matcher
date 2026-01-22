@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Loupe\Matcher\Tests\Tokenizer;
 
 use Loupe\Matcher\Locale;
+use Loupe\Matcher\Tokenizer\LocaleConfiguration\German;
 use Loupe\Matcher\Tokenizer\Tokenizer;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -65,6 +66,21 @@ class TokenizerTest extends TestCase
             'islenska',
         ], $tokenizer->tokenize('Það er gott að lesa íslenska.')
             ->allTermsWithVariants());
+    }
+
+    public function testKeepIntermediateTerms(): void
+    {
+        $keep = new Tokenizer(new German());
+        $ignore = new Tokenizer(new German(false));
+
+        $keepResult = $keep->tokenize('silvesterfeuerwerk')->allTermsWithVariants();
+        $ignoreResult = $ignore->tokenize('silvesterfeuerwerk')->allTermsWithVariants();
+
+        sort($keepResult, SORT_STRING);
+        sort($ignoreResult, SORT_STRING);
+
+        $this->assertSame(['feuer', 'feuerwerk', 'silvester', 'silvesterfeuerwerk', 'werk'], $keepResult);
+        $this->assertSame(['feuer', 'silvester', 'silvesterfeuerwerk', 'werk'], $ignoreResult);
     }
 
     public function testMaximumTokens(): void

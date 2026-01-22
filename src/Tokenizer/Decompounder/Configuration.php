@@ -14,6 +14,14 @@ class Configuration
     private array $allowList = [];
 
     /**
+     * Very often, terms can be split into multiple terms.
+     * Imagine the German "dampfschifffahrt". It is "dampf", "schiff" and "fahrt.
+     * But "dampfschiff" and "schiffahrt" are both also valid, they can just be split even further.
+     * When set to true, these are kept in the result (default).
+     */
+    private bool $includeIntermediateTerms = true;
+
+    /**
      * @var array<string>
      */
     private array $interfixes = [];
@@ -51,6 +59,11 @@ class Configuration
         return $this->minimumDecompositionTermLength;
     }
 
+    public function includeIntermediateTerms(): bool
+    {
+        return $this->includeIntermediateTerms;
+    }
+
     public function isTermOnAllowList(string $term): bool
     {
         return isset($this->allowList[$term]);
@@ -85,6 +98,14 @@ class Configuration
     {
         $clone = clone $this;
         $clone->interfixes = $interfixes;
+        return $clone;
+    }
+
+    public function withIntermediateTerms(bool $includeIntermediateTerms): self
+    {
+
+        $clone = clone $this;
+        $clone->includeIntermediateTerms = $includeIntermediateTerms;
         return $clone;
     }
 }
