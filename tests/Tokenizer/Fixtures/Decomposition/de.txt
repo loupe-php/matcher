@@ -8,8 +8,8 @@ backofen,back,ofen
 bahnhof,bahn,hof
 benutzerkonto,benutzer,konto
 dampf
-#datenbankserver,daten,bank,server
-#datensicherheit,daten,sicherheit
+datenbankserver,daten,bank,server,datenbank
+datensicherheit,daten,sicherheit
 donaudampfschifffahrtsgesellschaftskapitan,donau,dampf,schiff,fahrt,gesell,schaft,kapitan,dampfschiff,schifffahrt,dampfschifffahrtsgesellschaft,schifffahrtsgesellschaft,donaudampfschifffahrtsgesellschaft,dampfschifffahrt,gesellschaft
 dorfplatz,dorf,platz
 eierbecher,ei,eier,becher

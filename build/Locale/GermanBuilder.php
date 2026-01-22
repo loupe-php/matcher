@@ -10,6 +10,10 @@ use Loupe\Matcher\Tokenizer\LocaleConfiguration\German;
 
 class GermanBuilder extends AbstractKaikkiDictionaryBuilder
 {
+    private const DISALLOW_LIST = [
+        'date', // There is no compound word with date. This would split "datenbank" into "date", "daten" and "bank"
+    ];
+
     public function getLocale(): Locale
     {
         return Locale::fromString('de');
@@ -17,6 +21,10 @@ class GermanBuilder extends AbstractKaikkiDictionaryBuilder
 
     protected function allowTermPostNormalize(string $term, array $json): bool
     {
+        if (\in_array($term, self::DISALLOW_LIST, true)) {
+            return false;
+        }
+
         return true;
     }
 
