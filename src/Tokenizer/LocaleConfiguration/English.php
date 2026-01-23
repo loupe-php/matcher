@@ -105,7 +105,7 @@ class English extends AbstractPreconfiguredLocale
     protected function getDecompounderConfiguration(): Configuration
     {
         return (new Configuration(
-            $this->getDictionary(),
+            $this->wrapDictionaryWithInMemoryCacheDictionary($this->getFastSetDictionary()),
             self::MIN_DECOMPOSITION_TERM_LENGTH,
         ))->withAllowList(self::ALLOW_LIST);
     }

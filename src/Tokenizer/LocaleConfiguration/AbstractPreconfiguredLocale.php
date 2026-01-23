@@ -9,6 +9,8 @@ use Loupe\Matcher\Tokenizer\Decompounder\Decompounder;
 use Loupe\Matcher\Tokenizer\Decompounder\Dictionary\DictionaryInterface;
 use Loupe\Matcher\Tokenizer\Decompounder\Dictionary\FastSetDictionary;
 use Loupe\Matcher\Tokenizer\Decompounder\Dictionary\MemoryCacheDictionary;
+use Loupe\Matcher\Tokenizer\Decompounder\Dictionary\VariantDictionary;
+use Loupe\Matcher\Tokenizer\Decompounder\Dictionary\VariantExpanderInterface;
 use Loupe\Matcher\Tokenizer\Normalizer\Normalizer;
 use Loupe\Matcher\Tokenizer\Normalizer\NormalizerInterface;
 use Loupe\Matcher\Tokenizer\Token;
@@ -27,14 +29,6 @@ abstract class AbstractPreconfiguredLocale implements LocaleConfigurationInterfa
         return $token->withAddedVariants($this->decompounder->decompoundTerm($token->getTerm(), $token->getLength()));
     }
 
-    public function getDictionary(): DictionaryInterface
-    {
-        return new MemoryCacheDictionary(new FastSetDictionary(
-            $this->getLocale(),
-            __DIR__ . '/../../../dictionaries/' . $this->getLocale()->toString()
-        ), $this->getNumberOfCacheEntriesForMemoryCacheDictionary());
-    }
-
     public function getNormalizer(): NormalizerInterface
     {
         return new Normalizer();
@@ -42,11 +36,23 @@ abstract class AbstractPreconfiguredLocale implements LocaleConfigurationInterfa
 
     abstract protected function getDecompounderConfiguration(): Configuration;
 
-    protected function getNumberOfCacheEntriesForMemoryCacheDictionary(): int
+    protected function getFastSetDictionary(): FastSetDictionary
     {
-        // Default to 15k entries. This should be a fair balance for fast lookups for a lot of terms
-        // while ensuring memory is low. Should end up being a max of 2 - 3 MB of RAM depending
-        // on the length of the terms.
-        return 15_000;
+        return new FastSetDictionary(__DIR__ . '/../../../dictionaries/' . $this->getLocale()->toString());
+    }
+
+    /**
+     * Defaults to 15k cache entries. This should be a fair balance for fast lookups for a lot of terms
+     * while ensuring memory is low. Should end up being a max of 2 - 3 MB of RAM depending on the length
+     * of the terms.
+     */
+    protected function wrapDictionaryWithInMemoryCacheDictionary(DictionaryInterface $dictionary, int $maxEntries = 15_000): DictionaryInterface
+    {
+        return new MemoryCacheDictionary($dictionary, $maxEntries);
+    }
+
+    protected function wrapDictionaryWithVariantDictionary(DictionaryInterface $dictionary, VariantExpanderInterface $variantExpander): DictionaryInterface
+    {
+        return new VariantDictionary($dictionary, $variantExpander);
     }
 }

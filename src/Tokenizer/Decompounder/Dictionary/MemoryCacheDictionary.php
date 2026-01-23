@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher\Tokenizer\Decompounder\Dictionary;
 
-use Loupe\Matcher\Locale;
-
 class MemoryCacheDictionary implements DictionaryInterface
 {
     /**
@@ -23,11 +21,6 @@ class MemoryCacheDictionary implements DictionaryInterface
         private int $maxEntries = 0
     ) {
 
-    }
-
-    public function getLocale(): Locale
-    {
-        return $this->inner->getLocale();
     }
 
     public function has(string $term): bool

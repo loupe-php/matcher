@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher\Tokenizer\Decompounder\Dictionary;
 
-use Loupe\Matcher\Locale;
 use Toflar\FastSet\FastSet;
 
 class FastSetDictionary implements DictionaryInterface
@@ -13,10 +12,8 @@ class FastSetDictionary implements DictionaryInterface
 
     private FastSet $fastSet;
 
-    public function __construct(
-        protected Locale $locale,
-        string $directory
-    ) {
+    public function __construct(string $directory)
+    {
         $this->fastSet = new FastSet($directory);
 
         try {
@@ -25,11 +22,6 @@ class FastSetDictionary implements DictionaryInterface
             $this->fastSet->build($directory . '/' . self::DICTIONARY_FILE_NAME);
             $this->fastSet->initialize();
         }
-    }
-
-    public function getLocale(): Locale
-    {
-        return $this->locale;
     }
 
     public function has(string $term): bool
