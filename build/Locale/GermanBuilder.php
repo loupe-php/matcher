@@ -49,7 +49,7 @@ class GermanBuilder extends AbstractKaikkiDictionaryBuilder
 
         // This reduces the dictionary by multiple 100k terms. Try not removing this unless there's a very
         // good reason (or find out what exactly we need of those)
-        if ($this->hasTag($json, 'form-of')) {
+        if ($this->hasCommonFilterTag($json)) {
             return false;
         }
 
