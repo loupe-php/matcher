@@ -11,9 +11,29 @@ use Symfony\Component\HttpClient\HttpClient;
 
 abstract class AbstractKaikkiDictionaryBuilder extends AbstractFastSetDictionaryBuilder
 {
+    private const COMMON_FILTER_TAGS = [
+        'form-of',
+        'form_of',
+    ];
+
     abstract protected function allowTermPostNormalize(string $term, array $json): bool;
 
     abstract protected function allowTermPreNormalize(string $term, array $json): bool;
+
+    protected function collectTags(array $json): array
+    {
+        $allTags = $json['tags'] ?? [];
+        $senses = $json['senses'] ?? [];
+
+        foreach ($senses as $sense) {
+            $tags = $sense['tags'] ?? [];
+            foreach ($tags as $tag) {
+                $allTags[] = $tag;
+            }
+        }
+
+        return array_map('strtolower', array_unique($allTags));
+    }
 
     /**
      * @return array<string>
@@ -55,6 +75,11 @@ abstract class AbstractKaikkiDictionaryBuilder extends AbstractFastSetDictionary
 
     abstract protected function getNormalizer(): NormalizerInterface;
 
+    protected function hasCommonFilterTag(array $json): bool
+    {
+        return $this->hasTags($json, self::COMMON_FILTER_TAGS);
+    }
+
     protected function hasHypernym(array $json, string $hypernym): bool
     {
         $hypernyms = $json['hypernyms'] ?? [];
@@ -67,26 +92,9 @@ abstract class AbstractKaikkiDictionaryBuilder extends AbstractFastSetDictionary
         return false;
     }
 
-    protected function hasTag(array $json, string $tag): bool
+    protected function hasTags(array $json, array $tags): bool
     {
-        $topTags = $json['tags'] ?? [];
-        $topTagsLower = array_map('strtolower', $topTags);
-        if (\in_array($tag, $topTagsLower, true)) {
-            return true;
-        }
-
-        $senses = $entry['senses'] ?? [];
-
-        foreach ($senses as $sense) {
-            $tags = $sense['tags'] ?? [];
-            $tagsLower = array_map('strtolower', $tags);
-
-            if (\in_array($tag, $tagsLower, true)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_intersect($this->collectTags($json), $tags) !== [];
     }
 
     protected function isAllowedPos(array $json, array $allowedPos): bool

@@ -13,6 +13,10 @@ use Loupe\Matcher\Tokenizer\Normalizer\NormalizerInterface;
 class EnglishBuilder extends AbstractKaikkiDictionaryBuilder
 {
     private const DISALLOW_LIST = [
+        'ing',
+        'not',
+        'eld',
+        'shi',
         'ting', // apparently the sound made when a small bell is struck, that makes no sense to decompose and it makes for bad splits as a lot of "ing" words end on "ting".
     ];
 
@@ -41,7 +45,7 @@ class EnglishBuilder extends AbstractKaikkiDictionaryBuilder
             return false;
         }
 
-        if ($this->hasTag($json, 'form-of')) {
+        if ($this->hasCommonFilterTag($json)) {
             return false;
         }
 
