@@ -1,11 +1,6 @@
 # Loupe Matcher
 
-A PHP library for search term highlighting and text snippet generation. Transform search results into user-friendly formatted text with highlighted matches and contextual cropping.
-
-> <mark>Lorem ipsum</mark> dolor sit amet, consetetur [...] no sea takimata sanctus est <mark>lorem</mark> est <mark>ipsum</mark> dolor sit amet. <mark>Lorem ipsum</mark> dolor sit amet, consetetur [...] dolore te feugait nulla facilisi <mark>lorem ipsum</mark> dolor sit amet, consectetuer [...]
-
-> [!CAUTION]
-> Work in progress. Expect frequent changes to API and functionality.
+A PHP library for search term highlighting and text snippet generation. Transform search results into user-friendly formatted text with highlighted matches and contextual cropping. Moreover, this library ships with support for dictionary-based term decomposition!
 
 ## Installation
 
@@ -18,28 +13,28 @@ composer require loupe/matcher
 Here's a simple example of how to use Loupe Matcher to highlight search terms in a text document and crop around the highlights:
 
 ```php
+use Loupe\Matcher\Tokenizer\LocaleConfiguration\English;
 use Loupe\Matcher\Tokenizer\Tokenizer;
 use Loupe\Matcher\Matcher;
 use Loupe\Matcher\Formatter;
 use Loupe\Matcher\FormatterOptions;
 
-$tokenizer = new Tokenizer();
+$tokenizer = new Tokenizer(new English());
 $matcher = new Matcher($tokenizer);
 $formatter = new Formatter($matcher);
 
 $options = (new FormatterOptions())
     ->withEnableHighlight()
     ->withEnableCrop()
-    ->withCropLength(10);
+    ->withCropLength(20);
 
 $result = $formatter->format(
-    'This is a long document with many words to search through and compare.',
-    'search words',
+    'I always take my toothbrush with me for holidays',
+    'brush',
     $options
 );
 
-// "...with many <em>words</em> to <em>search</em> through..."
-echo $result->getFormattedText();
+// "…take my <em>toothbrush</em> with…"
 ```
 
 ## Core Components
@@ -54,15 +49,27 @@ The `Tokenizer` converts strings into `TokenCollection` objects, handling:
 - Phrase groups (quoted terms like `"exact phrase"`)
 - Negated terms (prefixed with `-`)
 - Locale-specific tokenization
+- Locale-specific term decomposition
 
 ```php
-$tokenizer = new Tokenizer('en_US'); // Optional locale
+$localeConfiguration = null; // Must implement the `LocaleConfigurationInterface`. 
+$tokenizer = new Tokenizer($localeConfiguration); // Optional locale configuration
 $tokens = $tokenizer->tokenize('search for "exact phrase" -exclude');
 
 $tokens->all();          // All tokens
 $tokens->phraseGroups(); // Quoted phrases only
 $tokens->allNegated();   // Terms to exclude
 ```
+
+If you want to configure the way the `Tokenizer` handles locale specifics (such as decomposition or normalization), you
+can provide your own implementation of the `LocaleConfigurationInterface` or use any of the pre-built configurations shipped
+with this library. There are currently the following:
+
+- English: Handles decomposition (`toothbrush` -> `tooth`, `brush`)
+- German: Handles normalization of German umlauts as well as `ß` and also decomposition (`Zeitungspapier` -> `zeitung`, `papier`)
+
+Checkout the [separate docs on decomposition](./docs/decomposition.md) if you want to improve the existing locale configurations
+or add support for a new one!
 
 ### Matcher
 
