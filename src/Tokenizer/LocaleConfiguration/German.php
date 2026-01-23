@@ -6,6 +6,7 @@ namespace Loupe\Matcher\Tokenizer\LocaleConfiguration;
 
 use Loupe\Matcher\Locale;
 use Loupe\Matcher\Tokenizer\Decompounder\Configuration;
+use Loupe\Matcher\Tokenizer\LocaleConfiguration\German\GermanVariantExpander;
 
 class German extends AbstractPreconfiguredLocale
 {
@@ -46,10 +47,11 @@ class German extends AbstractPreconfiguredLocale
 
     protected function getDecompounderConfiguration(): Configuration
     {
-        return (new Configuration(
-            $this->getDictionary(),
-            self::MIN_DECOMPOSITION_TERM_LENGTH
-        ))
+        $dictionary = $this->getFastSetDictionary();
+        $dictionary = $this->wrapDictionaryWithVariantDictionary($dictionary, new GermanVariantExpander());
+        $dictionary = $this->wrapDictionaryWithInMemoryCacheDictionary($dictionary);
+
+        return (new Configuration($dictionary, self::MIN_DECOMPOSITION_TERM_LENGTH))
             ->withInterfixes(['s', 'es', 'n', 'en', 'er', 'e'])
             ->withAllowList(self::ALLOW_LIST)
         ;

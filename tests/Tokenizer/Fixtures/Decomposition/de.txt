@@ -38,8 +38,7 @@ kochbuch,koch,buch
 kraftwerk,kraft,werk
 krankenversicherung,krank,kranke,versicherung
 kuhlschrank,kuhl,schrank
-# TODO: Find a way to deal with female "interfixes"
-#kunstlerinnengesprach,kunstlerinnen,gesprach
+kunstlerinnengesprach,kunstlerinnen,gesprach
 lebensmittelmarkt,leben,mittel,markt,lebensmittel
 lehrbuch
 luftfeuchtigkeit,luft,feuchtigkeit
@@ -86,3 +85,4 @@ wissenschaftsverlag,wissen,schaft,verlag,wissenschaft
 wochenende,woche,ende
 zeitungspapier,zeitung,papier
 zugriffsrecht,zug,riff,zugriff,recht
+arztinnenverband,arztinnen,verband
