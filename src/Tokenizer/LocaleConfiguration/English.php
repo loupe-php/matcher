@@ -9,11 +9,13 @@ use Loupe\Matcher\Tokenizer\Decompounder\Configuration;
 
 class English extends AbstractPreconfiguredLocale
 {
+    /**
+     * In English, there are thousands of valid words with 3 letters.
+     * For performance reasons, it might be smart to increase this to 4
+     * and have an allow list for the shorter terms but that's not doable
+     * if the allow list would contain thousands of terms.
+     */
     public const MIN_DECOMPOSITION_TERM_LENGTH = 3;
-
-    private const ALLOW_LIST = [
-
-    ];
 
     public function getLocale(): Locale
     {
@@ -22,9 +24,9 @@ class English extends AbstractPreconfiguredLocale
 
     protected function getDecompounderConfiguration(): Configuration
     {
-        return (new Configuration(
+        return new Configuration(
             $this->wrapDictionaryWithInMemoryCacheDictionary($this->getFastSetDictionary()),
             self::MIN_DECOMPOSITION_TERM_LENGTH,
-        ))->withAllowList(self::ALLOW_LIST);
+        );
     }
 }
