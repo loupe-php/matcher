@@ -7,6 +7,9 @@ namespace Loupe\Matcher\Build\Locale;
 use Loupe\Matcher\Build\DictionaryBuilder\AbstractKaikkiDictionaryBuilder;
 use Loupe\Matcher\Locale;
 use Loupe\Matcher\Tokenizer\LocaleConfiguration\German;
+use Loupe\Matcher\Tokenizer\LocaleConfiguration\German\GermanNormalizer;
+use Loupe\Matcher\Tokenizer\Normalizer\Normalizer;
+use Loupe\Matcher\Tokenizer\Normalizer\NormalizerInterface;
 
 class GermanBuilder extends AbstractKaikkiDictionaryBuilder
 {
@@ -67,5 +70,10 @@ class GermanBuilder extends AbstractKaikkiDictionaryBuilder
     protected function getDumpUrl(): string
     {
         return 'https://kaikki.org/dictionary/downloads/de/de-extract.jsonl.gz';
+    }
+
+    protected function getNormalizer(): NormalizerInterface
+    {
+        return new GermanNormalizer(new Normalizer());
     }
 }
