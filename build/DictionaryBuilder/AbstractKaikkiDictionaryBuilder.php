@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher\Build\DictionaryBuilder;
 
-use Loupe\Matcher\Tokenizer\Normalizer\Normalizer;
 use Loupe\Matcher\Tokenizer\Normalizer\NormalizerInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Filesystem\Filesystem;
