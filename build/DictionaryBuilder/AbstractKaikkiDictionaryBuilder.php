@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Loupe\Matcher\Build\DictionaryBuilder;
 
 use Loupe\Matcher\Tokenizer\Normalizer\Normalizer;
+use Loupe\Matcher\Tokenizer\Normalizer\NormalizerInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpClient\HttpClient;
@@ -29,7 +30,7 @@ abstract class AbstractKaikkiDictionaryBuilder extends AbstractFastSetDictionary
 
         $gz = gzopen($rawDumpPath, 'rb');
 
-        $normalizer = new Normalizer();
+        $normalizer = $this->getNormalizer();
         $terms = [];
         $io->progressStart();
 
@@ -52,6 +53,8 @@ abstract class AbstractKaikkiDictionaryBuilder extends AbstractFastSetDictionary
      * Take the correct URLs from https://kaikki.org/dictionary/rawdata.html.
      */
     abstract protected function getDumpUrl(): string;
+
+    abstract protected function getNormalizer(): NormalizerInterface;
 
     protected function hasHypernym(array $json, string $hypernym): bool
     {
@@ -94,7 +97,7 @@ abstract class AbstractKaikkiDictionaryBuilder extends AbstractFastSetDictionary
         return \in_array($pos, $allowedPos, true);
     }
 
-    private function convertLineIntoTerm(string $line, Normalizer $normalizer): ?string
+    private function convertLineIntoTerm(string $line, NormalizerInterface $normalizer): ?string
     {
         $line = trim($line);
 
