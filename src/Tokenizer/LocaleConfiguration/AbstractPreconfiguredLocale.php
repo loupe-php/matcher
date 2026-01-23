@@ -42,11 +42,11 @@ abstract class AbstractPreconfiguredLocale implements LocaleConfigurationInterfa
     }
 
     /**
-     * Defaults to 15k cache entries. This should be a fair balance for fast lookups for a lot of terms
+     * Defaults to 30k cache entries. This should be a fair balance for fast lookups for a lot of terms
      * while ensuring memory is low. Should end up being a max of 2 - 3 MB of RAM depending on the length
      * of the terms.
      */
-    protected function wrapDictionaryWithInMemoryCacheDictionary(DictionaryInterface $dictionary, int $maxEntries = 15_000): DictionaryInterface
+    protected function wrapDictionaryWithInMemoryCacheDictionary(DictionaryInterface $dictionary, int $maxEntries = 30_000): DictionaryInterface
     {
         return new MemoryCacheDictionary($dictionary, $maxEntries);
     }
