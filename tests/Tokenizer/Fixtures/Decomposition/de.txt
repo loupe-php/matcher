@@ -10,7 +10,7 @@ benutzerkonto,benutzer,konto
 dampf
 datenbankserver,daten,bank,server,datenbank
 datensicherheit,daten,sicherheit
-donaudampfschifffahrtsgesellschaftskapitan,donau,dampf,schiff,fahrt,gesell,schaft,kapitan,dampfschiff,schifffahrt,dampfschifffahrtsgesellschaft,schifffahrtsgesellschaft,donaudampfschifffahrtsgesellschaft,dampfschifffahrt,gesellschaft
+donaudampfschifffahrtsgesellschaftskapitan,donau,dampf,schiff,fahrt,gesell,schaft,kapitan,schifffahrt,dampfschifffahrtsgesellschaft,schifffahrtsgesellschaft,donaudampfschifffahrtsgesellschaft,gesellschaft
 dorfplatz,dorf,platz
 eierbecher,ei,becher
 einkaufsliste,ei,kauf,liste,einkauf
@@ -32,7 +32,7 @@ internetanschluss,internet,anschluss
 jahresabschluss,jahr,abschluss
 jahreszeit,jahr,zeit
 kindergarten,kind,garten
-klassenzimmer,klasse,klassen,zimmer
+klassenzimmer,klassen,zimmer
 klimaanlage,klima,anlage
 kochbuch,koch,buch
 kraftwerk,kraft,werk
@@ -43,9 +43,7 @@ kuhlschrank,kuhl,schrank
 lebensmittelmarkt,leben,mittel,markt,lebensmittel
 lehrbuch
 luftfeuchtigkeit,luft,feuchtigkeit
-# TODO: I guess we could improve this case. "master" requires no infix while "mast" does, so we could introduce a penalty
-# for splits that needed an infix and thus throw them away if there was one on the same level with no infix
-masterstudium,mast,master,studium
+masterstudium,master,studium
 mittagspause,mittag,pause
 mondschein,mond,schein
 mulltrennung,mull,trennung
@@ -57,7 +55,7 @@ prufungsordnung,prufung,ordnung
 quelltextdatei,quell,text,datei,quelltext,textdatei
 regenwolke,regen,wolke
 reinigungsmittel,reinigung,mittel
-reiseburo,reis,reise,buro
+reiseburo,reise,buro
 restaurantbesuch,restaurant,besuch
 schneefall,schnee,fall
 schreibtisch
