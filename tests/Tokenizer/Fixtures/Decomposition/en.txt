@@ -52,6 +52,7 @@ motorcycle,motor,cycle
 newspaper,news,paper
 notebook,note,book
 paintbrush,paint,brush
+pathfinder,path,finder
 playground,play,ground
 pseudosentence,pseudo,sentence
 postcard,post,card
