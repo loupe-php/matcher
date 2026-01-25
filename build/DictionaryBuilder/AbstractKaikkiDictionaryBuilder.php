@@ -109,6 +109,11 @@ abstract class AbstractKaikkiDictionaryBuilder extends AbstractFastSetDictionary
         return \in_array($pos, $allowedPos, true);
     }
 
+    protected function isSlang(array $json): bool
+    {
+        return $this->hasAllTags($json, ['abbreviation', 'slang']);
+    }
+
     private function convertLineIntoTerm(string $line, NormalizerInterface $normalizer): ?string
     {
         $line = trim($line);

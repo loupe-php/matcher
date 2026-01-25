@@ -45,6 +45,10 @@ class EnglishBuilder extends AbstractKaikkiDictionaryBuilder
             return false;
         }
 
+        if ($this->isSlang($json)) {
+            return false;
+        }
+
         if ($this->hasCommonFilterTag($json)) {
             return false;
         }
