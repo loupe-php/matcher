@@ -76,6 +76,7 @@ snowman,snow,man
 staircase,stair,case
 starfish,star,fish
 starting
+subheading,sub,heading
 sunflower,sun,flower
 sunlight,sun,light
 sunrise,sun,rise
