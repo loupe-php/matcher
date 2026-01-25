@@ -109,6 +109,11 @@ abstract class AbstractKaikkiDictionaryBuilder extends AbstractFastSetDictionary
         return \in_array($pos, $allowedPos, true);
     }
 
+    protected function isClipped(array $json): bool
+    {
+        return $this->hasAllTags($json, ['abbreviation', 'clipping']);
+    }
+
     protected function isSlang(array $json): bool
     {
         return $this->hasAllTags($json, ['abbreviation', 'slang']);
