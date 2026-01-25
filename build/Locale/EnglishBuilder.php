@@ -18,6 +18,10 @@ class EnglishBuilder extends AbstractKaikkiDictionaryBuilder
         'eld',
         'shi',
         'ting', // apparently the sound made when a small bell is struck, that makes no sense to decompose and it makes for bad splits as a lot of "ing" words end on "ting".
+        'kee', // alternative of "cow"
+        'sch', // abbreviation of "school"
+        'ser', // old form of "sir"
+        'und', // old for "wave", bad for decomposing "ground" and similar
     ];
 
     public function getLocale(): Locale
