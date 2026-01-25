@@ -75,9 +75,19 @@ abstract class AbstractKaikkiDictionaryBuilder extends AbstractFastSetDictionary
 
     abstract protected function getNormalizer(): NormalizerInterface;
 
+    protected function hasAllTags(array $json, array $tags): bool
+    {
+        return array_intersect($this->collectTags($json), $tags) === $tags;
+    }
+
+    protected function hasAnyTag(array $json, array $tags): bool
+    {
+        return array_intersect($this->collectTags($json), $tags) !== [];
+    }
+
     protected function hasCommonFilterTag(array $json): bool
     {
-        return $this->hasTags($json, self::COMMON_FILTER_TAGS);
+        return $this->hasAnyTag($json, self::COMMON_FILTER_TAGS);
     }
 
     protected function hasHypernym(array $json, string $hypernym): bool
@@ -90,11 +100,6 @@ abstract class AbstractKaikkiDictionaryBuilder extends AbstractFastSetDictionary
         }
 
         return false;
-    }
-
-    protected function hasTags(array $json, array $tags): bool
-    {
-        return array_intersect($this->collectTags($json), $tags) !== [];
     }
 
     protected function isAllowedPos(array $json, array $allowedPos): bool
