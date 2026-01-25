@@ -18,6 +18,7 @@ class EnglishBuilder extends AbstractKaikkiDictionaryBuilder
         'eld',
         'shi',
         'ting', // apparently the sound made when a small bell is struck, that makes no sense to decompose and it makes for bad splits as a lot of "ing" words end on "ting".
+        'ding', // similar to above
         'der', // interjection
         'kee', // alternative of "cow"
         'sch', // abbreviation of "school"
