@@ -40,6 +40,7 @@ kraftwerk,kraft,werk
 krankenversicherung,krank,kranke,versicherung
 kuehlschrank,kuehl,schrank
 kuenstlerinnengespraech,kuenstlerinnen,gespraech
+kuerbissuppe,kuerbis,suppe
 lebensmittelmarkt,leben,mittel,markt,lebensmittel
 lehrbuch
 luftfeuchtigkeit,luft,feuchtigkeit
