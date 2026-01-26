@@ -19,6 +19,10 @@ abstract class AbstractFastSetDictionaryBuilder implements DictionaryBuilderInte
             file_put_contents($targetDirectory . '/debug.txt', implode("\n", $terms));
         }
 
+        foreach (glob($targetDirectory . '/*.bin') as $file) {
+            unlink($file);
+        }
+
         SetBuilder::buildFromArray($terms, $targetDirectory . '/' . FastSetDictionary::DICTIONARY_FILE_NAME);
     }
 
