@@ -22,7 +22,7 @@ class GermanDecompounderConfiguration extends DefaultConfiguration
 
     public function __construct(
         private TermPool $termPool,
-        private int $minimumDecompositionTermLength
+        int $minimumDecompositionTermLength
     ) {
         parent::__construct($termPool, $minimumDecompositionTermLength, self::INTERFIXES);
     }
