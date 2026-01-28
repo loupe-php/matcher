@@ -10,7 +10,8 @@ class DefaultConfiguration implements ConfigurationInterface
         private readonly TermPool $termPool,
         private readonly int $minimumDecompositionTermLength,
         /**
-         * @var array<string>
+         * The interfix as key and its length as value
+         * @var array<string, int>
          */
         private readonly array $interfixes = [],
     ) {
@@ -29,8 +30,7 @@ class DefaultConfiguration implements ConfigurationInterface
 
         // 2) Try configured interfixes, if we find valid terms for those splits, we return them as candidate,
         // but we add a penalty of 1 (direct hits should be preferred)
-        foreach ($this->interfixes as $interfix) {
-            $length = mb_strlen($interfix);
+        foreach ($this->interfixes as $interfix => $length) {
             if (mb_substr($boundaryContext->term->term, $boundaryContext->splitPos, $length) !== $interfix) {
                 continue;
             }
