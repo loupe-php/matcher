@@ -15,5 +15,5 @@ interface ConfigurationInterface
 
     public function getMinimumDecompositionTermLength(): int;
 
-    public function isValidTerm(string $term): bool;
+    public function getTermPool(): TermPool;
 }
