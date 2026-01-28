@@ -13,9 +13,12 @@ datenbankserver,daten,bank,server,datenbank
 datensicherheit,daten,sicherheit
 donaudampfschifffahrtsgesellschaftskapitaen,donau,dampf,schiff,fahrt,gesell,schaft,kapitaen,schifffahrt,dampfschifffahrtsgesellschaft,schifffahrtsgesellschaft,donaudampfschifffahrtsgesellschaft,gesellschaft
 dorfplatz,dorf,platz
+ehrgefuehl,ehre,gefuehl
 eierbecher,ei,becher
 einkaufsliste,ei,kauf,liste,einkauf
 energieverbrauch,energie,verb,rauch,verbrauch
+erdwaerme,erde,waerme
+farbwelt,farbe,welt
 feierabend,feier,abend
 fensterbank,fenster,bank
 flugzeug,flug,zeug
@@ -47,6 +50,7 @@ luftfeuchtigkeit,luft,feuchtigkeit
 masterstudium,master,studium
 mittagspause,mittag,pause
 mondschein,mond,schein
+muehlwerk,muehle,werk
 muelltrennung,muell,trennung
 netzwerkverbindung,netz,werk,verbindung,netzwerk
 osterfest
@@ -69,6 +73,7 @@ sonnenaufgang,sonne,aufgang
 staatsangehoerigkeit,staat,angehoerigkeit
 stadtverwaltung,stadt,verwaltung
 staubsauger
+stimmtraining,stimme,training
 stromversorgung,strom,versorgung
 studentenausweis,student,ausweis
 teelicht,tee,licht
@@ -80,10 +85,12 @@ wartungsvertrag,wartung,vertrag
 waschmaschine
 wasserflasche,wasser,flasche
 weihnachtsbaum,weihnacht,baum,weihe,nacht
+wettbuero,wette,buero
 wettervorhersage,wetter,vorhersage
 windenergieanlage,wind,energie,anlage,windenergie
 winter
 wissenschaftsverlag,wissen,schaft,verlag,wissenschaft
 wochenende,woche,ende
 zeitungspapier,zeitung,papier
+zellwand,zelle,wand
 zugriffsrecht,zug,riff,zugriff,recht
