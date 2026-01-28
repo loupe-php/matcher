@@ -11,5 +11,8 @@ final class BoundaryCandidate
         public readonly Term $right,
         public readonly int $penalty = 0,
     ) {
+        if (!$this->left->isValid || !$this->right->isValid) {
+            throw new \InvalidArgumentException('Boundary candidate cannot contain invalid terms.');
+        }
     }
 }

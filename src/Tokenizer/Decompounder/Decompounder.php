@@ -6,6 +6,8 @@ namespace Loupe\Matcher\Tokenizer\Decompounder;
 
 class Decompounder
 {
+    public const int COSTLY_PENALTY = 100;
+
     private TermPool $termPool;
 
     public function __construct(
@@ -50,15 +52,11 @@ class Decompounder
             return $leafCache[$term->term];
         }
 
-        $termIsDecomposable = $this->isDecomposable($term, $decomposableCache);
-
-        // If we only want leaves: a valid, non-decomposable term is a leaf.
-        if ($term->isValid && !$this->includeIntermediateTerms && !$termIsDecomposable) {
-            return $leafCache[$term->term] = [$term];
+        if (!$this->isDecomposable($term, $decomposableCache)) {
+            return $leafCache[$term->term] = ($term->isValid ? [$term] : false);
         }
 
-        // If we want intermediate terms: start with the term itself if it is valid.
-        $bestInterfixRemovalCount = null;
+        $bestPenalty = null;
         $bestTerms = [];
 
         foreach ($this->splitCandidates($term) as $candidate) {
@@ -76,12 +74,12 @@ class Decompounder
             [$rightLeaves, $rightPenalty] = $this->collectLeavesOrSelf($right, $leafCache, $decomposableCache);
             $penalty = $leftPenalty + $rightPenalty + $candidate->penalty;
 
-            if ($bestInterfixRemovalCount !== null && $penalty > $bestInterfixRemovalCount) {
+            if ($bestPenalty !== null && $penalty > $bestPenalty) {
                 continue; // This is worse, ignore
             }
 
-            if ($bestInterfixRemovalCount === null || $penalty < $bestInterfixRemovalCount) {
-                $bestInterfixRemovalCount = $penalty;
+            if ($bestPenalty === null || $penalty < $bestPenalty) {
+                $bestPenalty = $penalty;
                 $bestTerms = []; // We found a new best: remove the ones found so far
             }
 
@@ -134,7 +132,7 @@ class Decompounder
 
         if ($result === false) {
             // Only fallback to the term itself if it is valid. Otherwise, make it very costly.
-            return $term->isValid ? [[$term], 0] : [[], 100];
+            return $term->isValid ? [[$term], 0] : [[], self::COSTLY_PENALTY];
         }
 
         return $result;
