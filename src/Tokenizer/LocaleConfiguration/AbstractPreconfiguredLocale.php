@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher\Tokenizer\LocaleConfiguration;
 
-use Loupe\Matcher\Tokenizer\Decompounder\Configuration;
+use Loupe\Matcher\Tokenizer\Decompounder\ConfigurationInterface;
 use Loupe\Matcher\Tokenizer\Decompounder\Decompounder;
 use Loupe\Matcher\Tokenizer\Decompounder\Dictionary\DictionaryInterface;
 use Loupe\Matcher\Tokenizer\Decompounder\Dictionary\FastSetDictionary;
@@ -21,7 +21,7 @@ abstract class AbstractPreconfiguredLocale implements LocaleConfigurationInterfa
 
     public function __construct(bool $keepIntermediateTerms = true)
     {
-        $this->decompounder = new Decompounder($this->getDecompounderConfiguration()->withIntermediateTerms($keepIntermediateTerms));
+        $this->decompounder = new Decompounder($this->getDecompounderConfiguration(), $keepIntermediateTerms);
     }
 
     public function enhanceToken(Token $token): Token
@@ -34,7 +34,7 @@ abstract class AbstractPreconfiguredLocale implements LocaleConfigurationInterfa
         return new Normalizer();
     }
 
-    abstract protected function getDecompounderConfiguration(): Configuration;
+    abstract protected function getDecompounderConfiguration(): ConfigurationInterface;
 
     protected function getFastSetDictionary(): FastSetDictionary
     {
