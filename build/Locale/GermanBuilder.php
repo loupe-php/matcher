@@ -6,7 +6,7 @@ namespace Loupe\Matcher\Build\Locale;
 
 use Loupe\Matcher\Build\DictionaryBuilder\AbstractKaikkiDictionaryBuilder;
 use Loupe\Matcher\Locale;
-use Loupe\Matcher\Tokenizer\LocaleConfiguration\German\GermanDecompounderConfiguration;
+use Loupe\Matcher\Tokenizer\LocaleConfiguration\German;
 use Loupe\Matcher\Tokenizer\LocaleConfiguration\German\GermanNormalizer;
 use Loupe\Matcher\Tokenizer\Normalizer\Normalizer;
 use Loupe\Matcher\Tokenizer\Normalizer\NormalizerInterface;
@@ -39,7 +39,7 @@ class GermanBuilder extends AbstractKaikkiDictionaryBuilder
 
     protected function allowTermPreNormalize(string $term, array $json): bool
     {
-        if (!preg_match('/^[A-ZÄÖÜa-zäöüß]{' . GermanDecompounderConfiguration::MIN_DECOMPOSITION_TERM_LENGTH . ',}$/u', $term)) {
+        if (!preg_match('/^[A-ZÄÖÜa-zäöüß]{' . German::MIN_DECOMPOSITION_TERM_LENGTH . ',}$/u', $term)) {
             return false;
         }
 

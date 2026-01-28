@@ -14,6 +14,8 @@ use Loupe\Matcher\Tokenizer\Normalizer\NormalizerInterface;
 
 class German extends AbstractPreconfiguredLocale
 {
+    public const MIN_DECOMPOSITION_TERM_LENGTH = 4;
+
     private const ALLOW_LIST = [
         'amt' => true,
         'art' => true,
@@ -56,8 +58,14 @@ class German extends AbstractPreconfiguredLocale
     {
         $dictionary = $this->getFastSetDictionary();
         $dictionary = $this->wrapDictionaryWithVariantDictionary($dictionary, new GermanVariantExpander());
-        $termPool = $this->getTermPool($this->getDefaultIsValidClosureForTermPool($dictionary, self::ALLOW_LIST));
+        $termPool = $this->getTermPool(
+            $this->getDefaultIsValidClosureForTermPool(
+                $dictionary,
+                self::MIN_DECOMPOSITION_TERM_LENGTH,
+                self::ALLOW_LIST
+            )
+        );
 
-        return new GermanDecompounderConfiguration($termPool);
+        return new GermanDecompounderConfiguration($termPool, self::MIN_DECOMPOSITION_TERM_LENGTH);
     }
 }

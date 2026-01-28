@@ -28,7 +28,6 @@ final class TermPool
 
         // Cache size restriction disabled
         if ($this->maxCacheEntries <= 0) {
-            // TODO: ALLOW LIST!
             return $this->pool[$term] = new Term($term, mb_strlen($term), $this->isValidClosure->__invoke($term));
         }
 

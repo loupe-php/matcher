@@ -11,13 +11,11 @@ use Loupe\Matcher\Tokenizer\Decompounder\TermPool;
 
 class GermanDecompounderConfiguration extends DefaultConfiguration
 {
-    public const MIN_DECOMPOSITION_TERM_LENGTH = 4;
-
     private const INTERFIXES = ['s', 'es', 'n', 'en', 'er', 'e'];
 
-    public function __construct(TermPool $termPool)
+    public function __construct(TermPool $termPool, int $minimumDecompositionTermLength)
     {
-        parent::__construct($termPool, self::MIN_DECOMPOSITION_TERM_LENGTH, self::INTERFIXES);
+        parent::__construct($termPool, $minimumDecompositionTermLength, self::INTERFIXES);
     }
 
     public function boundaryCandidates(BoundaryContext $boundaryContext): iterable

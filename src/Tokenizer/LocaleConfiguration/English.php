@@ -26,7 +26,10 @@ class English extends AbstractPreconfiguredLocale
     protected function getDecompounderConfiguration(): ConfigurationInterface
     {
         return new DefaultConfiguration(
-            $this->getTermPool($this->getDefaultIsValidClosureForTermPool($this->getFastSetDictionary())),
+            $this->getTermPool($this->getDefaultIsValidClosureForTermPool(
+                $this->getFastSetDictionary(),
+                self::MIN_DECOMPOSITION_TERM_LENGTH,
+            )),
             self::MIN_DECOMPOSITION_TERM_LENGTH,
         );
     }
