@@ -7,6 +7,7 @@ namespace Loupe\Matcher\Tokenizer\LocaleConfiguration;
 use Loupe\Matcher\Locale;
 use Loupe\Matcher\Tokenizer\Decompounder\ConfigurationInterface;
 use Loupe\Matcher\Tokenizer\Decompounder\DefaultConfiguration;
+use Loupe\Matcher\Tokenizer\Decompounder\TermValidator\DefaultTermValidator;
 
 class English extends AbstractPreconfiguredLocale
 {
@@ -26,7 +27,7 @@ class English extends AbstractPreconfiguredLocale
     protected function getDecompounderConfiguration(): ConfigurationInterface
     {
         return new DefaultConfiguration(
-            $this->getTermPool($this->getDefaultIsValidClosureForTermPool(
+            $this->getTermPool(new DefaultTermValidator(
                 $this->getFastSetDictionary(),
                 self::MIN_DECOMPOSITION_TERM_LENGTH,
             )),

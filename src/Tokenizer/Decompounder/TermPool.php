@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher\Tokenizer\Decompounder;
 
+use Loupe\Matcher\Tokenizer\Decompounder\TermValidator\TermValidatorInterface;
+
 final class TermPool
 {
     /**
@@ -14,7 +16,7 @@ final class TermPool
     private int $size = 0;
 
     public function __construct(
-        private readonly \Closure $isValidClosure,
+        private readonly TermValidatorInterface $termValidator,
         private readonly int $maxCacheEntries = 0
     ) {
 
@@ -28,10 +30,10 @@ final class TermPool
 
         // Cache size restriction disabled
         if ($this->maxCacheEntries <= 0) {
-            return $this->pool[$term] = new Term($term, mb_strlen($term), $this->isValidClosure->__invoke($term));
+            return $this->pool[$term] = new Term($term, mb_strlen($term), $this->termValidator->isValid($term));
         }
 
-        $termInstance = new Term($term, mb_strlen($term), $this->isValidClosure->__invoke($term));
+        $termInstance = new Term($term, mb_strlen($term), $this->termValidator->isValid($term));
 
         // If full, evict oldest inserted key (FIFO)
         // I have benched LRU but tracking access performs way worse.

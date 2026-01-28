@@ -6,6 +6,8 @@ namespace Loupe\Matcher\Tests\Tokenizer\Decompounder;
 
 use Loupe\Matcher\Tokenizer\Decompounder\Dictionary\DictionaryInterface;
 use Loupe\Matcher\Tokenizer\Decompounder\TermPool;
+use Loupe\Matcher\Tokenizer\Decompounder\TermValidator\DefaultTermValidator;
+use Loupe\Matcher\Tokenizer\Decompounder\TermValidator\TermValidatorInterface;
 use PHPUnit\Framework\TestCase;
 
 class TermPoolTest extends TestCase
@@ -19,7 +21,7 @@ class TermPoolTest extends TestCase
             ->willReturn(true)
         ;
 
-        $termPool = new TermPool($this->getIsValidClosure($dictionary));
+        $termPool = new TermPool($this->getTermValidator($dictionary));
 
         $this->assertTrue($termPool->term('foo')->isValid);
         $this->assertTrue($termPool->term('foo')->isValid);
@@ -36,7 +38,7 @@ class TermPoolTest extends TestCase
             ->willReturn(true)
         ;
 
-        $termPool = new TermPool($this->getIsValidClosure($dictionary), 2);
+        $termPool = new TermPool($this->getTermValidator($dictionary), 2);
 
         $this->assertTrue($termPool->term('foo')->isValid);
         $this->assertTrue($termPool->term('foo')->isValid);
@@ -50,10 +52,8 @@ class TermPoolTest extends TestCase
         $this->assertTrue($termPool->term('bar')->isValid);
     }
 
-    private function getIsValidClosure(DictionaryInterface $dictionary): \Closure
+    private function getTermValidator(DictionaryInterface $dictionary): TermValidatorInterface
     {
-        return function (string $term) use ($dictionary) {
-            return $dictionary->has($term);
-        };
+        return new DefaultTermValidator($dictionary, 3);
     }
 }
