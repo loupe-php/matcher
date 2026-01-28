@@ -14,6 +14,34 @@ use Loupe\Matcher\Tokenizer\Normalizer\NormalizerInterface;
 
 class German extends AbstractPreconfiguredLocale
 {
+    private const ALLOW_LIST = [
+        'amt' => true,
+        'art' => true,
+        'bad' => true,
+        'bau' => true,
+        'bus' => true,
+        'ehe' => true,
+        'eis' => true,
+        'erz' => true,
+        'fee' => true,
+        'gut' => true,
+        'hof' => true,
+        'hut' => true,
+        'klo' => true,
+        'mut' => true,
+        'rad' => true,
+        'ruf' => true,
+        'see' => true,
+        'tag' => true,
+        'tee' => true,
+        'tal' => true,
+        'tor' => true,
+        'typ' => true,
+        'weg' => true,
+        'zug' => true,
+        'ei' => true,
+    ];
+
     public function getLocale(): Locale
     {
         return Locale::fromString('de');
@@ -28,8 +56,8 @@ class German extends AbstractPreconfiguredLocale
     {
         $dictionary = $this->getFastSetDictionary();
         $dictionary = $this->wrapDictionaryWithVariantDictionary($dictionary, new GermanVariantExpander());
-        $dictionary = $this->wrapDictionaryWithInMemoryCacheDictionary($dictionary);
+        $termPool = $this->getTermPool($this->getDefaultIsValidClosureForTermPool($dictionary, self::ALLOW_LIST));
 
-        return new GermanDecompounderConfiguration($dictionary);
+        return new GermanDecompounderConfiguration($termPool);
     }
 }

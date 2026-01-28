@@ -1,0 +1,52 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Loupe\Matcher\Tokenizer\Decompounder;
+
+final class TermPool
+{
+    /**
+     * @var array<string, Term>
+     */
+    private array $pool = [];
+
+    private int $size = 0;
+
+    public function __construct(
+        private readonly \Closure $isValidClosure,
+        private readonly int $maxCacheEntries = 0
+    ) {
+
+    }
+
+    public function term(string $term): Term
+    {
+        if (isset($this->pool[$term])) {
+            return $this->pool[$term];
+        }
+
+        // Cache size restriction disabled
+        if ($this->maxCacheEntries <= 0) {
+            // TODO: ALLOW LIST!
+            return $this->pool[$term] = new Term($term, mb_strlen($term), $this->isValidClosure->__invoke($term));
+        }
+
+        $termInstance = new Term($term, mb_strlen($term), $this->isValidClosure->__invoke($term));
+
+        // If full, evict oldest inserted key (FIFO)
+        // I have benched LRU but tracking access performs way worse.
+        if ($this->size >= $this->maxCacheEntries) {
+            $first = array_key_first($this->pool);
+            if ($first !== null) {
+                unset($this->pool[$first]);
+                $this->size--;
+            }
+        }
+
+        $this->pool[$term] = $termInstance;
+        $this->size++;
+
+        return $termInstance;
+    }
+}

@@ -4,17 +4,11 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher\Tokenizer\Decompounder;
 
-use Loupe\Matcher\Tokenizer\Decompounder\Dictionary\DictionaryInterface;
-
 class DefaultConfiguration implements ConfigurationInterface
 {
     public function __construct(
-        private readonly DictionaryInterface $dictionary,
+        private readonly TermPool $termPool,
         private readonly int $minimumDecompositionTermLength,
-        /**
-         * @var array<string,bool>
-         */
-        private readonly array $allowList = [],
         /**
          * @var array<string>
          */
@@ -29,7 +23,7 @@ class DefaultConfiguration implements ConfigurationInterface
         $right = $boundaryContext->right;
 
         // 1) If both are valid directly, that's a perfect hit (0 penalty)
-        if ($this->isValidTerm($left) && $this->isValidTerm($right)) {
+        if ($left->isValid && $right->isValid) {
             yield new BoundaryCandidate($left, $right, 0);
         }
 
@@ -37,12 +31,12 @@ class DefaultConfiguration implements ConfigurationInterface
         // but we add a penalty of 1 (direct hits should be preferred)
         foreach ($this->interfixes as $interfix) {
             $length = mb_strlen($interfix);
-            if (mb_substr($boundaryContext->term, $boundaryContext->splitPos, $length) !== $interfix) {
+            if (mb_substr($boundaryContext->term->term, $boundaryContext->splitPos, $length) !== $interfix) {
                 continue;
             }
 
-            $rightAfter = mb_substr($boundaryContext->term, $boundaryContext->splitPos + $length);
-            if ($this->isValidTerm($left) && $this->isValidTerm($rightAfter)) {
+            $rightAfter = $this->getTermPool()->term(mb_substr($boundaryContext->term->term, $boundaryContext->splitPos + $length));
+            if ($left->isValid && $rightAfter->isValid) {
                 yield new BoundaryCandidate($left, $rightAfter, 1);
             }
         }
@@ -53,14 +47,8 @@ class DefaultConfiguration implements ConfigurationInterface
         return $this->minimumDecompositionTermLength;
     }
 
-    public function isValidTerm(string $term): bool
+    public function getTermPool(): TermPool
     {
-        $minLength = $this->getMinimumDecompositionTermLength();
-
-        if (mb_strlen($term) < $minLength) {
-            return isset($this->allowList[$term]);
-        }
-
-        return $this->dictionary->has($term);
+        return $this->termPool;
     }
 }

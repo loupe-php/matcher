@@ -7,10 +7,10 @@ namespace Loupe\Matcher\Tokenizer\Decompounder;
 final class BoundaryContext
 {
     public function __construct(
-        public readonly string $term,
+        public readonly Term $term,
         public readonly int $splitPos,
-        public readonly string $left,
-        public readonly string $right,
+        public readonly Term $left,
+        public readonly Term $right,
     ) {
     }
 }

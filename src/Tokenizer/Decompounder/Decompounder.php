@@ -6,10 +6,13 @@ namespace Loupe\Matcher\Tokenizer\Decompounder;
 
 class Decompounder
 {
+    private TermPool $termPool;
+
     public function __construct(
         private ConfigurationInterface $configuration,
         private bool $includeIntermediateTerms
     ) {
+        $this->termPool = $this->configuration->getTermPool();
     }
 
     /**
@@ -17,10 +20,10 @@ class Decompounder
      * and never returns the term itself.
      * @return array<string>
      */
-    public function decompoundTerm(string $term, int|null $termLength = null): array
+    public function decompoundTerm(string $term): array
     {
-        $termLength = $termLength ?? mb_strlen($term);
-        if ($termLength <= $this->configuration->getMinimumDecompositionTermLength()) {
+        $term = $this->termPool->term($term);
+        if ($term->length <= $this->configuration->getMinimumDecompositionTermLength()) {
             return [];
         }
 
@@ -36,23 +39,22 @@ class Decompounder
      * Collect unique leaf terms for given term.
      * Returns false if the term cannot be fully decomposed into dictionary-valid (or allow listed) leaves.
      *
-     * @param array<string, array<string>|false> $leafCache
+     * @param array<string, array<Term>|false> $leafCache
      * @param array<string, bool> $decomposableCache
      *
-     * @return array<string>|false
+     * @return array<Term>|false
      */
-    private function collectLeafTerms(string $term, array &$leafCache, array &$decomposableCache): array|false
+    private function collectLeafTerms(Term $term, array &$leafCache, array &$decomposableCache): array|false
     {
-        if (isset($leafCache[$term])) {
-            return $leafCache[$term];
+        if (isset($leafCache[$term->term])) {
+            return $leafCache[$term->term];
         }
 
-        $termIsValid = $this->configuration->isValidTerm($term);
         $termIsDecomposable = $this->isDecomposable($term, $decomposableCache);
 
         // If we only want leaves: a valid, non-decomposable term is a leaf.
-        if ($termIsValid && !$this->includeIntermediateTerms && !$termIsDecomposable) {
-            return $leafCache[$term] = [$term];
+        if ($term->isValid && !$this->includeIntermediateTerms && !$termIsDecomposable) {
+            return $leafCache[$term->term] = [$term];
         }
 
         // If we want intermediate terms: start with the term itself if it is valid.
@@ -84,32 +86,32 @@ class Decompounder
             }
 
             foreach ($leftLeaves as $leafTerm) {
-                $bestTerms[$leafTerm] = true;
+                $bestTerms[$leafTerm->term] = $leafTerm;
             }
             foreach ($rightLeaves as $leafTerm) {
-                $bestTerms[$leafTerm] = true;
+                $bestTerms[$leafTerm->term] = $leafTerm;
             }
 
             // If configured, keep intermediate dictionary-valid terms that are part of the chosen decomposition tree.
             if ($this->includeIntermediateTerms) {
-                $bestTerms[$left] = true;
-                $bestTerms[$right] = true;
+                $bestTerms[$left->term] = $left;
+                $bestTerms[$right->term] = $right;
             }
         }
 
         if ($bestTerms === []) {
-            return $leafCache[$term] = false;
+            return $leafCache[$term->term] = false;
         }
 
-        return $leafCache[$term] = array_keys($bestTerms);
+        return $leafCache[$term->term] = array_values($bestTerms);
     }
 
     /**
-     * @param array<string, array<string>|false> $leafCache
+     * @param array<string, array<Term>|false> $leafCache
      * @param array<string, bool> $decomposableCache
-     * @return array{0:array<string>,1:int}|false
+     * @return array{0:array<Term>,1:int}|false
      */
-    private function collectLeafTermsWithPenalty(string $term, array &$leafCache, array &$decomposableCache): array|false
+    private function collectLeafTermsWithPenalty(Term $term, array &$leafCache, array &$decomposableCache): array|false
     {
         $leaves = $this->collectLeafTerms($term, $leafCache, $decomposableCache);
         if ($leaves === false) {
@@ -121,24 +123,24 @@ class Decompounder
     }
 
     /**
-     * @param array<string, array<string>|false> $leafCache
+     * @param array<string, array<Term>|false> $leafCache
      * @param array<string, bool> $decomposableCache
      *
-     * @return array{0:array<string>,1:int} A tuple of (leaf terms, penalty)
+     * @return array{0:array<Term>,1:int} A tuple of (leaf terms, penalty)
      */
-    private function collectLeavesOrSelf(string $term, array &$leafCache, array &$decomposableCache): array
+    private function collectLeavesOrSelf(Term $term, array &$leafCache, array &$decomposableCache): array
     {
         $result = $this->collectLeafTermsWithPenalty($term, $leafCache, $decomposableCache);
 
         if ($result === false) {
             // Only fallback to the term itself if it is valid. Otherwise, make it very costly.
-            return $this->configuration->isValidTerm($term) ? [[$term], 0] : [[], 100];
+            return $term->isValid ? [[$term], 0] : [[], 100];
         }
 
         return $result;
     }
 
-    private function hasAnySplitCandidate(string $term): bool
+    private function hasAnySplitCandidate(Term $term): bool
     {
         foreach ($this->splitCandidates($term) as $_) {
             return true;
@@ -150,47 +152,58 @@ class Decompounder
     /**
      * @param array<string, bool> $decomposableCache
      */
-    private function isDecomposable(string $term, array &$decomposableCache): bool
+    private function isDecomposable(Term $term, array &$decomposableCache): bool
     {
-        if (isset($decomposableCache[$term])) {
-            return $decomposableCache[$term];
+        if (isset($decomposableCache[$term->term])) {
+            return $decomposableCache[$term->term];
         }
 
-        return $decomposableCache[$term] = $this->hasAnySplitCandidate($term);
+        return $decomposableCache[$term->term] = $this->hasAnySplitCandidate($term);
     }
 
     /**
      * @return array<string>
      */
-    private function split(string $term): array
+    private function split(Term $term): array
     {
         $leafCache = [];
         $decomposableCache = [];
+        $result = [];
+        $leaves = $this->collectLeafTerms($term, $leafCache, $decomposableCache);
 
-        $result = $this->collectLeafTerms($term, $leafCache, $decomposableCache);
+        if ($leaves === false) {
+            return $result;
+        }
+
+        foreach ($leaves as $leaf) {
+            $result[] = $leaf->term;
+        }
 
         // Ignore ourselves
-        if ([$term] === $result) {
+        if ([$term->term] === $result) {
             return [];
         }
 
-        return $result === false ? [] : $result;
+        return $result;
     }
 
     /**
      * @return iterable<BoundaryCandidate>
      */
-    private function splitCandidates(string $term): iterable
+    private function splitCandidates(Term $term): iterable
     {
-        $termLength = mb_strlen($term);
-
-        if ($termLength < 2) {
+        if ($term->length < 2) {
             return;
         }
 
-        for ($i = 1; $i <= $termLength - 1; $i++) {
+        for ($i = 1; $i <= $term->length - 1; $i++) {
             yield from $this->configuration->boundaryCandidates(
-                new BoundaryContext($term, $i, mb_substr($term, 0, $i), mb_substr($term, $i))
+                new BoundaryContext(
+                    $term,
+                    $i,
+                    $this->termPool->term(mb_substr($term->term, 0, $i)),
+                    $this->termPool->term(mb_substr($term->term, $i)),
+                )
             );
         }
     }
