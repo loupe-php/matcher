@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace Loupe\Matcher\Tokenizer\LocaleConfiguration;
 
 use Loupe\Matcher\Locale;
-use Loupe\Matcher\Tokenizer\Decompounder\Configuration;
+use Loupe\Matcher\Tokenizer\Decompounder\ConfigurationInterface;
+use Loupe\Matcher\Tokenizer\Decompounder\DefaultConfiguration;
 
 class English extends AbstractPreconfiguredLocale
 {
@@ -22,9 +23,9 @@ class English extends AbstractPreconfiguredLocale
         return Locale::fromString('en');
     }
 
-    protected function getDecompounderConfiguration(): Configuration
+    protected function getDecompounderConfiguration(): ConfigurationInterface
     {
-        return new Configuration(
+        return new DefaultConfiguration(
             $this->wrapDictionaryWithInMemoryCacheDictionary($this->getFastSetDictionary()),
             self::MIN_DECOMPOSITION_TERM_LENGTH,
         );

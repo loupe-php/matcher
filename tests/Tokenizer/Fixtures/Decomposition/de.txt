@@ -27,7 +27,7 @@ handtasche,hand,tasche
 hausboot,haus,boot
 haushaltsgeraet,haus,halt,geraet,haushalt
 herbst
-hochschulbibliothek,hoch,schulbibliothek
+hochschulbibliothek,hoch,schulbibliothek,schule,bibliothek
 hotelzimmer,hotel,zimmer
 internetanschluss,internet,anschluss
 jahresabschluss,jahr,abschluss
@@ -42,7 +42,7 @@ kuehlschrank,kuehl,schrank
 kuenstlerinnengespraech,kuenstlerinnen,gespraech
 kuerbissuppe,kuerbis,suppe
 lebensmittelmarkt,leben,mittel,markt,lebensmittel
-lehrbuch
+lehrbuch,lehre,buch
 luftfeuchtigkeit,luft,feuchtigkeit
 masterstudium,master,studium
 mittagspause,mittag,pause
@@ -60,7 +60,7 @@ reisebuero,reise,buero
 restaurantbesuch,restaurant,besuch
 schneefall,schnee,fall
 schreibtisch
-schulhof
+schulhof,schule,hof
 silvesterfeuerwerk,silvester,feuer,werk,feuerwerk
 softwareentwicklung,software,entwicklung
 solarpanel,solar,panel
@@ -79,7 +79,7 @@ vorlesungsverzeichnis,vorlesung,verzeichnis
 wartungsvertrag,wartung,vertrag
 waschmaschine
 wasserflasche,wasser,flasche
-weihnachtsbaum,weihnacht,baum
+weihnachtsbaum,weihnacht,baum,weihe,nacht
 wettervorhersage,wetter,vorhersage
 windenergieanlage,wind,energie,anlage,windenergie
 winter
