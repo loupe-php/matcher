@@ -39,11 +39,9 @@ abstract class AbstractPreconfiguredLocale implements LocaleConfigurationInterfa
     /**
      * @param array<string,bool> $allowList
      */
-    protected function getDefaultIsValidClosureForTermPool(DictionaryInterface $dictionary, array $allowList = []): \Closure
+    protected function getDefaultIsValidClosureForTermPool(DictionaryInterface $dictionary, int $minLength, array $allowList = []): \Closure
     {
-        return function (string $term) use ($dictionary, $allowList): bool {
-            $minLength = $this->getDecompounderConfiguration()->getMinimumDecompositionTermLength();
-
+        return static function (string $term) use ($dictionary, $allowList, $minLength): bool {
             if (mb_strlen($term) < $minLength) {
                 return isset($allowList[$term]);
             }
