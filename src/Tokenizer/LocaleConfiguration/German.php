@@ -6,6 +6,7 @@ namespace Loupe\Matcher\Tokenizer\LocaleConfiguration;
 
 use Loupe\Matcher\Locale;
 use Loupe\Matcher\Tokenizer\Decompounder\ConfigurationInterface;
+use Loupe\Matcher\Tokenizer\Decompounder\TermValidator\DefaultTermValidator;
 use Loupe\Matcher\Tokenizer\LocaleConfiguration\German\GermanDecompounderConfiguration;
 use Loupe\Matcher\Tokenizer\LocaleConfiguration\German\GermanNormalizer;
 use Loupe\Matcher\Tokenizer\LocaleConfiguration\German\GermanVariantExpander;
@@ -59,7 +60,7 @@ class German extends AbstractPreconfiguredLocale
         $dictionary = $this->getFastSetDictionary();
         $dictionary = $this->wrapDictionaryWithVariantDictionary($dictionary, new GermanVariantExpander());
         $termPool = $this->getTermPool(
-            $this->getDefaultIsValidClosureForTermPool(
+            new DefaultTermValidator(
                 $dictionary,
                 self::MIN_DECOMPOSITION_TERM_LENGTH,
                 self::ALLOW_LIST
