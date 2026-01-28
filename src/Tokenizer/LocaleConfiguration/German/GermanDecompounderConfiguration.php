@@ -11,10 +11,19 @@ use Loupe\Matcher\Tokenizer\Decompounder\TermPool;
 
 class GermanDecompounderConfiguration extends DefaultConfiguration
 {
-    private const INTERFIXES = ['s', 'es', 'n', 'en', 'er', 'e'];
+    private const INTERFIXES = [
+        's' => 1,
+        'es' => 2,
+        'n' => 1,
+        'en' => 2,
+        'er' => 2,
+        'e' => 1,
+    ];
 
-    public function __construct(TermPool $termPool, int $minimumDecompositionTermLength)
-    {
+    public function __construct(
+        private TermPool $termPool,
+        private int $minimumDecompositionTermLength
+    ) {
         parent::__construct($termPool, $minimumDecompositionTermLength, self::INTERFIXES);
     }
 
@@ -29,10 +38,19 @@ class GermanDecompounderConfiguration extends DefaultConfiguration
         // e.g. "Schulhof" which is "Schule" and "Hof". So we try that and if it's a valid term, we
         // add that as a candidate as well with a penalty of 1
         if ($right->isValid && !$left->isValid) {
-            $left = $this->getTermPool()->term($left->term . 'e');
-            if ($left->isValid) {
-                yield new BoundaryCandidate($left, $right, 1);
+
+            // Performance optimization:
+            // The ones that already end on "e" are certainly no candidates
+            if (str_ends_with($left->term, 'e')) {
+                return;
             }
+
+            $left = $this->termPool->term($left->term . 'e');
+            if (!$left->isValid) {
+                return;
+            }
+
+            yield new BoundaryCandidate($left, $right, 1);
         }
     }
 }
