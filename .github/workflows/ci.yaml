@@ -53,7 +53,7 @@ jobs:
             fail-fast: false
             matrix:
                 sqlite: ['3.16.0', 'default']
-                php: ['8.1', '8.2', '8.3', '8.4']
+                php: ['8.3', '8.4', '8.5'] # Only test supported versions
                 composer: ['--prefer-stable', '--prefer-lowest']
         steps:
             - name: Setup PHP

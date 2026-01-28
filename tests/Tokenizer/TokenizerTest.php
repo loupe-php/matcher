@@ -4,11 +4,39 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher\Tests\Tokenizer;
 
+use Loupe\Matcher\Locale;
+use Loupe\Matcher\Tokenizer\LocaleConfiguration\German;
 use Loupe\Matcher\Tokenizer\Tokenizer;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 
 class TokenizerTest extends TestCase
 {
+    #[TestWith(['de'])]
+    #[TestWith(['en'])]
+    public function testDecomposition(string $locale): void
+    {
+        $tokenizer = Tokenizer::createFromPreconfiguredLocaleConfiguration(Locale::fromString($locale));
+        $fixture = (string) file_get_contents(__DIR__ . '/Fixtures/Decomposition/' . $locale . '.txt');
+        $tests = [];
+        foreach (array_filter(explode("\n", $fixture)) as $line) {
+            if (!str_starts_with($line, '#')) {
+                $tests[] = $line;
+            }
+        }
+
+        foreach ($tests as $test) {
+            $terms = explode(',', $test);
+            $compound = $terms[0];
+            $withVariants = $tokenizer->tokenize($compound)->allTermsWithVariants();
+
+            sort($terms, SORT_STRING);
+            sort($withVariants, SORT_STRING);
+
+            $this->assertSame($terms, $withVariants);
+        }
+    }
+
     public function testGermanEszettNormalization(): void
     {
         $tokenizer = new Tokenizer();
@@ -40,10 +68,25 @@ class TokenizerTest extends TestCase
             ->allTermsWithVariants());
     }
 
+    public function testKeepIntermediateTerms(): void
+    {
+        $keep = new Tokenizer(new German());
+        $ignore = new Tokenizer(new German(false));
+
+        $keepResult = $keep->tokenize('silvesterfeuerwerk')->allTermsWithVariants();
+        $ignoreResult = $ignore->tokenize('silvesterfeuerwerk')->allTermsWithVariants();
+
+        sort($keepResult, SORT_STRING);
+        sort($ignoreResult, SORT_STRING);
+
+        $this->assertSame(['feuer', 'feuerwerk', 'silvester', 'silvesterfeuerwerk', 'werk'], $keepResult);
+        $this->assertSame(['feuer', 'silvester', 'silvesterfeuerwerk', 'werk'], $ignoreResult);
+    }
+
     public function testMaximumTokens(): void
     {
         $tokenizer = new Tokenizer();
-        $tokens = $tokenizer->tokenize('Hallo, mein Name ist Hase und ich weiß von nichts.', 5);
+        $tokens = $tokenizer->tokenize('Hallo, mein Name ist Hase und ich weiß von nichts.', true, 5);
 
         $this->assertSame(5, $tokens->count());
 
@@ -53,7 +96,7 @@ class TokenizerTest extends TestCase
             'name',
             'ist',
             'hase',
-        ], $tokenizer->tokenize('Hallo, mein Name ist Hase und ich weiß von nichts.', 5)
+        ], $tokenizer->tokenize('Hallo, mein Name ist Hase und ich weiß von nichts.', true, 5)
             ->allTermsWithVariants());
     }
 

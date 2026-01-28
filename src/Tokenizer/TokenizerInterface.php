@@ -8,5 +8,5 @@ interface TokenizerInterface
 {
     public function matches(Token $token, TokenCollection $tokens): bool;
 
-    public function tokenize(string $string, ?int $maxTokens = null): TokenCollection;
+    public function tokenize(string $string, bool $withVariants = true, ?int $maxTokens = null): TokenCollection;
 }
