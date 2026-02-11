@@ -19,8 +19,9 @@ class Token
         private int $startPosition,
         private bool $isPartOfPhrase,
         private bool $isNegated,
+        ?int $originalLength = null,
     ) {
-        $this->length = mb_strlen($this->term, 'UTF-8');
+        $this->length = $originalLength ?? mb_strlen($this->term, 'UTF-8');
     }
 
     /**

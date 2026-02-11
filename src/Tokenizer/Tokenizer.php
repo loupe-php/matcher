@@ -94,6 +94,7 @@ class Tokenizer implements TokenizerInterface
                 break;
             }
 
+            $originalLength = mb_strlen($term, 'UTF-8');
             $term = $this->normalizer->normalize($term);
 
             $token = new Token(
@@ -102,6 +103,7 @@ class Tokenizer implements TokenizerInterface
                 $position,
                 $phrase,
                 $negated,
+                $originalLength,
             );
 
             if ($withVariants && $this->localeConfiguration !== null) {
