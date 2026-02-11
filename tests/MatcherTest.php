@@ -130,4 +130,19 @@ final class MatcherTest extends TestCase
         $words = array_map(fn ($t) => $t->getTerm(), $matches->all());
         $this->assertEquals(['kuenstlerinnengespraech', 'silvesternacht'], $words);
     }
+
+    public function testNormalizationKeepsCorrectPositions(): void
+    {
+        $text = 'Das große Künstlerinnengespräch war für die Silvesternacht geplant';
+        $query = 'gespräch nacht';
+
+        $tokenizer = new Tokenizer(new German());
+        $matcher = new Matcher($tokenizer);
+        $matches = $matcher->calculateMatches($text, $query);
+        $spans = $matcher->calculateMatchSpans($text, $query, $matches);
+
+        $this->assertEquals(2, \count($matches->all()));
+        $this->assertSame([10, 31], [$spans[0]->getStartPosition(), $spans[0]->getEndPosition()]);
+        $this->assertSame([44, 58], [$spans[1]->getStartPosition(), $spans[1]->getEndPosition()]);
+    }
 }
