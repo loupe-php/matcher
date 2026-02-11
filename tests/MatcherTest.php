@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Loupe\Matcher\Tests;
 
 use Loupe\Matcher\Matcher;
+use Loupe\Matcher\Tokenizer\LocaleConfiguration\German;
 use Loupe\Matcher\Tokenizer\TokenCollection;
 use Loupe\Matcher\Tokenizer\Tokenizer;
 use PHPUnit\Framework\TestCase;
@@ -110,5 +111,23 @@ final class MatcherTest extends TestCase
         $words = array_map(fn ($t) => $t->getTerm(), $matches->all());
 
         $this->assertNotContains('the', $words);
+    }
+
+    public function testDecompositionKeepsCorrectPositions(): void
+    {
+        $text = 'das grosse kuenstlerinnengespraech war fuer die silvesternacht geplant';
+        $query = 'gespraech nacht';
+
+        $tokenizer = new Tokenizer(new German());
+        $matcher = new Matcher($tokenizer);
+        $matches = $matcher->calculateMatches($text, $query);
+        $spans = $matcher->calculateMatchSpans($text, $query, $matches);
+
+        $this->assertEquals(2, \count($matches->all()));
+        $this->assertSame([11, 34], [$spans[0]->getStartPosition(), $spans[0]->getEndPosition()]);
+        $this->assertSame([48, 62], [$spans[1]->getStartPosition(), $spans[1]->getEndPosition()]);
+
+        $words = array_map(fn ($t) => $t->getTerm(), $matches->all());
+        $this->assertEquals(['kuenstlerinnengespraech', 'silvesternacht'], $words);
     }
 }
