@@ -78,10 +78,10 @@ class Matcher
 
             if ($currentSpan) {
                 // Extend the current span
-                $currentSpan = $currentSpan->withEndPosition($textToken->getEndPosition());
+                $currentSpan = $currentSpan->withEndPosition($textToken->getOriginalEndPosition());
             } else {
                 // Start a new span
-                $currentSpan = new Span($textToken->getStartPosition(), $textToken->getEndPosition());
+                $currentSpan = new Span($textToken->getOriginalStartPosition(), $textToken->getOriginalEndPosition());
             }
         }
 
