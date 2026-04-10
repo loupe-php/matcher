@@ -8,6 +8,8 @@ class Token
 {
     private int $length;
 
+    private int $originalLength;
+
     /**
      * @var array<string>
      */
@@ -21,7 +23,8 @@ class Token
         private bool $isNegated,
         ?int $originalLength = null,
     ) {
-        $this->length = $originalLength ?? mb_strlen($this->term, 'UTF-8');
+        $this->length = mb_strlen($this->term, 'UTF-8');
+        $this->originalLength = $originalLength ?? $this->length;
     }
 
     /**
@@ -56,6 +59,11 @@ class Token
     public function getLength(): int
     {
         return $this->length;
+    }
+
+    public function getOriginalLength(): int
+    {
+        return $this->originalLength;
     }
 
     public function getStartPosition(): int
