@@ -30,7 +30,7 @@
         "ext-intl": "*",
         "ext-mbstring": "*",
         "ext-zlib": "*",
-        "toflar/fast-set": "dev-main"
+        "toflar/fast-set": "^1.0"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.0",
