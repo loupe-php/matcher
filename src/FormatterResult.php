@@ -31,8 +31,8 @@ class FormatterResult
     public function getMatchesArray(): array
     {
         return array_map(fn (Token $token) => [
-            'start' => $token->getStartPosition(),
-            'length' => $token->getLength(),
+            'start' => $token->getOriginalStartPosition(),
+            'length' => $token->getOriginalLength(),
         ], $this->matches->all());
     }
 

@@ -39,6 +39,7 @@ class Tokenizer implements TokenizerInterface
         $tokens = new TokenCollection();
         $id = 0;
         $position = 0;
+        $originalPosition = 0;
         $phrase = false;
         $negated = false;
         $whitespace = true;
@@ -64,8 +65,11 @@ class Tokenizer implements TokenizerInterface
             $word = $this->isWord($status);
             $whitespace = $this->isWhitespace($status, $term);
 
+            $originalLength = mb_strlen($term, 'UTF-8');
+
             if (!$word) {
-                $position += mb_strlen($term, 'UTF-8');
+                $position += $originalLength;
+                $originalPosition += $originalLength;
                 continue;
             }
 
@@ -90,9 +94,12 @@ class Tokenizer implements TokenizerInterface
                 $position,
                 $phrase,
                 $negated,
+                $originalPosition,
+                $originalLength,
             );
 
             $position += $token->getLength();
+            $originalPosition += $originalLength;
             $tokens->add($token);
         }
 

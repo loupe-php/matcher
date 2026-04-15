@@ -41,6 +41,21 @@ final class MatcherTest extends TestCase
         $this->assertCount(0, $result->all());
     }
 
+    public function testNormalizationKeepsCorrectPositions(): void
+    {
+        $text = 'Das größte Gespräch war für die längste Nacht geplant';
+        $query = 'Gespräch Nacht';
+
+        $tokenizer = new Tokenizer('de');
+        $matcher = new Matcher($tokenizer);
+        $matches = $matcher->calculateMatches($text, $query);
+        $spans = $matcher->calculateMatchSpans($text, $query, $matches);
+
+        $this->assertEquals(2, \count($matches->all()));
+        $this->assertSame([11, 19], [$spans[0]->getStartPosition(), $spans[0]->getEndPosition()]);
+        $this->assertSame([40, 45], [$spans[1]->getStartPosition(), $spans[1]->getEndPosition()]);
+    }
+
     public function testSimpleMatch(): void
     {
         $text = 'The quick brown fox jumps over the lazy dog';

@@ -12,6 +12,8 @@ class TokenizerTest extends TestCase
     public function testGermanEszettNormalization(): void
     {
         $tokenizer = new Tokenizer();
+        $tokens = $tokenizer->tokenize('Die Straße ist neben dem größeren Gebäude.');
+
         // ß should normalize to ss
         $this->assertSame([
             'die',
@@ -21,8 +23,7 @@ class TokenizerTest extends TestCase
             'dem',
             'grosseren',
             'gebaude',
-        ], $tokenizer->tokenize('Die Straße ist neben dem größeren Gebäude.')
-            ->allTermsWithVariants());
+        ], $tokens->allTermsWithVariants());
     }
 
     public function testIcelandicSpecialCharacters(): void
@@ -166,6 +167,29 @@ class TokenizerTest extends TestCase
             'hase',
             'ich',
         ], $tokens->allNegatedTermsWithVariants());
+    }
+
+    public function testOriginalTermPositionAndLength(): void
+    {
+        $tokenizer = new Tokenizer();
+        $tokens = $tokenizer->tokenize('Die größere Straße ist lang.');
+
+        $this->assertSame([
+            'die',
+            'grossere',
+            'strasse',
+            'ist',
+            'lang',
+        ], $tokens->allTermsWithVariants());
+
+        // The original term length should be remembered even after normalization
+        $this->assertSame(13, $tokens->all()[2]->getStartPosition());
+        $this->assertSame(7, $tokens->all()[2]->getLength());
+        $this->assertSame(20, $tokens->all()[2]->getEndPosition());
+
+        $this->assertSame(12, $tokens->all()[2]->getOriginalStartPosition());
+        $this->assertSame(6, $tokens->all()[2]->getOriginalLength());
+        $this->assertSame(18, $tokens->all()[2]->getOriginalEndPosition());
     }
 
     public function testPolishLNormalization(): void

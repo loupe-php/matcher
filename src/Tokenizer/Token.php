@@ -8,6 +8,10 @@ class Token
 {
     private int $length;
 
+    private int $originalLength;
+
+    private int $originalStartPosition;
+
     /**
      * @var array<string>
      */
@@ -19,8 +23,12 @@ class Token
         private int $startPosition,
         private bool $isPartOfPhrase,
         private bool $isNegated,
+        ?int $originalStartPosition = null,
+        ?int $originalLength = null,
     ) {
         $this->length = mb_strlen($this->term, 'UTF-8');
+        $this->originalLength = $originalLength ?? $this->length;
+        $this->originalStartPosition = $originalStartPosition ?? $this->startPosition;
     }
 
     /**
@@ -55,6 +63,21 @@ class Token
     public function getLength(): int
     {
         return $this->length;
+    }
+
+    public function getOriginalEndPosition(): int
+    {
+        return $this->originalStartPosition + $this->originalLength;
+    }
+
+    public function getOriginalLength(): int
+    {
+        return $this->originalLength;
+    }
+
+    public function getOriginalStartPosition(): int
+    {
+        return $this->originalStartPosition;
     }
 
     public function getStartPosition(): int
