@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher\Tests;
 
+use Loupe\Matcher\Locale;
 use Loupe\Matcher\Matcher;
 use Loupe\Matcher\Tokenizer\TokenCollection;
 use Loupe\Matcher\Tokenizer\Tokenizer;
@@ -46,7 +47,7 @@ final class MatcherTest extends TestCase
         $text = 'Das größte Gespräch war für die längste Nacht geplant';
         $query = 'Gespräch Nacht';
 
-        $tokenizer = new Tokenizer('de');
+        $tokenizer = Tokenizer::createFromPreconfiguredLocaleConfiguration(Locale::fromString('de'));
         $matcher = new Matcher($tokenizer);
         $matches = $matcher->calculateMatches($text, $query);
         $spans = $matcher->calculateMatchSpans($text, $query, $matches);
