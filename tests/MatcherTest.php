@@ -35,6 +35,21 @@ final class MatcherTest extends TestCase
         $this->assertSame(15, $spans[0]->getLength());
     }
 
+    public function testDecompositionKeepsCorrectPositions(): void
+    {
+        $text = 'Die Spaßkanone sorgte für großartige Stimmungssteigerung';
+        $query = 'kanone steigerung';
+
+        $tokenizer = Tokenizer::createFromPreconfiguredLocaleConfiguration(Locale::fromString('de'));
+        $matcher = new Matcher($tokenizer);
+        $matches = $matcher->calculateMatches($text, $query);
+        $spans = $matcher->calculateMatchSpans($text, $query, $matches);
+
+        $this->assertEquals(2, \count($matches->all()));
+        $this->assertSame([4, 14], [$spans[0]->getStartPosition(), $spans[0]->getEndPosition()]);
+        $this->assertSame([37, 56], [$spans[1]->getStartPosition(), $spans[1]->getEndPosition()]);
+    }
+
     public function testEmptyTextReturnsEmptyCollection(): void
     {
         $result = $this->matcher->calculateMatches('', 'query');
