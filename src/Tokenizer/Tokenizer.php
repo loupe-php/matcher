@@ -66,6 +66,7 @@ class Tokenizer implements TokenizerInterface
             $whitespace = $this->isWhitespace($status, $term);
 
             $originalLength = mb_strlen($term, 'UTF-8');
+            $originalTerm = $term;
 
             if (!$word) {
                 $position += $originalLength;
@@ -87,6 +88,7 @@ class Tokenizer implements TokenizerInterface
             $term = (string) preg_replace('/\p{Mn}+/u', '', $term);
             // Lowercase
             $term = mb_strtolower($term, 'UTF-8');
+            $wasFolded = mb_strtolower($originalTerm, 'UTF-8') !== $term;
 
             $token = new Token(
                 $id++,
@@ -94,6 +96,7 @@ class Tokenizer implements TokenizerInterface
                 $position,
                 $phrase,
                 $negated,
+                $wasFolded,
                 $originalPosition,
                 $originalLength,
             );
