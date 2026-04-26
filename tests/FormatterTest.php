@@ -51,7 +51,7 @@ class FormatterTest extends TestCase
         yield 'Cropping with less context and change' => [
             'taken',
             'A wonderful serenity has taken possession of my entire soul, like these sweet mornings have taken all spring.',
-            '…serenity has taken possession…mornings have taken all spring…',
+            '…serenity has taken possession…',
             true,
             25,
         ];
@@ -66,14 +66,14 @@ class FormatterTest extends TestCase
         yield 'Cropping around repeating term' => [
             'soul',
             'A wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole soul. I am alone, and feel the charm of existence in this spot, which was created for the bliss of a soul like mine.',
-            '…serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole soul. I am alone, and feel the charm of existence…which was created for the bliss of a soul like mine.',
+            '…serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole soul. I am alone, and feel the charm of existence…',
             true,
         ];
 
         yield 'Cropping around multiple terms' => [
             'soul bliss',
             'A wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole being. I am alone, and feel the charm of existence in this spot, which was created for the bliss of a heart like mine.',
-            '…serenity has taken possession of my entire soul, like these sweet mornings of spring…this spot, which was created for the bliss of a heart like mine.',
+            '…serenity has taken possession of my entire soul, like these sweet mornings of spring…',
             true,
         ];
 
@@ -94,7 +94,7 @@ class FormatterTest extends TestCase
         yield 'Cropping with custom length' => [
             'whole entire',
             'Wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole panorama.',
-            '…my entire soul…with my whole pano…',
+            '…my entire soul…',
             true,
             15,
         ];
@@ -102,10 +102,18 @@ class FormatterTest extends TestCase
         yield 'Cropping with custom marker' => [
             'whole entire',
             'Wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole panorama.',
-            ' --- possession of my entire soul, like --- enjoy with my whole panorama.',
+            ' --- possession of my entire soul, like --- ',
             true,
             25,
             ' --- ',
+        ];
+
+        yield 'Cropping with many distant matches stays bounded' => [
+            'needle',
+            trim(str_repeat('prefix filler filler filler filler filler needle suffix filler filler filler filler filler ', 20)),
+            '…filler filler needle suffix filler…',
+            true,
+            25,
         ];
     }
 
@@ -281,7 +289,7 @@ class FormatterTest extends TestCase
         $formatter = new Formatter($this->matcher);
         $result = $formatter->format('This is a test string and we use it to test the cropping and highlighting features combined.', $this->queryTerms, $options);
 
-        $this->assertSame('…his is a [test] string and…use it to [test] the cropping…', $result->getFormattedText());
+        $this->assertSame('…his is a [test] string and…', $result->getFormattedText());
 
     }
 

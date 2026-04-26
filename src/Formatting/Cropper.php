@@ -82,9 +82,24 @@ class Cropper implements Transformer
             $spans[] = $span;
         }
 
+        if ($spans === []) {
+            return $text;
+        }
+
+        $croppedSpans = [];
+        $remainingLength = $this->cropLength;
+        foreach ($spans as $span) {
+            if ($croppedSpans !== [] && $remainingLength <= 0) {
+                break;
+            }
+
+            $croppedSpans[] = $span;
+            $remainingLength -= $span->getLength();
+        }
+
         // Put back together and add crop markers
         $result = '';
-        foreach ($spans as $span) {
+        foreach ($croppedSpans as $span) {
             if ($span->getStartPosition() > 0) {
                 $result .= $this->cropMarker;
             }

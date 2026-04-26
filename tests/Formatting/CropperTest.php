@@ -19,7 +19,7 @@ class CropperTest extends TestCase
 
         yield 'Cropping with less context and change' => [
             'A wonderful serenity has <em>taken</em> possession of my entire soul, like these sweet mornings have <em>taken</em> all spring.',
-            '…serenity has <em>taken</em> possession…mornings have <em>taken</em> all spring…',
+            '…serenity has <em>taken</em> possession…',
             25,
         ];
 
@@ -30,12 +30,12 @@ class CropperTest extends TestCase
 
         yield 'Cropping around repeating term' => [
             'A wonderful serenity has taken possession of my entire <em>soul</em>, like these sweet mornings of spring which I enjoy with my whole <em>soul</em>. I am alone, and feel the charm of existence in this spot, which was created for the bliss of a <em>soul</em> like mine.',
-            '…serenity has taken possession of my entire <em>soul</em>, like these sweet mornings of spring which I enjoy with my whole <em>soul</em>. I am alone, and feel the charm of existence…which was created for the bliss of a <em>soul</em> like mine.',
+            '…serenity has taken possession of my entire <em>soul</em>, like these sweet mornings of spring which I enjoy with my whole <em>soul</em>. I am alone, and feel the charm of existence…',
         ];
 
         yield 'Cropping around multiple terms' => [
             'A wonderful serenity has taken possession of my entire <em>soul</em>, like these sweet mornings of spring which I enjoy with my whole being. I am alone, and feel the charm of existence in this spot, which was created for the <em>bliss</em> of a heart like mine.',
-            '…serenity has taken possession of my entire <em>soul</em>, like these sweet mornings of spring…this spot, which was created for the <em>bliss</em> of a heart like mine.',
+            '…serenity has taken possession of my entire <em>soul</em>, like these sweet mornings of spring…',
         ];
 
         yield 'Cropping at start' => [
@@ -50,24 +50,30 @@ class CropperTest extends TestCase
 
         yield 'Cropping with custom length' => [
             'Wonderful serenity has taken possession of my <em>entire</em> soul, like these sweet mornings of spring which I enjoy with my <em>whole</em> panorama.',
-            '…my <em>entire</em> soul…with my <em>whole</em> pano…',
+            '…my <em>entire</em> soul…',
             15,
         ];
 
         yield 'Cropping with custom marker' => [
             'Wonderful serenity has taken possession of my <em>entire</em> soul, like these sweet mornings of spring which I enjoy with my <em>whole</em> panorama.',
-            ' --- possession of my <em>entire</em> soul, like --- enjoy with my <em>whole</em> panorama.',
+            ' --- possession of my <em>entire</em> soul, like --- ',
             25,
             ' --- ',
         ];
 
         yield 'Cropping with custom highlight tags' => [
             'Wonderful serenity has taken <mark>possession</mark> of my <em>entire</em> soul, like these sweet mornings of <mark>spring</mark> which I enjoy with my <em>whole</em> panorama.',
-            '…taken <mark>possession</mark> of my <em>entire</em>…mornings of <mark>spring</mark> which I enjoy…',
+            '…taken <mark>possession</mark> of my <em>entire</em>…',
             25,
             '…',
             '<mark>',
             '</mark>',
+        ];
+
+        yield 'Cropping with many distant highlights stays bounded' => [
+            str_repeat('prefix filler filler filler filler filler <em>needle</em> suffix filler filler filler filler filler ', 20),
+            '…filler filler <em>needle</em> suffix filler…',
+            25,
         ];
     }
 
