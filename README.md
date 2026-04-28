@@ -93,6 +93,7 @@ The `Formatter` orchestrates the entire process:
 
 - Highlights matched terms with HTML tags
 - Crops text to show relevant context around matches
+- Truncates long text while preserving word boundaries and highlights
 - Configurable through `FormatterOptions`
 
 ```php
@@ -104,7 +105,10 @@ $options = (new FormatterOptions())
     ->withHighlightEndTag('</mark>')
     ->withEnableCrop()
     ->withCropLength(150)
-    ->withCropMarker('...');
+    ->withCropMarker(' ... ')
+    ->withEnableTruncation()
+    ->withTruncationLength(200)
+    ->withTruncationMarker('...');
 
 $result = $formatter->format($text, $query, $options);
 echo $result->getFormattedText();
