@@ -240,6 +240,22 @@ class FormatterTest extends TestCase
         $this->assertSame($expectedResult, $result->getFormattedText());
     }
 
+    public function testFormatTruncationClosesOpenHighlight(): void
+    {
+        $options = (new FormatterOptions())
+            ->withEnableHighlight()
+            ->withEnableTruncation()
+            ->withHighlightStartTag('[')
+            ->withHighlightEndTag(']')
+            ->withTruncationLength(12)
+        ;
+
+        $formatter = new Formatter($this->matcher);
+        $result = $formatter->format('this is a test of patience to find a suitable example', $this->queryTerms, $options);
+
+        $this->assertSame('this is a [te]…', $result->getFormattedText());
+    }
+
     public function testFormatWithCrop(): void
     {
         $options = (new FormatterOptions())
@@ -252,6 +268,21 @@ class FormatterTest extends TestCase
         $result = $formatter->format('This is a test string used for cropping.', $this->queryTerms, $options);
 
         $this->assertSame('...a test string...', $result->getFormattedText());
+    }
+
+    public function testFormatWithCropAndTruncation(): void
+    {
+        $options = (new FormatterOptions())
+            ->withEnableCrop()
+            ->withEnableTruncation()
+            ->withCropLength(15)
+            ->withTruncationLength(25)
+        ;
+
+        $formatter = new Formatter($this->matcher);
+        $result = $formatter->format('This is a test string and we use it to test the cropping and highlighting features combined.', $this->queryTerms, $options);
+
+        $this->assertSame('…is a test string…it to t…', $result->getFormattedText());
     }
 
     public function testFormatWithHighlight(): void
@@ -285,6 +316,22 @@ class FormatterTest extends TestCase
 
     }
 
+    public function testFormatWithHighlightAndTruncation(): void
+    {
+        $options = (new FormatterOptions())
+            ->withEnableHighlight()
+            ->withEnableTruncation()
+            ->withHighlightStartTag('[')
+            ->withHighlightEndTag(']')
+            ->withTruncationLength(20)
+        ;
+
+        $formatter = new Formatter($this->matcher);
+        $result = $formatter->format('This is a test string used for truncation testing.', $this->queryTerms, $options);
+
+        $this->assertSame('This is a [test]…', $result->getFormattedText());
+    }
+
     public function testFormatWithoutHighlightOrCrop(): void
     {
         $options = new FormatterOptions();
@@ -293,6 +340,20 @@ class FormatterTest extends TestCase
         $result = $formatter->format('This is a test string.', $this->queryTerms, $options);
 
         $this->assertSame('This is a test string.', $result->getFormattedText());
+    }
+
+    public function testFormatWithTruncation(): void
+    {
+        $options = (new FormatterOptions())
+            ->withEnableTruncation()
+            ->withTruncationLength(20)
+            ->withTruncationMarker('...')
+        ;
+
+        $formatter = new Formatter($this->matcher);
+        $result = $formatter->format('This is a test string used for truncation testing.', $this->queryTerms, $options);
+
+        $this->assertSame('This is a test...', $result->getFormattedText());
     }
 
     #[DataProvider('highlightingProvider')]
@@ -319,5 +380,81 @@ class FormatterTest extends TestCase
         $result = $formatter->format($text, $query, $options);
 
         $this->assertSame($expectedResult, $result->getFormattedText());
+    }
+
+    #[DataProvider('truncationProvider')]
+    public function testTruncation(
+        string|TokenCollection $query,
+        string $text,
+        string $expectedResult,
+        bool $enableTruncation = false,
+        int $truncationLength = 250,
+        string $truncationMarker = '…',
+    ): void {
+        $options = (new FormatterOptions());
+        if ($enableTruncation) {
+            $options = $options->withEnableTruncation()
+                ->withTruncationLength($truncationLength)
+                ->withTruncationMarker($truncationMarker);
+        } else {
+            $options = $options->withDisableTruncation();
+        }
+
+        $query = $query instanceof TokenCollection ? $query : (new Tokenizer())->tokenize($query);
+
+        $formatter = new Formatter($this->matcher);
+        $result = $formatter->format($text, $query, $options);
+
+        $this->assertSame($expectedResult, $result->getFormattedText());
+    }
+
+    public static function truncationProvider(): \Generator
+    {
+        yield 'No truncation' => [
+            'soul',
+            'A wonderful serenity has taken possession of my entire soul.',
+            'A wonderful serenity has taken possession of my entire soul.',
+        ];
+
+        yield 'Text shorter than limit is unchanged' => [
+            'soul',
+            'A wonderful serenity has taken possession of my entire soul.',
+            'A wonderful serenity has taken possession of my entire soul.',
+            true,
+            250,
+        ];
+
+        yield 'Truncates at word boundary with marker' => [
+            'soul',
+            'A wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole soul.',
+            'A wonderful serenity has taken possession of my entire soul, like these sweet…',
+            true,
+            80,
+        ];
+
+        yield 'Truncates with custom marker' => [
+            'soul',
+            'A wonderful serenity has taken possession of my entire soul.',
+            'A wonderful serenity has taken [...]',
+            true,
+            32,
+            ' [...]',
+        ];
+
+        yield 'Truncation length zero is a no-op' => [
+            'soul',
+            'A wonderful serenity has taken possession of my entire soul.',
+            'A wonderful serenity has taken possession of my entire soul.',
+            true,
+            0,
+        ];
+
+        yield 'Truncates multibyte text safely' => [
+            'café',
+            'A café in Zürich is où you naïvely meet for piña coladas and crème brûlée.',
+            'A café in Zürich is où you naïvely meet for piña…',
+            true,
+            50,
+        ];
     }
 }
