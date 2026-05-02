@@ -240,6 +240,33 @@ class FormatterTest extends TestCase
         $this->assertSame($expectedResult, $result->getFormattedText());
     }
 
+    public function testFormatDoesNotThrowOnDefaultLengthsWithMatchPrioritization(): void
+    {
+        $options = (new FormatterOptions())
+            ->withEnableCrop()
+            ->withEnableTruncation()
+            ->withEnableMatchPrioritization();
+
+        $formatter = new Formatter($this->matcher);
+        $result = $formatter->format('A test sentence.', $this->queryTerms, $options);
+
+        $this->assertSame('A test sentence.', $result->getFormattedText());
+    }
+
+    public function testFormatThrowsWhenCropLengthExceedsTruncationLength(): void
+    {
+        $options = (new FormatterOptions())
+            ->withEnableCrop()
+            ->withEnableTruncation()
+            ->withCropLength(300)
+            ->withTruncationLength(100);
+
+        $formatter = new Formatter($this->matcher);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $formatter->format('Some text with a test in it.', $this->queryTerms, $options);
+    }
+
     public function testFormatTruncationClosesOpenHighlight(): void
     {
         $tokenizer = new Tokenizer();
@@ -349,6 +376,167 @@ class FormatterTest extends TestCase
         $result = $formatter->format('This is a test string used for truncation testing.', $this->queryTerms, $options);
 
         $this->assertSame('This is a [test]…', $result->getFormattedText());
+    }
+
+    public function testFormatWithMatchPrioritizationCropEmitsSelectedWindowsInDocumentOrder(): void
+    {
+        $tokenizer = new Tokenizer();
+        $query = $tokenizer->tokenize('test');
+
+        // Three clusters: dense at start, sparse middle, medium at end
+        $text = 'Cluster A has test test test together. Filler text fills the gap between clusters here nicely. Single sparse test alone here. More filler fills the next gap between segments. End test and test paired close.';
+
+        $options = (new FormatterOptions())
+            ->withEnableCrop()
+            ->withEnableTruncation()
+            ->withEnableMatchPrioritization()
+            ->withCropLength(30)
+            ->withTruncationLength(100);
+
+        $formatter = new Formatter($this->matcher);
+        $result = $formatter->format($text, $query, $options);
+        $output = $result->getFormattedText();
+
+        // Top two clusters by token count: A (3 matches) and end (2 matches), sparse middle dropped
+        $this->assertStringContainsString('test test test', $output);
+        $this->assertStringContainsString('test and test', $output);
+        $this->assertStringNotContainsString('Single sparse test alone', $output);
+
+        // Document order: cluster A appears before end cluster
+        $clusterAPosition = mb_strpos($output, 'test test test');
+        $endPosition = mb_strpos($output, 'test and test');
+        $this->assertNotFalse($clusterAPosition);
+        $this->assertNotFalse($endPosition);
+        $this->assertLessThan($endPosition, $clusterAPosition);
+    }
+
+    public function testFormatWithMatchPrioritizationCropPicksDenserWindow(): void
+    {
+        $tokenizer = new Tokenizer();
+        $query = $tokenizer->tokenize('test');
+
+        $text = 'A test alone over here. Plenty of unrelated content fills the middle gap nicely. Then test and test together at the end of this sentence.';
+
+        $options = (new FormatterOptions())
+            ->withEnableCrop()
+            ->withEnableTruncation()
+            ->withEnableMatchPrioritization()
+            ->withCropLength(30)
+            ->withTruncationLength(40);
+
+        $formatter = new Formatter($this->matcher);
+        $result = $formatter->format($text, $query, $options);
+        $output = $result->getFormattedText();
+
+        $this->assertStringContainsString('test and test', $output);
+        $this->assertStringNotContainsString('alone over here', $output);
+    }
+
+    public function testFormatWithMatchPrioritizationCropPrefersDistinctTerms(): void
+    {
+        $tokenizer = new Tokenizer();
+        $query = $tokenizer->tokenize('alpha beta gamma');
+
+        // Cluster X: alpha alpha alpha (3 matches, 1 distinct term)
+        // Cluster Y: alpha beta gamma (3 matches, 3 distinct terms)
+        $text = 'Cluster X has alpha alpha alpha repeated thrice. Plenty of unrelated middle content fills the gap. Cluster Y has alpha beta gamma in it.';
+
+        $options = (new FormatterOptions())
+            ->withEnableCrop()
+            ->withEnableTruncation()
+            ->withEnableMatchPrioritization()
+            ->withCropLength(30)
+            ->withTruncationLength(40);
+
+        $formatter = new Formatter($this->matcher);
+        $result = $formatter->format($text, $query, $options);
+        $output = $result->getFormattedText();
+
+        $this->assertStringContainsString('alpha beta gamma', $output);
+        $this->assertStringNotContainsString('alpha alpha alpha', $output);
+    }
+
+    public function testFormatWithMatchPrioritizationTruncationCentersOnDensestCluster(): void
+    {
+        $tokenizer = new Tokenizer();
+        $query = $tokenizer->tokenize('test');
+
+        $text = 'Sparse leading test alone here. Plenty of unrelated middle content fills the gap. Dense cluster test and test and test together. Some trailing filler to extend the text further.';
+
+        $options = (new FormatterOptions())
+            ->withEnableTruncation()
+            ->withEnableMatchPrioritization()
+            ->withTruncationLength(50);
+
+        $formatter = new Formatter($this->matcher);
+        $result = $formatter->format($text, $query, $options);
+        $output = $result->getFormattedText();
+
+        $this->assertStringStartsWith('…', $output);
+        $this->assertStringEndsWith('…', $output);
+        $this->assertStringContainsString('test and test and test', $output);
+    }
+
+    public function testFormatWithMatchPrioritizationTruncationFallsBackToHeadTruncationWithoutMatches(): void
+    {
+        $tokenizer = new Tokenizer();
+        $query = $tokenizer->tokenize('elephant');
+
+        $text = 'A wonderful serenity has taken possession of my entire soul today.';
+
+        $options = (new FormatterOptions())
+            ->withEnableTruncation()
+            ->withEnableMatchPrioritization()
+            ->withTruncationLength(30);
+
+        $formatter = new Formatter($this->matcher);
+        $result = $formatter->format($text, $query, $options);
+
+        $this->assertSame('A wonderful serenity has taken…', $result->getFormattedText());
+    }
+
+    public function testFormatWithMatchPrioritizationTruncationKeepsHighlightTagsWhenHighlightDisabled(): void
+    {
+        $tokenizer = new Tokenizer();
+        $query = $tokenizer->tokenize('test');
+
+        $text = 'Sparse leading content here. Plenty of unrelated middle content fills the gap. Dense cluster test and test and test together. Some trailing filler.';
+
+        $options = (new FormatterOptions())
+            ->withEnableTruncation()
+            ->withEnableMatchPrioritization()
+            ->withTruncationLength(50);
+
+        $formatter = new Formatter($this->matcher);
+        $result = $formatter->format($text, $query, $options);
+        $output = $result->getFormattedText();
+
+        // Smart truncation must locate matches even when highlight is off — Unhighlighter strips tags
+        $this->assertStringNotContainsString('<em>', $output);
+        $this->assertStringNotContainsString('</em>', $output);
+        $this->assertStringContainsString('test', $output);
+    }
+
+    public function testFormatWithMatchPrioritizationTruncationPreservesHighlightsWhenEnabled(): void
+    {
+        $tokenizer = new Tokenizer();
+        $query = $tokenizer->tokenize('test');
+
+        $text = 'Sparse leading content here. Plenty of unrelated middle content fills the gap. Dense cluster test and test and test together. Some trailing filler.';
+
+        $options = (new FormatterOptions())
+            ->withEnableHighlight()
+            ->withEnableTruncation()
+            ->withEnableMatchPrioritization()
+            ->withHighlightStartTag('[')
+            ->withHighlightEndTag(']')
+            ->withTruncationLength(50);
+
+        $formatter = new Formatter($this->matcher);
+        $result = $formatter->format($text, $query, $options);
+        $output = $result->getFormattedText();
+
+        $this->assertStringContainsString('[test] and [test] and [test]', $output);
     }
 
     public function testFormatWithoutHighlightOrCrop(): void

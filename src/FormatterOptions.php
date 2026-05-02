@@ -18,6 +18,8 @@ class FormatterOptions
 
     private bool $shouldHighlight = false;
 
+    private bool $shouldPrioritizeMatches = false;
+
     private bool $shouldTruncate = false;
 
     private int $truncationLength = 250;
@@ -30,6 +32,7 @@ class FormatterOptions
      *     crop_marker?: string,
      *     enable_crop?: bool,
      *     enable_highlight?: bool,
+     *     enable_match_prioritization?: bool,
      *     enable_truncation?: bool,
      *     truncation_length?: int,
      *     truncation_marker?: string,
@@ -67,6 +70,12 @@ class FormatterOptions
 
         if (isset($options['highlight_end_tag'])) {
             $formatterOptions = $formatterOptions->withHighlightEndTag($options['highlight_end_tag']);
+        }
+
+        if (\array_key_exists('enable_match_prioritization', $options)) {
+            $formatterOptions = $options['enable_match_prioritization']
+                ? $formatterOptions->withEnableMatchPrioritization()
+                : $formatterOptions->withDisableMatchPrioritization();
         }
 
         if (\array_key_exists('enable_truncation', $options)) {
@@ -126,6 +135,11 @@ class FormatterOptions
         return $this->shouldHighlight;
     }
 
+    public function shouldPrioritizeMatches(): bool
+    {
+        return $this->shouldPrioritizeMatches;
+    }
+
     public function shouldTruncate(): bool
     {
         return $this->shouldTruncate;
@@ -161,6 +175,13 @@ class FormatterOptions
         return $clone;
     }
 
+    public function withDisableMatchPrioritization(): self
+    {
+        $clone = clone $this;
+        $clone->shouldPrioritizeMatches = false;
+        return $clone;
+    }
+
     public function withDisableTruncation(): self
     {
         $clone = clone $this;
@@ -181,6 +202,13 @@ class FormatterOptions
     {
         $clone = clone $this;
         $clone->shouldHighlight = true;
+        return $clone;
+    }
+
+    public function withEnableMatchPrioritization(): self
+    {
+        $clone = clone $this;
+        $clone->shouldPrioritizeMatches = true;
         return $clone;
     }
 

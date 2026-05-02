@@ -4,45 +4,34 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher\Formatting;
 
-use Loupe\Matcher\Matcher;
-use Loupe\Matcher\Tokenizer\TokenCollection;
-
 class Highlighter implements Transformer
 {
     public function __construct(
-        private Matcher $matcher,
         private string $startTag,
-        private string $endTag
+        private string $endTag,
     ) {
     }
 
-    public function transform(string $text, TokenCollection|string $query, TokenCollection $matches): string
+    public function transform(FormattedText $input): FormattedText
     {
-        $spans = $this->matcher->calculateMatchSpans($text, $query, $matches);
-
-        if (empty($spans)) {
-            return $text;
+        if ($input->spans === [] || $this->startTag === '' || $this->endTag === '') {
+            return $input;
         }
 
         $result = '';
         $end = 0;
 
-        foreach ($spans as $span) {
-            // Insert start tag before span
-            $result .= mb_substr($text, $end, $span->getStartPosition() - $end, 'UTF-8');
+        foreach ($input->spans as $span) {
+            $result .= mb_substr($input->text, $end, $span->getStartPosition() - $end, 'UTF-8');
             $result .= $this->startTag;
-
-            // Insert span text
-            $result .= mb_substr($text, $span->getStartPosition(), $span->getLength(), 'UTF-8');
-
-            // Insert end tag after span
+            $result .= mb_substr($input->text, $span->getStartPosition(), $span->getLength(), 'UTF-8');
             $result .= $this->endTag;
             $end = $span->getEndPosition();
         }
 
-        // Add remaining text after last span
-        $result .= mb_substr($text, $end, null, 'UTF-8');
+        $result .= mb_substr($input->text, $end, null, 'UTF-8');
 
-        return $result;
+        // Spans are no longer accurate after tag insertion; the highlighter is terminal.
+        return new FormattedText($result, []);
     }
 }

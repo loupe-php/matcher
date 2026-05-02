@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher\Formatting;
 
-use Loupe\Matcher\Tokenizer\TokenCollection;
+use Loupe\Matcher\Tokenizer\MatchSpan;
+use Loupe\Matcher\Tokenizer\Span;
 
 class Truncator implements Transformer
 {
@@ -13,88 +14,131 @@ class Truncator implements Transformer
     public function __construct(
         private int $truncationLength,
         private string $truncationMarker,
-        private string $highlightStartTag,
-        private string $highlightEndTag,
+        private bool $prioritizeMatches = false,
     ) {
     }
 
-    public function transform(string $text, TokenCollection|string $query, TokenCollection $matches): string
+    public function transform(FormattedText $input): FormattedText
     {
-        if ($this->truncationLength <= 0 || $text === '') {
-            return $text;
+        if ($this->truncationLength <= 0 || $input->text === '') {
+            return $input;
         }
 
-        $hasTags = $this->highlightStartTag !== '' && $this->highlightEndTag !== '';
-
-        if ($hasTags) {
-            $pattern = '/(' . preg_quote($this->highlightStartTag, '/') . '|' . preg_quote($this->highlightEndTag, '/') . ')/u';
-            $segments = preg_split($pattern, $text, -1, PREG_SPLIT_DELIM_CAPTURE);
-        } else {
-            $segments = [$text];
+        $textLength = mb_strlen($input->text, 'UTF-8');
+        if ($textLength <= $this->truncationLength) {
+            return $input;
         }
 
-        if ($segments === false) {
-            return $text;
+        if ($this->prioritizeMatches && $input->spans !== []) {
+            return $this->smartTruncate($input);
         }
 
-        $result = '';
-        $visibleLength = 0;
-        $insideHighlight = false;
-        $lastVisibleChar = null;
+        return $this->headTruncate($input);
+    }
 
-        $checkpointResult = '';
-        $checkpointInsideHighlight = false;
-        $wasTruncated = false;
+    private function headTruncate(FormattedText $input): FormattedText
+    {
+        $cut = $this->snapEndBackward($input->text, $this->truncationLength);
+        if ($cut <= 0) {
+            $cut = $this->truncationLength;
+        }
 
-        foreach ($segments as $segment) {
-            if ($segment === '') {
+        $body = mb_substr($input->text, 0, $cut, 'UTF-8');
+        $spans = [];
+        foreach ($input->spans as $matchSpan) {
+            if ($matchSpan->getStartPosition() >= $cut) {
                 continue;
             }
+            $end = min($matchSpan->getEndPosition(), $cut);
+            $spans[] = new MatchSpan($matchSpan->getStartPosition(), $end, $matchSpan->getTerms());
+        }
 
-            if ($hasTags && $segment === $this->highlightStartTag) {
-                $result .= $segment;
-                $insideHighlight = true;
+        return new FormattedText($body . $this->truncationMarker, $spans);
+    }
+
+    private function smartTruncate(FormattedText $input): FormattedText
+    {
+        $text = $input->text;
+        $matchSpans = $input->spans;
+        $textLength = mb_strlen($text, 'UTF-8');
+        $scorer = new Scorer();
+
+        $candidateStarts = [];
+        foreach ($matchSpans as $matchSpan) {
+            $spanStart = $matchSpan->getStartPosition();
+            $spanLength = $matchSpan->getLength();
+
+            $candidateStarts[] = $spanStart;
+            $candidateStarts[] = $spanStart - (int) floor(($this->truncationLength - $spanLength) / 2);
+        }
+
+        $bestScore = null;
+        $bestStart = 0;
+        foreach ($candidateStarts as $rawStart) {
+            $start = max(0, min($rawStart, $textLength - $this->truncationLength));
+            $end = $start + $this->truncationLength;
+            $score = $scorer->scoreSnippet(new Span($start, $end), $matchSpans);
+            if ($bestScore === null || $score > $bestScore || ($score === $bestScore && $start < $bestStart)) {
+                $bestScore = $score;
+                $bestStart = $start;
+            }
+        }
+
+        $windowStart = $bestStart;
+        $windowEnd = min($textLength, $windowStart + $this->truncationLength);
+
+        if ($windowStart > 0) {
+            $windowStart = $this->snapStartForward($text, $windowStart);
+        }
+        if ($windowEnd < $textLength) {
+            $windowEnd = $this->snapEndBackward($text, $windowEnd);
+        }
+
+        if ($windowStart >= $windowEnd) {
+            return $this->headTruncate($input);
+        }
+
+        $body = mb_substr($text, $windowStart, $windowEnd - $windowStart, 'UTF-8');
+
+        $leadingMarker = $windowStart > 0 ? $this->truncationMarker : '';
+        $trailingMarker = $windowEnd < $textLength ? $this->truncationMarker : '';
+        $delta = mb_strlen($leadingMarker, 'UTF-8') - $windowStart;
+
+        $rebasedSpans = [];
+        foreach ($matchSpans as $matchSpan) {
+            if ($matchSpan->getEndPosition() <= $windowStart || $matchSpan->getStartPosition() >= $windowEnd) {
                 continue;
             }
+            $clippedStart = max($matchSpan->getStartPosition(), $windowStart);
+            $clippedEnd = min($matchSpan->getEndPosition(), $windowEnd);
+            $rebasedSpans[] = new MatchSpan($clippedStart + $delta, $clippedEnd + $delta, $matchSpan->getTerms());
+        }
 
-            if ($hasTags && $segment === $this->highlightEndTag) {
-                $result .= $segment;
-                $insideHighlight = false;
-                continue;
+        return new FormattedText($leadingMarker . $body . $trailingMarker, $rebasedSpans);
+    }
+
+    private function snapEndBackward(string $text, int $position): int
+    {
+        while ($position > 0) {
+            $char = mb_substr($text, $position, 1, 'UTF-8');
+            if (\in_array($char, self::WORD_BOUNDARIES, true)) {
+                return $position;
             }
+            $position--;
+        }
+        return $position;
+    }
 
-            $remainingBudget = $this->truncationLength - $visibleLength + 1;
-            $relevantSegment = mb_substr($segment, 0, $remainingBudget, 'UTF-8');
-
-            foreach (mb_str_split($relevantSegment, 1, 'UTF-8') as $char) {
-                $isBoundary = \in_array($char, self::WORD_BOUNDARIES, true);
-
-                if ($isBoundary && $lastVisibleChar !== null && !\in_array($lastVisibleChar, self::WORD_BOUNDARIES, true)) {
-                    $checkpointResult = $result;
-                    $checkpointInsideHighlight = $insideHighlight;
-                }
-
-                if ($visibleLength >= $this->truncationLength) {
-                    $wasTruncated = true;
-                    break 2;
-                }
-
-                $result .= $char;
-                $visibleLength++;
-                $lastVisibleChar = $char;
+    private function snapStartForward(string $text, int $position): int
+    {
+        $length = mb_strlen($text, 'UTF-8');
+        while ($position < $length) {
+            $char = mb_substr($text, $position, 1, 'UTF-8');
+            if (\in_array($char, self::WORD_BOUNDARIES, true)) {
+                return $position + 1;
             }
+            $position++;
         }
-
-        if (!$wasTruncated) {
-            return $result;
-        }
-
-        $result = $checkpointResult;
-        if ($checkpointInsideHighlight) {
-            $result .= $this->highlightEndTag;
-        }
-        $result .= $this->truncationMarker;
-
-        return $result;
+        return $position;
     }
 }
