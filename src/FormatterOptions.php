@@ -145,6 +145,17 @@ class FormatterOptions
         return $this->shouldTruncate;
     }
 
+    public function validate(): void
+    {
+        if ($this->shouldCrop && $this->shouldTruncate && $this->cropLength > $this->truncationLength) {
+            throw new \InvalidArgumentException(\sprintf(
+                'crop_length (%d) must not exceed truncation_length (%d) when both are enabled.',
+                $this->cropLength,
+                $this->truncationLength,
+            ));
+        }
+    }
+
     public function withCropLength(int $cropLength): self
     {
         $clone = clone $this;

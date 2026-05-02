@@ -19,13 +19,7 @@ class Formatter
 
     public function format(string $text, TokenCollection|string $query, FormatterOptions $options, TokenCollection|null $matches = null): FormatterResult
     {
-        if ($options->shouldCrop() && $options->shouldTruncate() && $options->getCropLength() > $options->getTruncationLength()) {
-            throw new \InvalidArgumentException(\sprintf(
-                'crop_length (%d) must not exceed truncation_length (%d) when both are enabled.',
-                $options->getCropLength(),
-                $options->getTruncationLength(),
-            ));
-        }
+        $options->validate();
 
         $matches = $matches ?? $this->matcher->calculateMatches($text, $query);
         $spans = $this->matcher->calculateMatchSpans($text, $query, $matches);
@@ -33,31 +27,49 @@ class Formatter
         $current = new FormattedText($text, $spans);
 
         if ($options->shouldCrop()) {
-            $cropper = new Cropper(
-                $options->getCropLength(),
-                $options->getCropMarker(),
-                $options->getHighlightStartTag(),
-                $options->getHighlightEndTag(),
-                $options->shouldPrioritizeMatches(),
-                $options->shouldTruncate() ? $options->getTruncationLength() : null,
-            );
-            $current = $cropper->transform($current);
+            $current = $this->crop($current, $options);
         }
 
         if ($options->shouldTruncate()) {
-            $truncator = new Truncator(
-                $options->getTruncationLength(),
-                $options->getTruncationMarker(),
-                $options->shouldPrioritizeMatches(),
-            );
-            $current = $truncator->transform($current);
+            $current = $this->truncate($current, $options);
         }
 
         if ($options->shouldHighlight()) {
-            $highlighter = new Highlighter($options->getHighlightStartTag(), $options->getHighlightEndTag());
-            $current = $highlighter->transform($current);
+            $current = $this->highlight($current, $options);
         }
 
-        return new FormatterResult($current->text, $matches);
+        return new FormatterResult($current->getText(), $matches);
+    }
+
+    private function crop(FormattedText $input, FormatterOptions $options): FormattedText
+    {
+        $cropper = new Cropper(
+            $options->getCropLength(),
+            $options->getCropMarker(),
+            $options->getHighlightStartTag(),
+            $options->getHighlightEndTag(),
+            $options->shouldPrioritizeMatches(),
+            $options->shouldTruncate() ? $options->getTruncationLength() : null,
+        );
+
+        return $cropper->transform($input);
+    }
+
+    private function highlight(FormattedText $input, FormatterOptions $options): FormattedText
+    {
+        $highlighter = new Highlighter($options->getHighlightStartTag(), $options->getHighlightEndTag());
+
+        return $highlighter->transform($input);
+    }
+
+    private function truncate(FormattedText $input, FormatterOptions $options): FormattedText
+    {
+        $truncator = new Truncator(
+            $options->getTruncationLength(),
+            $options->getTruncationMarker(),
+            $options->shouldPrioritizeMatches(),
+        );
+
+        return $truncator->transform($input);
     }
 }

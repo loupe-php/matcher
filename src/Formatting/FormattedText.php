@@ -8,7 +8,7 @@ use Loupe\Matcher\Tokenizer\MatchSpan;
 
 /**
  * Carrier for text + match spans through the formatter pipeline.
- * Spans are always in coordinates of the accompanying $text.
+ * Spans are always in coordinates of the accompanying text.
  */
 class FormattedText
 {
@@ -16,8 +16,21 @@ class FormattedText
      * @param MatchSpan[] $spans
      */
     public function __construct(
-        public readonly string $text,
-        public readonly array $spans = [],
+        private string $text,
+        private array $spans = [],
     ) {
+    }
+
+    /**
+     * @return MatchSpan[]
+     */
+    public function getSpans(): array
+    {
+        return $this->spans;
+    }
+
+    public function getText(): string
+    {
+        return $this->text;
     }
 }
