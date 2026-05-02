@@ -242,6 +242,25 @@ class FormatterTest extends TestCase
 
     public function testFormatTruncationClosesOpenHighlight(): void
     {
+        $tokenizer = new Tokenizer();
+        $query = $tokenizer->tokenize('a meeting of souls');
+
+        $options = (new FormatterOptions())
+            ->withEnableHighlight()
+            ->withEnableTruncation()
+            ->withHighlightStartTag('[')
+            ->withHighlightEndTag(']')
+            ->withTruncationLength(10)
+        ;
+
+        $formatter = new Formatter($this->matcher);
+        $result = $formatter->format('A meeting of souls has taken possession.', $query, $options);
+
+        $this->assertSame('[A meeting]…', $result->getFormattedText());
+    }
+
+    public function testFormatTruncationDoesNotCutWords(): void
+    {
         $options = (new FormatterOptions())
             ->withEnableHighlight()
             ->withEnableTruncation()
@@ -253,7 +272,7 @@ class FormatterTest extends TestCase
         $formatter = new Formatter($this->matcher);
         $result = $formatter->format('this is a test of patience to find a suitable example', $this->queryTerms, $options);
 
-        $this->assertSame('this is a [te]…', $result->getFormattedText());
+        $this->assertSame('this is a…', $result->getFormattedText());
     }
 
     public function testFormatWithCrop(): void
@@ -276,13 +295,13 @@ class FormatterTest extends TestCase
             ->withEnableCrop()
             ->withEnableTruncation()
             ->withCropLength(15)
-            ->withTruncationLength(25)
+            ->withTruncationLength(35)
         ;
 
         $formatter = new Formatter($this->matcher);
         $result = $formatter->format('This is a test string and we use it to test the cropping and highlighting features combined.', $this->queryTerms, $options);
 
-        $this->assertSame('…is a test string…it to t…', $result->getFormattedText());
+        $this->assertSame('…is a test string…it to test the…', $result->getFormattedText());
     }
 
     public function testFormatWithHighlight(): void

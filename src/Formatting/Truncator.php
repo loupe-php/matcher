@@ -8,6 +8,8 @@ use Loupe\Matcher\Tokenizer\TokenCollection;
 
 class Truncator implements Transformer
 {
+    private const WORD_BOUNDARIES = [' ', "\t", "\n", "\r"];
+
     public function __construct(
         private int $truncationLength,
         private string $truncationMarker,
@@ -36,9 +38,13 @@ class Truncator implements Transformer
         }
 
         $result = '';
-        $truncatedLength = 0;
-        $wasTruncated = false;
+        $visibleLength = 0;
         $insideHighlight = false;
+        $lastVisibleChar = null;
+
+        $checkpointResult = '';
+        $checkpointInsideHighlight = false;
+        $wasTruncated = false;
 
         foreach ($segments as $segment) {
             if ($segment === '') {
@@ -57,52 +63,38 @@ class Truncator implements Transformer
                 continue;
             }
 
-            $segmentLength = mb_strlen($segment, 'UTF-8');
+            $remainingBudget = $this->truncationLength - $visibleLength + 1;
+            $relevantSegment = mb_substr($segment, 0, $remainingBudget, 'UTF-8');
 
-            if ($truncatedLength + $segmentLength <= $this->truncationLength) {
-                $result .= $segment;
-                $truncatedLength += $segmentLength;
-                continue;
+            foreach (mb_str_split($relevantSegment, 1, 'UTF-8') as $char) {
+                $isBoundary = \in_array($char, self::WORD_BOUNDARIES, true);
+
+                if ($isBoundary && $lastVisibleChar !== null && !\in_array($lastVisibleChar, self::WORD_BOUNDARIES, true)) {
+                    $checkpointResult = $result;
+                    $checkpointInsideHighlight = $insideHighlight;
+                }
+
+                if ($visibleLength >= $this->truncationLength) {
+                    $wasTruncated = true;
+                    break 2;
+                }
+
+                $result .= $char;
+                $visibleLength++;
+                $lastVisibleChar = $char;
             }
-
-            $remainingLength = $this->truncationLength - $truncatedLength;
-            $wasTruncatedAt = $this->snapBackToBoundary($segment, $remainingLength);
-            $result .= mb_substr($segment, 0, $wasTruncatedAt, 'UTF-8');
-
-            if ($insideHighlight) {
-                $result .= $this->highlightEndTag;
-            }
-
-            $wasTruncated = true;
-            break;
         }
 
-        if ($wasTruncated) {
-            $result .= $this->truncationMarker;
+        if (!$wasTruncated) {
+            return $result;
         }
+
+        $result = $checkpointResult;
+        if ($checkpointInsideHighlight) {
+            $result .= $this->highlightEndTag;
+        }
+        $result .= $this->truncationMarker;
 
         return $result;
-    }
-
-    private function snapBackToBoundary(string $segment, int $maxLength): int
-    {
-        if ($maxLength <= 0) {
-            return 0;
-        }
-
-        $segmentLength = mb_strlen($segment, 'UTF-8');
-        if ($maxLength >= $segmentLength) {
-            return $segmentLength;
-        }
-
-        $boundaries = [' ', "\t", "\n", "\r"];
-        for ($i = $maxLength; $i > 0; $i--) {
-            $char = mb_substr($segment, $i - 1, 1, 'UTF-8');
-            if (\in_array($char, $boundaries, true)) {
-                return $i - 1;
-            }
-        }
-
-        return $maxLength;
     }
 }
