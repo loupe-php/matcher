@@ -6,6 +6,7 @@ namespace Loupe\Matcher;
 
 use Loupe\Matcher\Formatting\Cropper;
 use Loupe\Matcher\Formatting\Highlighter;
+use Loupe\Matcher\Formatting\Truncator;
 use Loupe\Matcher\Formatting\Unhighlighter;
 use Loupe\Matcher\Tokenizer\TokenCollection;
 
@@ -26,6 +27,9 @@ class Formatter
         }
         if ($options->shouldCrop()) {
             $transformers[] = new Cropper($options->getCropLength(), $options->getCropMarker(), $options->getHighlightStartTag(), $options->getHighlightEndTag());
+        }
+        if ($options->shouldTruncate()) {
+            $transformers[] = new Truncator($options->getTruncationLength(), $options->getTruncationMarker(), $options->getHighlightStartTag(), $options->getHighlightEndTag());
         }
         if (!$options->shouldHighlight()) {
             $transformers[] = new Unhighlighter($options->getHighlightStartTag(), $options->getHighlightEndTag());
