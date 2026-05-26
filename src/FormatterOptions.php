@@ -10,6 +10,8 @@ class FormatterOptions
 
     private string $cropMarker = '…';
 
+    private int $cropMaxFragments = 10;
+
     private string $highlightEndTag = '</em>';
 
     private string $highlightStartTag = '<em>';
@@ -30,6 +32,7 @@ class FormatterOptions
      * @param array{
      *     crop_length?: int,
      *     crop_marker?: string,
+     *     crop_max_fragments?: int,
      *     enable_crop?: bool,
      *     enable_highlight?: bool,
      *     enable_match_prioritization?: bool,
@@ -50,6 +53,10 @@ class FormatterOptions
 
         if (isset($options['crop_marker'])) {
             $formatterOptions = $formatterOptions->withCropMarker($options['crop_marker']);
+        }
+
+        if (isset($options['crop_max_fragments'])) {
+            $formatterOptions = $formatterOptions->withCropMaxFragments((int) $options['crop_max_fragments']);
         }
 
         if (\array_key_exists('enable_crop', $options)) {
@@ -103,6 +110,11 @@ class FormatterOptions
     public function getCropMarker(): string
     {
         return $this->cropMarker;
+    }
+
+    public function getCropMaxFragments(): int
+    {
+        return $this->cropMaxFragments;
     }
 
     public function getHighlightEndTag(): string
@@ -168,6 +180,13 @@ class FormatterOptions
     {
         $clone = clone $this;
         $clone->cropMarker = $marker;
+        return $clone;
+    }
+
+    public function withCropMaxFragments(int $cropMaxFragments): self
+    {
+        $clone = clone $this;
+        $clone->cropMaxFragments = $cropMaxFragments;
         return $clone;
     }
 
