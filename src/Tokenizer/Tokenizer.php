@@ -65,7 +65,14 @@ class Tokenizer implements TokenizerInterface
             $word = $this->isWord($status);
             $whitespace = $this->isWhitespace($status, $term);
 
-            $originalLength = mb_strlen($term, 'UTF-8');
+            // Fast path: skip normalization for pure-ascii tokens
+            $isAscii = !preg_match('/[^\x00-\x7F]/', $term);
+            if ($isAscii) {
+                $originalLength = \strlen($term);
+            } else {
+                $originalLength = mb_strlen($term, 'UTF-8');
+            }
+
             $originalTerm = $term;
 
             if (!$word) {
@@ -78,17 +85,23 @@ class Tokenizer implements TokenizerInterface
                 break;
             }
 
-            // Normalize (NFKC)
-            $term = (string) \Normalizer::normalize($term, \Normalizer::NFKC);
-            // Decompose accents
-            $term = (string) \Normalizer::normalize($term, \Normalizer::FORM_D);
-            // Transliterate to ASCII (handles characters like ß, Ł/ł, å/ä/ö that Normalizer doesn't decompose)
-            $term = $this->transliterateToAscii($term);
-            // Remove any remaining diacritics
-            $term = (string) preg_replace('/\p{Mn}+/u', '', $term);
-            // Lowercase
-            $term = mb_strtolower($term, 'UTF-8');
-            $wasFolded = mb_strtolower($originalTerm, 'UTF-8') !== $term;
+            if ($isAscii) {
+                // Fast path: ascii tokens can never be folded
+                $term = strtolower($term);
+                $wasFolded = false;
+            } else {
+                // Normalize (NFKC)
+                $term = (string) \Normalizer::normalize($term, \Normalizer::NFKC);
+                // Decompose accents
+                $term = (string) \Normalizer::normalize($term, \Normalizer::FORM_D);
+                // Transliterate to ASCII (handles characters like ß, Ł/ł, å/ä/ö that Normalizer doesn't decompose)
+                $term = $this->transliterateToAscii($term);
+                // Remove any remaining diacritics
+                $term = (string) preg_replace('/\p{Mn}+/u', '', $term);
+                // Lowercase
+                $term = mb_strtolower($term, 'UTF-8');
+                $wasFolded = mb_strtolower($originalTerm, 'UTF-8') !== $term;
+            }
 
             $token = new Token(
                 $id++,
