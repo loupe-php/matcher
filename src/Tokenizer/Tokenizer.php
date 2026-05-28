@@ -74,8 +74,7 @@ class Tokenizer implements TokenizerInterface
 
             if (!$word) {
                 // Non-word path: set whitespace flag for negation/quote logic, skip term work
-                $whitespace = ($status === null || $status < \IntlBreakIterator::WORD_NONE_LIMIT)
-                    && ($term === ' ' || trim($term) === '');
+                $whitespace = $term === ' ' || trim($term) === '';
                 $position += $originalLength;
                 $originalPosition += $originalLength;
                 continue;
