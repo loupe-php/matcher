@@ -1,0 +1,15 @@
+{
+    "$schema": "vendor/phpbench/phpbench/phpbench.schema.json",
+    "runner.bootstrap": "vendor/autoload.php",
+    "runner.path": "tests/Benchmark",
+    "runner.file_pattern": "*Bench.php",
+    "report.generators": {
+        "tokenizer": {
+            "extends": "aggregate",
+            "cols": ["benchmark", "subject", "set", "revs", "mem_peak", "mode", "rstdev", "us_per_1k"],
+            "expressions": {
+                "us_per_1k": "format(\"%.2f\", mode(result_time_avg) / first(variant_params)['size'] * 1000)"
+            }
+        }
+    }
+}
