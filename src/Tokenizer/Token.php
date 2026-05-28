@@ -23,6 +23,7 @@ class Token
         private int $startPosition,
         private bool $isPartOfPhrase,
         private bool $isNegated,
+        private bool $wasFolded = false,
         ?int $originalStartPosition = null,
         ?int $originalLength = null,
     ) {
@@ -126,6 +127,17 @@ class Token
     public function isPartOfPhrase(): bool
     {
         return $this->isPartOfPhrase;
+    }
+
+    /**
+     * Whether tokenization changed the token beyond case normalization.
+     *
+     * Case-only changes such as `Thomas` -> `thomas` return false.
+     * Folding changes such as `Müller` -> `muller` or `Straße` -> `strasse` return true.
+     */
+    public function wasFolded(): bool
+    {
+        return $this->wasFolded;
     }
 
     /**

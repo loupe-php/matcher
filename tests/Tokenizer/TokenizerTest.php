@@ -296,4 +296,14 @@ class TokenizerTest extends TestCase
         ], $tokenizer->tokenize('Hallo, mein "Name ist Hase" und ich weiß von nichts.')
             ->allTermsWithVariants());
     }
+
+    public function testTokenKnowsIfItWasFolded(): void
+    {
+        $tokenizer = new Tokenizer();
+        $tokens = $tokenizer->tokenize('Thomas Müller thomas');
+
+        $this->assertFalse($tokens->all()[0]->wasFolded());
+        $this->assertTrue($tokens->all()[1]->wasFolded());
+        $this->assertFalse($tokens->all()[2]->wasFolded());
+    }
 }

@@ -18,12 +18,21 @@ class FormatterOptions
 
     private bool $shouldHighlight = false;
 
+    private bool $shouldTruncate = false;
+
+    private int $truncationLength = 250;
+
+    private string $truncationMarker = '…';
+
     /**
      * @param array{
      *     crop_length?: int,
      *     crop_marker?: string,
      *     enable_crop?: bool,
      *     enable_highlight?: bool,
+     *     enable_truncation?: bool,
+     *     truncation_length?: int,
+     *     truncation_marker?: string,
      *     highlight_start_tag?: string,
      *     highlight_end_tag?: string
      * } $options
@@ -60,6 +69,20 @@ class FormatterOptions
             $formatterOptions = $formatterOptions->withHighlightEndTag($options['highlight_end_tag']);
         }
 
+        if (\array_key_exists('enable_truncation', $options)) {
+            $formatterOptions = $options['enable_truncation']
+                ? $formatterOptions->withEnableTruncation()
+                : $formatterOptions->withDisableTruncation();
+        }
+
+        if (isset($options['truncation_length'])) {
+            $formatterOptions = $formatterOptions->withTruncationLength((int) $options['truncation_length']);
+        }
+
+        if (isset($options['truncation_marker'])) {
+            $formatterOptions = $formatterOptions->withTruncationMarker($options['truncation_marker']);
+        }
+
         return $formatterOptions;
     }
 
@@ -83,6 +106,16 @@ class FormatterOptions
         return $this->highlightStartTag;
     }
 
+    public function getTruncationLength(): int
+    {
+        return $this->truncationLength;
+    }
+
+    public function getTruncationMarker(): string
+    {
+        return $this->truncationMarker;
+    }
+
     public function shouldCrop(): bool
     {
         return $this->shouldCrop;
@@ -91,6 +124,11 @@ class FormatterOptions
     public function shouldHighlight(): bool
     {
         return $this->shouldHighlight;
+    }
+
+    public function shouldTruncate(): bool
+    {
+        return $this->shouldTruncate;
     }
 
     public function withCropLength(int $cropLength): self
@@ -123,6 +161,14 @@ class FormatterOptions
         return $clone;
     }
 
+    public function withDisableTruncation(): self
+    {
+        $clone = clone $this;
+        $clone->shouldTruncate = false;
+
+        return $clone;
+    }
+
     public function withEnableCrop(): self
     {
         $clone = clone $this;
@@ -138,6 +184,14 @@ class FormatterOptions
         return $clone;
     }
 
+    public function withEnableTruncation(): self
+    {
+        $clone = clone $this;
+        $clone->shouldTruncate = true;
+
+        return $clone;
+    }
+
     public function withHighlightEndTag(string $endTag): self
     {
         $clone = clone $this;
@@ -149,6 +203,20 @@ class FormatterOptions
     {
         $clone = clone $this;
         $clone->highlightStartTag = $startTag;
+        return $clone;
+    }
+
+    public function withTruncationLength(int $truncationLength): self
+    {
+        $clone = clone $this;
+        $clone->truncationLength = $truncationLength;
+        return $clone;
+    }
+
+    public function withTruncationMarker(string $truncationMarker): self
+    {
+        $clone = clone $this;
+        $clone->truncationMarker = $truncationMarker;
         return $clone;
     }
 }

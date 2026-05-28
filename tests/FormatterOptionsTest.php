@@ -15,8 +15,11 @@ final class FormatterOptionsTest extends TestCase
 
         $this->assertFalse($options->shouldCrop());
         $this->assertFalse($options->shouldHighlight());
+        $this->assertFalse($options->shouldTruncate());
         $this->assertEquals(50, $options->getCropLength());
         $this->assertEquals('…', $options->getCropMarker());
+        $this->assertEquals(250, $options->getTruncationLength());
+        $this->assertEquals('…', $options->getTruncationMarker());
         $this->assertEquals('<em>', $options->getHighlightStartTag());
         $this->assertEquals('</em>', $options->getHighlightEndTag());
     }
@@ -30,24 +33,33 @@ final class FormatterOptionsTest extends TestCase
             'enable_highlight' => true,
             'highlight_start_tag' => '<strong>',
             'highlight_end_tag' => '</strong>',
+            'enable_truncation' => true,
+            'truncation_length' => 100,
+            'truncation_marker' => ' ...',
         ]);
 
-        $this->assertEquals(20, $options->getCropLength());
-        $this->assertEquals('...', $options->getCropMarker());
         $this->assertTrue($options->shouldCrop());
         $this->assertTrue($options->shouldHighlight());
+        $this->assertTrue($options->shouldTruncate());
+        $this->assertEquals(20, $options->getCropLength());
+        $this->assertEquals('...', $options->getCropMarker());
         $this->assertEquals('<strong>', $options->getHighlightStartTag());
         $this->assertEquals('</strong>', $options->getHighlightEndTag());
+        $this->assertEquals(100, $options->getTruncationLength());
+        $this->assertEquals(' ...', $options->getTruncationMarker());
     }
 
     public function testFromArrayWithDefaults(): void
     {
         $options = FormatterOptions::fromArray([]);
 
-        $this->assertEquals(50, $options->getCropLength());
-        $this->assertEquals('…', $options->getCropMarker());
         $this->assertFalse($options->shouldCrop());
         $this->assertFalse($options->shouldHighlight());
+        $this->assertFalse($options->shouldTruncate());
+        $this->assertEquals(50, $options->getCropLength());
+        $this->assertEquals('…', $options->getCropMarker());
+        $this->assertEquals(250, $options->getTruncationLength());
+        $this->assertEquals('…', $options->getTruncationMarker());
         $this->assertEquals('<em>', $options->getHighlightStartTag());
         $this->assertEquals('</em>', $options->getHighlightEndTag());
     }
@@ -57,10 +69,12 @@ final class FormatterOptionsTest extends TestCase
         $options = FormatterOptions::fromArray([
             'enable_crop' => false,
             'enable_highlight' => false,
+            'enable_truncation' => false,
         ]);
 
         $this->assertFalse($options->shouldCrop());
         $this->assertFalse($options->shouldHighlight());
+        $this->assertFalse($options->shouldTruncate());
     }
 
     public function testWithCropLength(): void
@@ -99,6 +113,15 @@ final class FormatterOptionsTest extends TestCase
         $this->assertFalse($newOptions->shouldHighlight());
     }
 
+    public function testWithDisableTruncation(): void
+    {
+        $options = (new FormatterOptions())->withEnableTruncation();
+        $newOptions = $options->withDisableTruncation();
+
+        $this->assertTrue($options->shouldTruncate());
+        $this->assertFalse($newOptions->shouldTruncate());
+    }
+
     public function testWithEnableCrop(): void
     {
         $options = new FormatterOptions();
@@ -117,6 +140,15 @@ final class FormatterOptionsTest extends TestCase
         $this->assertTrue($newOptions->shouldHighlight());
     }
 
+    public function testWithEnableTruncation(): void
+    {
+        $options = new FormatterOptions();
+        $newOptions = $options->withEnableTruncation();
+
+        $this->assertFalse($options->shouldTruncate());
+        $this->assertTrue($newOptions->shouldTruncate());
+    }
+
     public function testWithHighlightEndTag(): void
     {
         $options = new FormatterOptions();
@@ -133,5 +165,14 @@ final class FormatterOptionsTest extends TestCase
 
         $this->assertEquals('<em>', $options->getHighlightStartTag());
         $this->assertEquals('<strong>', $newOptions->getHighlightStartTag());
+    }
+
+    public function testWithTruncationLength(): void
+    {
+        $options = new FormatterOptions();
+        $newOptions = $options->withTruncationLength(100);
+
+        $this->assertEquals(250, $options->getTruncationLength());
+        $this->assertEquals(100, $newOptions->getTruncationLength());
     }
 }

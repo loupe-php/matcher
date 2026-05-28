@@ -87,6 +87,7 @@ class Tokenizer implements TokenizerInterface
             $whitespace = $this->isWhitespace($status, $term);
 
             $originalLength = mb_strlen($term, 'UTF-8');
+            $originalTerm = $term;
 
             if (!$word) {
                 $position += $originalLength;
@@ -99,6 +100,7 @@ class Tokenizer implements TokenizerInterface
             }
 
             $term = $this->normalizer->normalize($term);
+            $wasFolded = mb_strtolower($originalTerm, 'UTF-8') !== $term;
 
             $token = new Token(
                 $id++,
@@ -106,6 +108,7 @@ class Tokenizer implements TokenizerInterface
                 $position,
                 $phrase,
                 $negated,
+                $wasFolded,
                 $originalPosition,
                 $originalLength,
             );
