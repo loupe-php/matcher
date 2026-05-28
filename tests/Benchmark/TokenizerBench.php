@@ -19,6 +19,9 @@ class TokenizerBench
 
     private Tokenizer $tokenizer;
 
+    /**
+     * @param array{locale: string, size: int} $params
+     */
     public function setUp(array $params): void
     {
         $this->tokenizer = new Tokenizer($params['locale']);
@@ -35,7 +38,7 @@ class TokenizerBench
      */
     public function benchControlBreakIterator(): void
     {
-        $bi = \IntlRuleBasedBreakIterator::createWordInstance(null);
+        $bi = \IntlRuleBasedBreakIterator::createWordInstance(null); // @phpstan-ignore-line - null is allowed
         $bi->setText($this->text);
         foreach ($bi->getPartsIterator() as $_) {
         }
