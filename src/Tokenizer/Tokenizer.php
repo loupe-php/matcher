@@ -62,20 +62,17 @@ class Tokenizer implements TokenizerInterface
             }
 
             $status = $this->breakIterator->getRuleStatus();
-            $word = $this->isWord($status);
-            $whitespace = $this->isWhitespace($status, $term);
+            $word = $status >= \IntlBreakIterator::WORD_NONE_LIMIT;
+            $whitespace = false;
 
-            // Fast path: skip normalization for pure-ascii tokens
+            // Fast path for pure-ascii tokens: skips normalization and folding for performance
             $isAscii = !preg_match('/[^\x00-\x7F]/', $term);
-            if ($isAscii) {
-                $originalLength = \strlen($term);
-            } else {
-                $originalLength = mb_strlen($term, 'UTF-8');
-            }
-
-            $originalTerm = $term;
+            $originalLength = $isAscii ? \strlen($term) : mb_strlen($term, 'UTF-8');
 
             if (!$word) {
+                // Non-word path: set whitespace flag for negation/quote logic, skip term work
+                $whitespace = ($status === null || $status < \IntlBreakIterator::WORD_NONE_LIMIT)
+                    && ($term === ' ' || trim($term) === '');
                 $position += $originalLength;
                 $originalPosition += $originalLength;
                 continue;
@@ -86,10 +83,12 @@ class Tokenizer implements TokenizerInterface
             }
 
             if ($isAscii) {
-                // Fast path: ascii tokens can never be folded
+                // Fast path: ascii tokens can never be folded and length doesn't change
                 $term = strtolower($term);
+                $termLength = $originalLength;
                 $wasFolded = false;
             } else {
+                $originalTerm = $term;
                 // Normalize (NFKC)
                 $term = (string) \Normalizer::normalize($term, \Normalizer::NFKC);
                 // Decompose accents
@@ -101,9 +100,11 @@ class Tokenizer implements TokenizerInterface
                 // Lowercase
                 $term = mb_strtolower($term, 'UTF-8');
                 $wasFolded = mb_strtolower($originalTerm, 'UTF-8') !== $term;
+                // Prefer strlen for length measurement
+                $termLength = !preg_match('/[^\x00-\x7F]/', $term) ? \strlen($term) : mb_strlen($term, 'UTF-8');
             }
 
-            $token = new Token(
+            $tokens->add(new Token(
                 $id++,
                 $term,
                 $position,
@@ -112,24 +113,14 @@ class Tokenizer implements TokenizerInterface
                 $wasFolded,
                 $originalPosition,
                 $originalLength,
-            );
+                $termLength,
+            ));
 
-            $position += $token->getLength();
+            $position += $termLength;
             $originalPosition += $originalLength;
-            $tokens->add($token);
         }
 
         return $tokens;
-    }
-
-    private function isWhitespace(?int $status, string $token): bool
-    {
-        return ($status === null || ($status >= \IntlBreakIterator::WORD_NONE && $status < \IntlBreakIterator::WORD_NONE_LIMIT)) && trim($token) === '';
-    }
-
-    private function isWord(?int $status): bool
-    {
-        return $status >= \IntlBreakIterator::WORD_NONE_LIMIT;
     }
 
     private function transliterateToAscii(string $term): string
