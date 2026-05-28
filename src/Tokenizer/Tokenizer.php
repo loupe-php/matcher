@@ -36,7 +36,8 @@ class Tokenizer implements TokenizerInterface
     {
         $this->breakIterator->setText($string);
 
-        $tokens = new TokenCollection();
+        /** @var Token[] $tokenList */
+        $tokenList = [];
         $id = 0;
         $position = 0;
         $originalPosition = 0;
@@ -78,7 +79,8 @@ class Tokenizer implements TokenizerInterface
                 continue;
             }
 
-            if ($maxTokens !== null && $tokens->count() >= $maxTokens) {
+            // $id is incremented per kept token, so it doubles as count
+            if ($maxTokens !== null && $id >= $maxTokens) {
                 break;
             }
 
@@ -104,7 +106,7 @@ class Tokenizer implements TokenizerInterface
                 $termLength = !preg_match('/[^\x00-\x7F]/', $term) ? \strlen($term) : mb_strlen($term, 'UTF-8');
             }
 
-            $tokens->add(new Token(
+            $tokenList[] = new Token(
                 $id++,
                 $term,
                 $position,
@@ -114,13 +116,13 @@ class Tokenizer implements TokenizerInterface
                 $originalPosition,
                 $originalLength,
                 $termLength,
-            ));
+            );
 
             $position += $termLength;
             $originalPosition += $originalLength;
         }
 
-        return $tokens;
+        return new TokenCollection($tokenList);
     }
 
     private function transliterateToAscii(string $term): string
