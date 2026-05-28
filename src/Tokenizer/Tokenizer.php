@@ -45,6 +45,8 @@ class Tokenizer implements TokenizerInterface
         $negated = false;
         $whitespace = true;
 
+        $allAscii = !preg_match('/[^\x00-\x7F]/', $string);
+
         foreach ($this->breakIterator->getPartsIterator() as $term) {
             // Set negation if the previous token was not a word and we're not in a phrase
             if (!$phrase && $whitespace) {
@@ -66,8 +68,8 @@ class Tokenizer implements TokenizerInterface
             $word = $status >= \IntlBreakIterator::WORD_NONE_LIMIT;
             $whitespace = false;
 
-            // Fast path for pure-ascii tokens: skips normalization and folding for performance
-            $isAscii = !preg_match('/[^\x00-\x7F]/', $term);
+            // Fast path for pure-ascii tokens: skips normalization and folding
+            $isAscii = $allAscii || !preg_match('/[^\x00-\x7F]/', $term);
             $originalLength = $isAscii ? \strlen($term) : mb_strlen($term, 'UTF-8');
 
             if (!$word) {
