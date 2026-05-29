@@ -18,7 +18,9 @@ class TokenCollection implements \Countable
      */
     public function __construct(array $tokens = [])
     {
-        $this->tokens = $tokens;
+        foreach ($tokens as $token) {
+            $this->add($token);
+        }
     }
 
     public function add(Token $token): self
