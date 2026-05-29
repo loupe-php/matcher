@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher\Tokenizer;
 
+use IntlChar;
+
 class Tokenizer implements TokenizerInterface
 {
     public const VERSION = '0.3.0'; // Increase this whenever the logic changes so it gives e.g. Loupe the opportunity to detect when a reindex is needed
@@ -74,7 +76,7 @@ class Tokenizer implements TokenizerInterface
 
             if (!$word) {
                 // Non-word path: set whitespace flag for negation/quote logic, skip term work
-                $whitespace = ctype_space($term);
+                $whitespace = $term === ' ' || IntlChar::isspace($term);
                 $position += $originalLength;
                 $originalPosition += $originalLength;
                 continue;
