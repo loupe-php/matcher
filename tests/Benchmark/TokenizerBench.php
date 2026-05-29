@@ -5,14 +5,19 @@ declare(strict_types=1);
 namespace Loupe\Matcher\Tests\Benchmark;
 
 use Loupe\Matcher\Tokenizer\Tokenizer;
+use PhpBench\Attributes\BeforeMethods;
+use PhpBench\Attributes\Groups;
+use PhpBench\Attributes\Iterations;
+use PhpBench\Attributes\OutputTimeUnit;
+use PhpBench\Attributes\ParamProviders;
+use PhpBench\Attributes\Revs;
+use PhpBench\Attributes\Warmup;
 
-/**
- * @BeforeMethods("setUp")
- * @Revs(100)
- * @Iterations(10)
- * @Warmup(2)
- * @OutputTimeUnit("microseconds", precision=2)
- */
+#[BeforeMethods('setUp')]
+#[Revs(100)]
+#[Iterations(10)]
+#[Warmup(2)]
+#[OutputTimeUnit('microseconds', precision: 2)]
 class TokenizerBench
 {
     private string $text;
@@ -32,10 +37,9 @@ class TokenizerBench
      * Pure ICU break-iterator pass — no Tokenizer code involved.
      * Drift here between baseline and PR indicates environmental noise
      * (runner load, thermal state), not a real regression in Tokenizer.
-     *
-     * @ParamProviders("provideCorpus")
-     * @Groups({"control"})
      */
+    #[ParamProviders('provideCorpus')]
+    #[Groups(['control'])]
     public function benchControlBreakIterator(): void
     {
         $bi = \IntlRuleBasedBreakIterator::createWordInstance(null); // @phpstan-ignore-line - null is allowed
@@ -44,9 +48,7 @@ class TokenizerBench
         }
     }
 
-    /**
-     * @ParamProviders("provideCorpus")
-     */
+    #[ParamProviders('provideCorpus')]
     public function benchTokenize(): void
     {
         $this->tokenizer->tokenize($this->text);
