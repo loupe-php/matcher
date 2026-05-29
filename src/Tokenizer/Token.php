@@ -26,8 +26,9 @@ class Token
         private bool $wasFolded = false,
         ?int $originalStartPosition = null,
         ?int $originalLength = null,
+        ?int $length = null,
     ) {
-        $this->length = mb_strlen($this->term, 'UTF-8');
+        $this->length = $length ?? mb_strlen($this->term, 'UTF-8');
         $this->originalLength = $originalLength ?? $this->length;
         $this->originalStartPosition = $originalStartPosition ?? $this->startPosition;
     }

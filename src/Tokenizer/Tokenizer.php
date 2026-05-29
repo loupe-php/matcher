@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher\Tokenizer;
 
+use IntlChar;
+
 class Tokenizer implements TokenizerInterface
 {
     public const VERSION = '0.3.0'; // Increase this whenever the logic changes so it gives e.g. Loupe the opportunity to detect when a reindex is needed
@@ -36,13 +38,16 @@ class Tokenizer implements TokenizerInterface
     {
         $this->breakIterator->setText($string);
 
-        $tokens = new TokenCollection();
+        /** @var Token[] $tokenList */
+        $tokenList = [];
         $id = 0;
         $position = 0;
         $originalPosition = 0;
         $phrase = false;
         $negated = false;
         $whitespace = true;
+
+        $allAscii = !preg_match('/[^\x00-\x7F]/', $string);
 
         foreach ($this->breakIterator->getPartsIterator() as $term) {
             // Set negation if the previous token was not a word and we're not in a phrase
@@ -62,35 +67,40 @@ class Tokenizer implements TokenizerInterface
             }
 
             $status = $this->breakIterator->getRuleStatus();
-            $word = $this->isWord($status);
-            $whitespace = $this->isWhitespace($status, $term);
+            $word = $status >= \IntlBreakIterator::WORD_NONE_LIMIT;
+            $whitespace = false;
 
-            $originalLength = mb_strlen($term, 'UTF-8');
-            $originalTerm = $term;
+            // Fast path for pure-ascii tokens: skips normalization and folding
+            $isAscii = $allAscii || !preg_match('/[^\x00-\x7F]/', $term);
+            $originalLength = $isAscii ? \strlen($term) : mb_strlen($term, 'UTF-8');
 
             if (!$word) {
+                // Non-word path: set whitespace flag for negation/quote logic, skip term work
+                $whitespace = $term === ' ' || IntlChar::isspace($term);
                 $position += $originalLength;
                 $originalPosition += $originalLength;
                 continue;
             }
 
-            if ($maxTokens !== null && $tokens->count() >= $maxTokens) {
+            // $id is incremented per kept token, so it doubles as count
+            if ($maxTokens !== null && $id >= $maxTokens) {
                 break;
             }
 
-            // Normalize (NFKC)
-            $term = (string) \Normalizer::normalize($term, \Normalizer::NFKC);
-            // Decompose accents
-            $term = (string) \Normalizer::normalize($term, \Normalizer::FORM_D);
-            // Transliterate to ASCII (handles characters like ß, Ł/ł, å/ä/ö that Normalizer doesn't decompose)
-            $term = $this->transliterateToAscii($term);
-            // Remove any remaining diacritics
-            $term = (string) preg_replace('/\p{Mn}+/u', '', $term);
-            // Lowercase
-            $term = mb_strtolower($term, 'UTF-8');
-            $wasFolded = mb_strtolower($originalTerm, 'UTF-8') !== $term;
+            if ($isAscii) {
+                // Fast path: ascii tokens can never be folded and length doesn't change
+                $term = strtolower($term);
+                $termLength = $originalLength;
+                $wasFolded = false;
+            } else {
+                $originalTerm = $term;
+                $term = $this->transliterateToAscii($term);
+                $term = mb_strtolower($term, 'UTF-8');
+                $wasFolded = mb_strtolower($originalTerm, 'UTF-8') !== $term;
+                $termLength = !preg_match('/[^\x00-\x7F]/', $term) ? \strlen($term) : mb_strlen($term, 'UTF-8');
+            }
 
-            $token = new Token(
+            $tokenList[] = new Token(
                 $id++,
                 $term,
                 $position,
@@ -99,24 +109,14 @@ class Tokenizer implements TokenizerInterface
                 $wasFolded,
                 $originalPosition,
                 $originalLength,
+                $termLength,
             );
 
-            $position += $token->getLength();
+            $position += $termLength;
             $originalPosition += $originalLength;
-            $tokens->add($token);
         }
 
-        return $tokens;
-    }
-
-    private function isWhitespace(?int $status, string $token): bool
-    {
-        return ($status === null || ($status >= \IntlBreakIterator::WORD_NONE && $status < \IntlBreakIterator::WORD_NONE_LIMIT)) && trim($token) === '';
-    }
-
-    private function isWord(?int $status): bool
-    {
-        return $status >= \IntlBreakIterator::WORD_NONE_LIMIT;
+        return new TokenCollection($tokenList);
     }
 
     private function transliterateToAscii(string $term): string
