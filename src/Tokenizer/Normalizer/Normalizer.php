@@ -10,16 +10,10 @@ class Normalizer implements NormalizerInterface
 
     public function normalize(string $term): string
     {
-        // Normalize (NFKC)
-        $term = (string) \Normalizer::normalize($term, \Normalizer::NFKC);
-        // Decompose accents
-        $term = (string) \Normalizer::normalize($term, \Normalizer::FORM_D);
-        // Transliterate to ASCII (handles characters like ß, Ł/ł, å/ä/ö that Normalizer doesn't decompose)
         $term = $this->transliterateToAscii($term);
-        // Remove any remaining diacritics
-        $term = (string) preg_replace('/\p{Mn}+/u', '', $term);
-        // Lowercase
-        return mb_strtolower($term, 'UTF-8');
+        $term = mb_strtolower($term, 'UTF-8');
+
+        return $term;
     }
 
     private function transliterateToAscii(string $term): string

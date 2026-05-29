@@ -33,6 +33,7 @@
         "toflar/fast-set": "^1.0"
     },
     "require-dev": {
+        "phpbench/phpbench": "^1.2",
         "phpstan/phpstan": "^2.0",
         "phpunit/phpunit": "^11.5.46",
         "symfony/console": "^7.4 || ^8.0",
@@ -46,6 +47,7 @@
         "tests": "@php vendor/bin/phpunit",
         "cs-fixer": "@php vendor/bin/ecs check --fix",
         "ci-cs-fixer": "@php vendor/bin/ecs check",
-        "phpstan": "@php vendor/bin/phpstan analyse"
+        "phpstan": "@php vendor/bin/phpstan analyse",
+        "bench": "@php vendor/bin/phpbench run --report=tokenizer"
     }
 }
