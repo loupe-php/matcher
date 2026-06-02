@@ -82,13 +82,17 @@ class WindowPlanner
         }
 
         $bestScore = null;
+        $bestCentering = 0;
         $bestStart = 0;
         foreach ($candidateStarts as $rawStart) {
             $start = max(0, min($rawStart, $textLength - $windowLength));
             $end = $start + $windowLength;
-            $score = $this->scoreWindow(new Span($start, $end), $matchSpans);
-            if ($bestScore === null || $score > $bestScore || ($score === $bestScore && $start < $bestStart)) {
+            $window = new Span($start, $end);
+            $score = $this->scoreWindow($window, $matchSpans);
+            $centering = $this->centeringScore($window, $matchSpans);
+            if ($bestScore === null || $score > $bestScore || ($score === $bestScore && $centering > $bestCentering)) {
                 $bestScore = $score;
+                $bestCentering = $centering;
                 $bestStart = $start;
             }
         }
@@ -179,6 +183,39 @@ class WindowPlanner
     }
 
     /**
+     * Measure how well the contained matches are centered within a window.
+     *
+     * @param MatchSpan[] $matchSpans
+     */
+    private function centeringScore(Span $window, array $matchSpans): int
+    {
+        $firstMatch = null;
+        $lastMatch = null;
+
+        foreach ($matchSpans as $matchSpan) {
+            if ($matchSpan->getStartPosition() < $window->getStartPosition()
+                || $matchSpan->getEndPosition() > $window->getEndPosition()) {
+                continue;
+            }
+            if ($firstMatch === null || $matchSpan->getStartPosition() < $firstMatch) {
+                $firstMatch = $matchSpan->getStartPosition();
+            }
+            if ($lastMatch === null || $matchSpan->getEndPosition() > $lastMatch) {
+                $lastMatch = $matchSpan->getEndPosition();
+            }
+        }
+
+        if ($firstMatch === null) {
+            return 0;
+        }
+
+        $leftPad = $firstMatch - $window->getStartPosition();
+        $rightPad = $window->getEndPosition() - $lastMatch;
+
+        return min($leftPad, $rightPad);
+    }
+
+    /**
      * Score a candidate window against the match spans.
      * Larger tuple = better window: [distinct query terms, total matched tokens, -length].
      *
@@ -189,6 +226,7 @@ class WindowPlanner
     {
         $distinct = [];
         $total = 0;
+
         foreach ($matchSpans as $matchSpan) {
             if ($matchSpan->getStartPosition() < $window->getStartPosition()
                 || $matchSpan->getEndPosition() > $window->getEndPosition()) {
@@ -199,6 +237,7 @@ class WindowPlanner
                 $total++;
             }
         }
+
         return [\count($distinct), $total, -$window->getLength()];
     }
 
