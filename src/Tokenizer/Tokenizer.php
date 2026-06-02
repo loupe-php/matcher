@@ -57,6 +57,7 @@ class Tokenizer implements TokenizerInterface
     public function tokenize(string $string, bool $withVariants = true, ?int $maxTokens = null): TokenCollection
     {
         $this->breakIterator->setText($string);
+        $enhanceTokens = $withVariants && $this->localeConfiguration !== null;
 
         /** @var Token[] $tokenList */
         $tokenList = [];
@@ -132,7 +133,7 @@ class Tokenizer implements TokenizerInterface
                 $termLength,
             );
 
-            if ($withVariants && $this->localeConfiguration !== null) {
+            if ($enhanceTokens) {
                 $token = $this->localeConfiguration->enhanceToken($token);
             }
 
