@@ -2,7 +2,7 @@
 
 Thanks for your interest in contributing to the decomposition process!  
 This project is intentionally pragmatic: we focus on **fast, deterministic, lexeme-based decompounding** with a small 
-emory footprint. Contributions that improve correctness, coverage, or maintainability are very welcome.
+memory footprint. Contributions that improve correctness, coverage, or maintainability are very welcome.
 
 This document explains **where things live**, **how dictionaries are built**, and **how to contribute improvements or 
 new languages**.
