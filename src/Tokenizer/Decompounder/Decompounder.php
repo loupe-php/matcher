@@ -52,25 +52,16 @@ class Decompounder
             return $leafCache[$term->term];
         }
 
-        if (!$this->isDecomposable($term, $decomposableCache)) {
-            return $leafCache[$term->term] = ($term->isValid ? [$term] : false);
-        }
-
+        $hasCandidate = false;
         $bestPenalty = null;
         $bestTerms = [];
 
         foreach ($this->splitCandidates($term) as $candidate) {
+            $hasCandidate = true;
             $left = $candidate->left;
             $right = $candidate->right;
-            $leftIsDecomposable = $this->isDecomposable($left, $decomposableCache);
 
-            if (!$leftIsDecomposable) {
-                $leftLeaves = [$left];
-                $leftPenalty = 0;
-            } else {
-                [$leftLeaves, $leftPenalty] = $this->collectLeavesOrSelf($left, $leafCache, $decomposableCache);
-            }
-
+            [$leftLeaves, $leftPenalty] = $this->collectLeavesOrSelf($left, $leafCache, $decomposableCache);
             [$rightLeaves, $rightPenalty] = $this->collectLeavesOrSelf($right, $leafCache, $decomposableCache);
             $penalty = $leftPenalty + $rightPenalty + $candidate->penalty;
 
@@ -95,6 +86,11 @@ class Decompounder
                 $bestTerms[$left->term] = $left;
                 $bestTerms[$right->term] = $right;
             }
+        }
+
+        $decomposableCache[$term->term] = $hasCandidate;
+        if (!$hasCandidate) {
+            return $leafCache[$term->term] = ($term->isValid ? [$term] : false);
         }
 
         if ($bestTerms === []) {
