@@ -35,7 +35,7 @@ class WindowPlanner
         string $text,
         array $matchSpans,
         int $cropLength,
-        int $tagOverhead,
+        int $tagOverhead = 0,
         int $maxFragments = -1,
         bool $prioritizeMatches = false,
     ): array {
