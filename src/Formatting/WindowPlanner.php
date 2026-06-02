@@ -8,11 +8,12 @@ use Loupe\Matcher\Tokenizer\MatchSpan;
 use Loupe\Matcher\Tokenizer\Span;
 
 /**
- * Plans which regions ("windows") of a source text to keep around match spans.
+ * Window Planner.
  *
- * Handles the match-prioritization logic: building candidate windows around matches,
- * scoring them by query coverage, selecting subsets into max fragment budget,
- * and picking single windows centered on the densest match cluster.
+ * Plans which regions ("windows") of a source text to keep around match spans.
+ * Handles  building candidate windows around matches, scoring them by query coverage,
+ * selecting subsets into max fragment budget, and picking single windows centered on
+ * the densest match cluster.
  */
 class WindowPlanner
 {
@@ -22,14 +23,12 @@ class WindowPlanner
 
     /**
      * Plan a sequence of context windows for cropping, one per match cluster.
-     *
-     * Every match span gets its own window (overlapping ones merged). When maxFragments
-     * limits the result, the selection strategy depends on prioritizeMatches:
-     *  - false: take the first N windows in document order
-     *  - true:  score windows by query coverage and pick the best N
+     * Selection strategy depends on prioritizeMatches:
+     *  - false: return the first N windows in document order
+     *  - true: score windows by relevance, pick the best N, return in document order
      *
      * @param MatchSpan[] $matchSpans
-     * @return Span[] in document order
+     * @return Span[]
      */
     public function planCropWindows(
         string $text,
@@ -115,7 +114,7 @@ class WindowPlanner
     }
 
     /**
-     * Build one context window per match span; merge adjacent/overlapping windows.
+     * Build one context window per match span. Merge adjacent/overlapping windows.
      *
      * @param MatchSpan[] $matchSpans
      * @return Span[]
@@ -123,8 +122,6 @@ class WindowPlanner
     private function buildPerMatchWindows(string $text, array $matchSpans, int $cropLength, int $tagOverhead): array
     {
         $textLength = mb_strlen($text, 'UTF-8');
-        // cropLength historically counts tagged-output chars; in original-text coords we
-        // discount per-span tag overhead so the resulting tagged window matches cropLength.
         $effectiveCropLength = max(1, $cropLength - $tagOverhead);
         $windows = [];
 
