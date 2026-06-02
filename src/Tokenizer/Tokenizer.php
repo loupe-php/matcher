@@ -5,20 +5,38 @@ declare(strict_types=1);
 namespace Loupe\Matcher\Tokenizer;
 
 use IntlChar;
+use Loupe\Matcher\Locale;
+use Loupe\Matcher\Tokenizer\LocaleConfiguration\English;
+use Loupe\Matcher\Tokenizer\LocaleConfiguration\German;
+use Loupe\Matcher\Tokenizer\LocaleConfiguration\LocaleConfigurationInterface;
+use Loupe\Matcher\Tokenizer\Normalizer\Normalizer;
+use Loupe\Matcher\Tokenizer\Normalizer\NormalizerInterface;
 
 class Tokenizer implements TokenizerInterface
 {
-    public const VERSION = '0.3.0'; // Increase this whenever the logic changes so it gives e.g. Loupe the opportunity to detect when a reindex is needed
-
     private \IntlRuleBasedBreakIterator $breakIterator;
 
-    private ?\Transliterator $transliterator = null;
+    private NormalizerInterface $normalizer;
 
     public function __construct(
-        private ?string $locale = null
+        private ?LocaleConfigurationInterface $localeConfiguration = null
     ) {
-        $this->breakIterator = \IntlRuleBasedBreakIterator::createWordInstance($this->locale); // @phpstan-ignore-line - null is allowed
+        $this->breakIterator = \IntlRuleBasedBreakIterator::createWordInstance($this->localeConfiguration?->getLocale()->toString()); // @phpstan-ignore-line - null is allowed
+        $this->normalizer = $this->localeConfiguration?->getNormalizer() ?? new Normalizer();
+    }
 
+    public static function createFromPreconfiguredLocaleConfiguration(Locale $locale): self
+    {
+        return new self(self::getPreconfiguredLocaleConfigurationForLocale($locale));
+    }
+
+    public static function getPreconfiguredLocaleConfigurationForLocale(Locale $locale): ?LocaleConfigurationInterface
+    {
+        return match ($locale->getPrimaryLanguage()) {
+            'de' => new German(),
+            'en' => new English(),
+            default => null,
+        };
     }
 
     public function matches(Token $token, TokenCollection $tokens): bool
@@ -34,9 +52,11 @@ class Tokenizer implements TokenizerInterface
         return false;
     }
 
-    public function tokenize(string $string, ?int $maxTokens = null): TokenCollection
+    public function tokenize(string $string, bool $withVariants = true, ?int $maxTokens = null): TokenCollection
     {
         $this->breakIterator->setText($string);
+        $localeConfiguration = $this->localeConfiguration;
+        $enhanceTokens = $withVariants && $localeConfiguration !== null;
 
         /** @var Token[] $tokenList */
         $tokenList = [];
@@ -94,13 +114,13 @@ class Tokenizer implements TokenizerInterface
                 $wasFolded = false;
             } else {
                 $originalTerm = $term;
-                $term = $this->transliterateToAscii($term);
+                $term = $this->normalizer->normalize($term);
                 $term = mb_strtolower($term, 'UTF-8');
                 $wasFolded = mb_strtolower($originalTerm, 'UTF-8') !== $term;
                 $termLength = !preg_match('/[^\x00-\x7F]/', $term) ? \strlen($term) : mb_strlen($term, 'UTF-8');
             }
 
-            $tokenList[] = new Token(
+            $token = new Token(
                 $id++,
                 $term,
                 $position,
@@ -112,27 +132,15 @@ class Tokenizer implements TokenizerInterface
                 $termLength,
             );
 
+            if ($enhanceTokens) {
+                $token = $localeConfiguration->enhanceToken($token);
+            }
+
+            $tokenList[] = $token;
             $position += $termLength;
             $originalPosition += $originalLength;
         }
 
         return new TokenCollection($tokenList);
-    }
-
-    private function transliterateToAscii(string $term): string
-    {
-        $transliterator = $this->transliterator;
-
-        if ($transliterator === null) {
-            $transliterator = \Transliterator::create('NFKD; [:Nonspacing Mark:] Remove; Latin-ASCII');
-            if (!$transliterator instanceof \Transliterator) {
-                return $term;
-            }
-            $this->transliterator = $transliterator;
-        }
-
-        $result = $transliterator->transliterate($term);
-
-        return $result !== false ? $result : $term;
     }
 }

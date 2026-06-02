@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher\Tests;
 
+use Loupe\Matcher\Locale;
 use Loupe\Matcher\Matcher;
 use Loupe\Matcher\Tokenizer\TokenCollection;
 use Loupe\Matcher\Tokenizer\Tokenizer;
@@ -34,6 +35,21 @@ final class MatcherTest extends TestCase
         $this->assertSame(15, $spans[0]->getLength());
     }
 
+    public function testDecompositionKeepsCorrectPositions(): void
+    {
+        $text = 'Die Spaßkanone sorgte für großartige Stimmungssteigerung';
+        $query = 'kanone steigerung';
+
+        $tokenizer = Tokenizer::createFromPreconfiguredLocaleConfiguration(Locale::fromString('de'));
+        $matcher = new Matcher($tokenizer);
+        $matches = $matcher->calculateMatches($text, $query);
+        $spans = $matcher->calculateMatchSpans($text, $query, $matches);
+
+        $this->assertEquals(2, \count($matches->all()));
+        $this->assertSame([4, 14], [$spans[0]->getStartPosition(), $spans[0]->getEndPosition()]);
+        $this->assertSame([37, 56], [$spans[1]->getStartPosition(), $spans[1]->getEndPosition()]);
+    }
+
     public function testEmptyTextReturnsEmptyCollection(): void
     {
         $result = $this->matcher->calculateMatches('', 'query');
@@ -46,7 +62,7 @@ final class MatcherTest extends TestCase
         $text = 'Das größte Gespräch war für die längste Nacht geplant';
         $query = 'Gespräch Nacht';
 
-        $tokenizer = new Tokenizer('de');
+        $tokenizer = Tokenizer::createFromPreconfiguredLocaleConfiguration(Locale::fromString('de'));
         $matcher = new Matcher($tokenizer);
         $matches = $matcher->calculateMatches($text, $query);
         $spans = $matcher->calculateMatchSpans($text, $query, $matches);
