@@ -155,30 +155,6 @@ class WindowPlanner
         return $windows;
     }
 
-    private function closestCropBoundary(string $text, int $position, bool $forward): int
-    {
-        $boundaries = [];
-        foreach (self::CROP_BOUNDARY_CHARS as $char) {
-            if ($forward) {
-                $boundary = mb_strpos($text, $char, $position, 'UTF-8');
-                if ($boundary !== false) {
-                    $boundaries[] = $boundary;
-                }
-            } else {
-                $boundary = mb_strrpos($text, $char, 0 - (mb_strlen($text) - $position), 'UTF-8');
-                if ($boundary !== false) {
-                    $boundaries[] = $boundary + 1;
-                }
-            }
-        }
-
-        if (empty($boundaries)) {
-            return $position;
-        }
-
-        return $forward ? min($boundaries) : max($boundaries);
-    }
-
     /**
      * Measure how well the contained matches are centered within a window.
      *
@@ -210,6 +186,30 @@ class WindowPlanner
         $rightPad = $window->getEndPosition() - $lastMatch;
 
         return min($leftPad, $rightPad);
+    }
+
+    private function closestCropBoundary(string $text, int $position, bool $forward): int
+    {
+        $boundaries = [];
+        foreach (self::CROP_BOUNDARY_CHARS as $char) {
+            if ($forward) {
+                $boundary = mb_strpos($text, $char, $position, 'UTF-8');
+                if ($boundary !== false) {
+                    $boundaries[] = $boundary;
+                }
+            } else {
+                $boundary = mb_strrpos($text, $char, 0 - (mb_strlen($text) - $position), 'UTF-8');
+                if ($boundary !== false) {
+                    $boundaries[] = $boundary + 1;
+                }
+            }
+        }
+
+        if (empty($boundaries)) {
+            return $position;
+        }
+
+        return $forward ? min($boundaries) : max($boundaries);
     }
 
     /**
