@@ -6,15 +6,15 @@ namespace Loupe\Matcher\Tokenizer\Decompounder\TermValidator;
 
 use Loupe\Matcher\Tokenizer\Decompounder\Dictionary\DictionaryInterface;
 
-final readonly class DefaultTermValidator implements TermValidatorInterface
+final class DefaultTermValidator implements TermValidatorInterface
 {
     public function __construct(
-        private DictionaryInterface $dictionary,
-        private int $minimumDecompositionTermLength,
+        private readonly DictionaryInterface $dictionary,
+        private readonly int $minimumDecompositionTermLength,
         /**
          * @var array<string, bool> $allowList
          */
-        private array $allowList = []
+        private readonly array $allowList = []
     ) {
 
     }

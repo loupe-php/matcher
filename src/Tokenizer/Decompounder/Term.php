@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher\Tokenizer\Decompounder;
 
-final readonly class Term
+final class Term
 {
     public function __construct(
-        public string $term,
-        public int $length,
-        public bool $isValid
+        public readonly string $term,
+        public readonly int $length,
+        public readonly bool $isValid
     ) {
 
     }
