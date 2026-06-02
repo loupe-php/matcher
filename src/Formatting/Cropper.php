@@ -15,7 +15,7 @@ class Cropper implements Transformer
         private string $highlightStartTag,
         private string $highlightEndTag,
         private bool $prioritizeMatches = false,
-        private ?int $truncationBudget = null,
+        private int $cropMaxFragments = -1,
     ) {
     }
 
@@ -32,6 +32,7 @@ class Cropper implements Transformer
         $parsed = $this->parseTaggedText($text);
         $cropped = $this->transform($parsed);
         $highlighter = new Highlighter($this->highlightStartTag, $this->highlightEndTag);
+
         return $highlighter->transform($cropped)->getText();
     }
 
@@ -42,16 +43,14 @@ class Cropper implements Transformer
         }
 
         $tagOverhead = mb_strlen($this->highlightStartTag, 'UTF-8') + mb_strlen($this->highlightEndTag, 'UTF-8');
-        $totalBudget = ($this->prioritizeMatches && $this->truncationBudget !== null) ? $this->truncationBudget : null;
-        $markerLength = mb_strlen($this->cropMarker, 'UTF-8');
 
         $windows = (new WindowPlanner())->planCropWindows(
             $input->getText(),
             $input->getSpans(),
             $this->cropLength,
             $tagOverhead,
-            $totalBudget,
-            $markerLength,
+            $this->cropMaxFragments,
+            $this->prioritizeMatches,
         );
 
         if ($windows === []) {

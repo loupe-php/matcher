@@ -10,8 +10,8 @@ use Loupe\Matcher\Tokenizer\Span;
 /**
  * Plans which regions ("windows") of a source text to keep around match spans.
  *
- * Owns all match-prioritization logic: building candidate windows around matches,
- * scoring them by query coverage, selecting subsets that fit a length budget,
+ * Handles the match-prioritization logic: building candidate windows around matches,
+ * scoring them by query coverage, selecting subsets into max fragment budget,
  * and picking single windows centered on the densest match cluster.
  */
 class WindowPlanner
@@ -23,9 +23,10 @@ class WindowPlanner
     /**
      * Plan a sequence of context windows for cropping, one per match cluster.
      *
-     * Without a totalBudget, every match span gets its own window (overlapping ones merged).
-     * With a totalBudget, an anchor is selected by score and the best-scoring subset of
-     * the remaining windows that fits in the budget is returned.
+     * Every match span gets its own window (overlapping ones merged). When maxFragments
+     * limits the result, the selection strategy depends on prioritizeMatches:
+     *  - false: take the first N windows in document order
+     *  - true:  score windows by query coverage and pick the best N
      *
      * @param MatchSpan[] $matchSpans
      * @return Span[] in document order
@@ -35,8 +36,8 @@ class WindowPlanner
         array $matchSpans,
         int $cropLength,
         int $tagOverhead,
-        ?int $totalBudget,
-        int $markerLength,
+        int $maxFragments = -1,
+        bool $prioritizeMatches = false,
     ): array {
         if ($cropLength <= 0 || $text === '' || $matchSpans === []) {
             return [];
@@ -44,11 +45,15 @@ class WindowPlanner
 
         $windows = $this->buildPerMatchWindows($text, $matchSpans, $cropLength, $tagOverhead);
 
-        if ($totalBudget === null || \count($windows) <= 1) {
+        if ($maxFragments < 0 || \count($windows) <= $maxFragments) {
             return $windows;
         }
 
-        return $this->selectByPriority($windows, $matchSpans, $totalBudget, $markerLength);
+        if ($prioritizeMatches) {
+            return $this->selectByPriority($windows, $matchSpans, $maxFragments);
+        }
+
+        return \array_slice($windows, 0, $maxFragments);
     }
 
     /**
@@ -103,68 +108,6 @@ class WindowPlanner
         }
 
         return new Span($start, $end);
-    }
-
-    /**
-     * @param array<int, array{window: Span, terms: array<string, true>, total: int, visibleLength: int}> $candidates
-     * @return array<int, array{window: Span, terms: array<string, true>, total: int, visibleLength: int}>
-     */
-    private function bestSubsetWithinBudget(array $candidates, int $budget, int $markerLength): array
-    {
-        $n = \count($candidates);
-        if ($n === 0) {
-            return [];
-        }
-
-        if ($n > 12) {
-            $selected = [];
-            $used = 0;
-            foreach ($candidates as $entry) {
-                $cost = $entry['visibleLength'] + $markerLength;
-                if ($used + $cost <= $budget) {
-                    $selected[] = $entry;
-                    $used += $cost;
-                }
-            }
-            return $selected;
-        }
-
-        $bestKey = [-1, -1, 0];
-        $bestPicks = [];
-        $cap = 1 << $n;
-        for ($mask = 1; $mask < $cap; $mask++) {
-            $cost = 0;
-            $terms = [];
-            $total = 0;
-            $length = 0;
-            $picks = [];
-            for ($i = 0; $i < $n; $i++) {
-                if (($mask & (1 << $i)) === 0) {
-                    continue;
-                }
-                $entry = $candidates[$i];
-                $cost += $entry['visibleLength'] + $markerLength;
-                if ($cost > $budget) {
-                    break;
-                }
-                foreach ($entry['terms'] as $t => $_) {
-                    $terms[$t] = true;
-                }
-                $total += $entry['total'];
-                $length += $entry['visibleLength'];
-                $picks[] = $entry;
-            }
-            if ($cost > $budget) {
-                continue;
-            }
-            $key = [\count($terms), $total, -$length];
-            if ($key > $bestKey) {
-                $bestKey = $key;
-                $bestPicks = $picks;
-            }
-        }
-
-        return $bestPicks;
     }
 
     /**
@@ -260,55 +203,28 @@ class WindowPlanner
     }
 
     /**
-     * Anchor on the highest-scoring window; pick the best subset of the rest that fits.
+     * Score all windows by query coverage and pick the best N.
      *
      * @param Span[]      $windows
      * @param MatchSpan[] $matchSpans
      * @return Span[] in document order
      */
-    private function selectByPriority(array $windows, array $matchSpans, int $budget, int $markerLength): array
+    private function selectByPriority(array $windows, array $matchSpans, int $maxFragments): array
     {
         $scored = [];
         foreach ($windows as $window) {
-            $terms = [];
-            $total = 0;
-            foreach ($matchSpans as $matchSpan) {
-                if ($matchSpan->getStartPosition() < $window->getStartPosition()
-                    || $matchSpan->getEndPosition() > $window->getEndPosition()) {
-                    continue;
-                }
-                foreach ($matchSpan->getTerms() as $term) {
-                    $terms[$term] = true;
-                    $total++;
-                }
-            }
+            $score = $this->scoreWindow($window, $matchSpans);
             $scored[] = [
                 'window' => $window,
-                'terms' => $terms,
-                'total' => $total,
-                'visibleLength' => $window->getLength(),
+                'score' => $score,
             ];
         }
 
-        usort($scored, function ($a, $b) {
-            return [\count($b['terms']), $b['total'], -$b['visibleLength']]
-                <=> [\count($a['terms']), $a['total'], -$a['visibleLength']];
-        });
+        usort($scored, fn ($a, $b) => $b['score'] <=> $a['score']);
 
-        $anchor = $scored[0];
-        $rest = \array_slice($scored, 1);
-        $selected = [$anchor];
-        $remainingBudget = $budget - ($anchor['visibleLength'] + $markerLength);
+        $selected = \array_slice($scored, 0, $maxFragments);
 
-        if ($remainingBudget > 0 && $rest !== []) {
-            foreach ($this->bestSubsetWithinBudget($rest, $remainingBudget, $markerLength) as $entry) {
-                $selected[] = $entry;
-            }
-        }
-
-        usort($selected, function ($a, $b) {
-            return $a['window']->getStartPosition() <=> $b['window']->getStartPosition();
-        });
+        usort($selected, fn ($a, $b) => $a['window']->getStartPosition() <=> $b['window']->getStartPosition());
 
         return array_map(fn ($e) => $e['window'], $selected);
     }

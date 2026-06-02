@@ -49,7 +49,7 @@ class Formatter
             $options->getHighlightStartTag(),
             $options->getHighlightEndTag(),
             $options->shouldPrioritizeMatches(),
-            $options->shouldTruncate() ? $options->getTruncationLength() : null,
+            $options->getCropMaxFragments(),
         );
 
         return $cropper->transform($input);
