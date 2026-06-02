@@ -99,7 +99,7 @@ fruehlingsblume,blume,fruehling
 fruehlingswetter,fruehling,wetter
 fruehstuecksbuffet,frueh,stueck,buffet,fruehstueck
 fussgaenger
-fussweg
+fussweg,fuss,weg
 gartenarbeit,arbeit,garten
 gartenbank,bank,garten
 gartenhaus,garten,haus

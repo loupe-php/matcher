@@ -30,6 +30,10 @@ class GermanBuilder extends AbstractKaikkiDictionaryBuilder
 
     protected function allowTermPostNormalize(string $term, array $json): bool
     {
+        if (mb_strlen($term) < German::MIN_DECOMPOSITION_TERM_LENGTH) {
+            return false;
+        }
+
         if (\in_array($term, self::DISALLOW_LIST, true)) {
             return false;
         }
@@ -39,7 +43,7 @@ class GermanBuilder extends AbstractKaikkiDictionaryBuilder
 
     protected function allowTermPreNormalize(string $term, array $json): bool
     {
-        if (!preg_match('/^[A-ZÄÖÜa-zäöüß]{' . German::MIN_DECOMPOSITION_TERM_LENGTH . ',}$/u', $term)) {
+        if (!preg_match('/^[A-ZÄÖÜa-zäöüß]+$/u', $term)) {
             return false;
         }
 
