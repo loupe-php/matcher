@@ -14,8 +14,6 @@ use Loupe\Matcher\Tokenizer\Normalizer\NormalizerInterface;
 
 class Tokenizer implements TokenizerInterface
 {
-    public const VERSION = '0.3.0'; // Increase this whenever the logic changes so it gives e.g. Loupe the opportunity to detect when a reindex is needed
-
     private \IntlRuleBasedBreakIterator $breakIterator;
 
     private NormalizerInterface $normalizer;
