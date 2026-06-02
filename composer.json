@@ -1,6 +1,6 @@
 {
     "name": "loupe/matcher",
-    "description": "Highlight and crop around search terms",
+    "description": "Tokenize, decompose, highlight and crop around text and search terms",
     "keywords": ["search", "tokenize", "tokenizer", "crop", "highlight", "decomposition", "decompose", "dictionary"],
     "type": "library",
     "license": "MIT",

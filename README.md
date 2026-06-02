@@ -1,6 +1,8 @@
 # Loupe Matcher
 
-A PHP library for search term highlighting and text snippet generation. Transform search results into user-friendly formatted text with highlighted matches and contextual cropping. Moreover, this library ships with support for dictionary-based term decomposition!
+Loupe Matcher turns plain search queries and arbitrary text into precise, user-friendly matches: tokenize phrases and
+negations, normalize language-specific spelling variants, decompose compound words, calculate match spans, and format the
+result with highlighting, cropping, and truncation.
 
 ## Installation
 
