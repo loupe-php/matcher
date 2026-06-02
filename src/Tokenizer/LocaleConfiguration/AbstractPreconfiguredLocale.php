@@ -27,7 +27,12 @@ abstract class AbstractPreconfiguredLocale implements LocaleConfigurationInterfa
 
     public function enhanceToken(Token $token): Token
     {
-        return $token->withAddedVariants($this->decompounder->decompoundTerm($token->getTerm()));
+        $variants = $this->decompounder->decompoundTerm($token->getTerm());
+        if ($variants === []) {
+            return $token;
+        }
+
+        return $token->withAddedVariants($variants);
     }
 
     public function getNormalizer(): NormalizerInterface

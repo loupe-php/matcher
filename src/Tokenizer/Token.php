@@ -146,6 +146,10 @@ class Token
      */
     public function withAddedVariants(array $variants): self
     {
+        if ($variants === []) {
+            return $this;
+        }
+
         $clone = clone $this;
         $clone->variants = array_unique(array_merge($this->variants, $variants));
         return $clone;
