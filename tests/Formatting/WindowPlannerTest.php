@@ -12,7 +12,11 @@ class WindowPlannerTest extends TestCase
 {
     public function testPrioritizationPrefersDistinctTermsOverRepetition(): void
     {
-        $text = $this->getRepetitionVsDiversityText();
+        $text = <<<'TEXT'
+            Here delta delta delta repeat the same term three times at the start.
+            Filler that contains no matches and only serves to push clusters far apart from each other.
+            At the very end epsilon zeta eta appear together with full term diversity.
+            TEXT;
         $spans = $this->findSpansForTerms($text, 'delta', 'epsilon', 'zeta', 'eta');
 
         $windows = (new WindowPlanner())->planCropWindows(
@@ -35,7 +39,15 @@ class WindowPlannerTest extends TestCase
 
     public function testPrioritizedResultIsAlwaysInDocumentOrder(): void
     {
-        $text = $this->getDescendingQualityText();
+        $text = <<<'TEXT'
+            First ruby ruby ruby ruby here with four matches.
+            Filler that contains no matches and only serves to push clusters far apart from each other.
+            Second jade jade jade here with three matches.
+            Filler that contains no matches and only serves to push clusters far apart from each other.
+            Third opal opal here with two matches.
+            Filler that contains no matches and only serves to push clusters far apart from each other.
+            Fourth onyx here with one match.
+            TEXT;
         $spans = $this->findSpansForTerms($text, 'ruby', 'jade', 'opal', 'onyx');
 
         $this->assertCount(10, $spans);
@@ -60,7 +72,13 @@ class WindowPlannerTest extends TestCase
 
     public function testReturnsAllWindowsWhenUnlimited(): void
     {
-        $text = $this->getWeakMediumDenseText();
+        $text = <<<'TEXT'
+            A lone alpha sits at the very start of this document.
+            Filler that contains no matches and only serves to push clusters far apart from each other.
+            In the middle beta and beta appear as a pair close together.
+            More filler that contains no matches and only serves to push clusters far apart from each other.
+            At the very end gamma gamma gamma cluster tightly together as the densest group.
+            TEXT;
         $spans = $this->findSpansForTerms($text, 'alpha', 'beta', 'gamma');
 
         $windows = (new WindowPlanner())->planCropWindows(
@@ -73,9 +91,80 @@ class WindowPlannerTest extends TestCase
         $this->assertCount(3, $windows);
     }
 
+    public function testTagOverheadCanChangePrioritizationOutcome(): void
+    {
+        $text = <<<'TEXT'
+            Here alpha and then more words before beta in text.
+            Far far far far far far far far far far far far far far far away from the first cluster entirely.
+            At the end gamma gamma gamma tightly packed.
+            TEXT;
+        $spans = $this->findSpansForTerms($text, 'alpha', 'beta', 'gamma');
+
+        // Without overhead a wide window around alpha also captures beta → 2 distinct terms,
+        // which beats gamma's 1 distinct term under prioritization.
+        $withoutOverhead = (new WindowPlanner())->planCropWindows(
+            $text,
+            $spans,
+            cropLength: 30,
+            tagOverhead: 0,
+            maxFragments: 1,
+            prioritizeMatches: true,
+        );
+        $textWithout = $this->combinedWindowText($text, $withoutOverhead);
+        $this->assertStringContainsString('alpha', $textWithout);
+        $this->assertStringContainsString('beta', $textWithout);
+
+        // With large overhead the window around alpha shrinks and no longer reaches beta →
+        // both clusters score 1 distinct term, but gamma has 3 total matches and wins.
+        $withOverhead = (new WindowPlanner())->planCropWindows(
+            $text,
+            $spans,
+            cropLength: 30,
+            tagOverhead: 15,
+            maxFragments: 1,
+            prioritizeMatches: true,
+        );
+        $textWith = $this->combinedWindowText($text, $withOverhead);
+        $this->assertStringContainsString('gamma', $textWith);
+        $this->assertStringNotContainsString('alpha', $textWith);
+    }
+
+    public function testTagOverheadCanPreventWindowMerging(): void
+    {
+        $text = 'Words before alpha and then a moderate gap of several filler words separating them before beta appears after.';
+        $spans = $this->findSpansForTerms($text, 'alpha', 'beta');
+
+        $merged = (new WindowPlanner())->planCropWindows($text, $spans, cropLength: 50, tagOverhead: 0);
+        $separate = (new WindowPlanner())->planCropWindows($text, $spans, cropLength: 50, tagOverhead: 20);
+
+        // Without overhead the wider windows overlap and merge into one
+        $this->assertCount(1, $merged);
+        // With overhead the narrower windows remain separate
+        $this->assertCount(2, $separate);
+    }
+
+    public function testTagOverheadProducesNarrowerWindow(): void
+    {
+        $text = 'Plenty of prefix filler content before the keyword and plenty of suffix filler content after it ends here at last.';
+        $spans = $this->findSpansForTerms($text, 'keyword');
+
+        $without = (new WindowPlanner())->planCropWindows($text, $spans, cropLength: 40, tagOverhead: 0);
+        $with = (new WindowPlanner())->planCropWindows($text, $spans, cropLength: 40, tagOverhead: 20);
+
+        $this->assertCount(1, $without);
+        $this->assertCount(1, $with);
+        $this->assertLessThan($without[0]->getLength(), $with[0]->getLength());
+    }
+
     public function testWithoutPrioritizationTakesFirstN(): void
     {
-        $text = $this->getWeakMediumDenseText();
+        $text = <<<'TEXT'
+            A lone alpha sits at the very start of this document.
+            Filler that contains no matches and only serves to push clusters far apart from each other.
+            In the middle beta and beta appear as a pair close together.
+            More filler that contains no matches and only serves to push clusters far apart from each other.
+            At the very end gamma gamma gamma cluster tightly together as the densest group.
+            TEXT;
         $spans = $this->findSpansForTerms($text, 'alpha', 'beta', 'gamma');
 
         $windows = (new WindowPlanner())->planCropWindows(
@@ -96,8 +185,13 @@ class WindowPlannerTest extends TestCase
 
     public function testWithPrioritizationPicksBestN(): void
     {
-        // Exact same text as testWithoutPrioritizationTakesFirstN — only the flag changes.
-        $text = $this->getWeakMediumDenseText();
+        $text = <<<'TEXT'
+            A lone alpha sits at the very start of this document.
+            Filler that contains no matches and only serves to push clusters far apart from each other.
+            In the middle beta and beta appear as a pair close together.
+            More filler that contains no matches and only serves to push clusters far apart from each other.
+            At the very end gamma gamma gamma cluster tightly together as the densest group.
+            TEXT;
         $spans = $this->findSpansForTerms($text, 'alpha', 'beta', 'gamma');
 
         $windows = (new WindowPlanner())->planCropWindows(
@@ -118,7 +212,13 @@ class WindowPlannerTest extends TestCase
 
     public function testWithPrioritizationSingleFragmentPicksBest(): void
     {
-        $text = $this->getWeakMediumDenseText();
+        $text = <<<'TEXT'
+            A lone alpha sits at the very start of this document.
+            Filler that contains no matches and only serves to push clusters far apart from each other.
+            In the middle beta and beta appear as a pair close together.
+            More filler that contains no matches and only serves to push clusters far apart from each other.
+            At the very end gamma gamma gamma cluster tightly together as the densest group.
+            TEXT;
         $spans = $this->findSpansForTerms($text, 'alpha', 'beta', 'gamma');
 
         $windows = (new WindowPlanner())->planCropWindows(
@@ -182,50 +282,5 @@ class WindowPlannerTest extends TestCase
         usort($spans, fn ($a, $b) => $a->getStartPosition() <=> $b->getStartPosition());
 
         return $spans;
-    }
-
-    /**
-     * Four clusters of descending quality (best first, worst last).
-     * (ruby ×4) ··· (jade ×3) ··· (opal ×2) ··· (onyx ×1)
-     */
-    private function getDescendingQualityText(): string
-    {
-        return <<<'TEXT'
-            First ruby ruby ruby ruby here with four matches.
-            Filler that contains no matches and only serves to push clusters far apart from each other.
-            Second jade jade jade here with three matches.
-            Filler that contains no matches and only serves to push clusters far apart from each other.
-            Third opal opal here with two matches.
-            Filler that contains no matches and only serves to push clusters far apart from each other.
-            Fourth onyx here with one match.
-            TEXT;
-    }
-
-    /**
-     * Start: delta delta delta (3 matches, 1 distinct term)
-     * End:   epsilon zeta eta  (3 matches, 3 distinct terms)
-     */
-    private function getRepetitionVsDiversityText(): string
-    {
-        return <<<'TEXT'
-            Here delta delta delta repeat the same term three times at the start.
-            Filler that contains no matches and only serves to push clusters far apart from each other.
-            At the very end epsilon zeta eta appear together with full term diversity.
-            TEXT;
-    }
-
-    /**
-     * Densest cluster at the end so document-order and score-based selection diverge.
-     * (weak: alpha ×1) ··· (medium: beta ×2) ··· (dense: gamma ×3)
-     */
-    private function getWeakMediumDenseText(): string
-    {
-        return <<<'TEXT'
-            A lone alpha sits at the very start of this document.
-            Filler that contains no matches and only serves to push clusters far apart from each other.
-            In the middle beta and beta appear as a pair close together.
-            More filler that contains no matches and only serves to push clusters far apart from each other.
-            At the very end gamma gamma gamma cluster tightly together as the densest group.
-            TEXT;
     }
 }
