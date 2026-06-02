@@ -6,7 +6,7 @@ namespace Loupe\Matcher\Tokenizer\Decompounder;
 
 class Decompounder
 {
-    public const int COSTLY_PENALTY = 100;
+    public const COSTLY_PENALTY = 100;
 
     private TermPool $termPool;
 
