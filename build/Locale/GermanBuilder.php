@@ -13,6 +13,10 @@ use Loupe\Matcher\Tokenizer\Normalizer\NormalizerInterface;
 
 class GermanBuilder extends AbstractKaikkiDictionaryBuilder
 {
+    protected const EXTRA_TERMS = [
+        'sauger',
+    ];
+
     private const DISALLOW_LIST = [
         'date', // There is no compound word with date. This would split "datenbank" into "date", "daten" and "bank"
         'tuck',

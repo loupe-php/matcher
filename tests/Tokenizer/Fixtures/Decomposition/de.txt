@@ -277,7 +277,7 @@ stadtplan,plan,stadt
 stadtteil,stadt,teil
 stadtverwaltung,stadt,verwaltung
 stadtzentrum,stadt,zentrum
-staubsauger
+staubsauger,staub,sauger
 stimmtraining,stimme,training
 stromausfall,ausfall,strom
 stromleitung,leitung,strom
@@ -332,6 +332,7 @@ wetterlage,lage,wetter
 wetterstation,station,wetter
 wettervorhersage,wetter,vorhersage
 windenergieanlage,wind,energie,anlage,windenergie
+windschutzscheibe,wind,schutz,scheibe,windschutz
 winter
 wintergarten,garten,winter
 winterjacke,jacke,winter

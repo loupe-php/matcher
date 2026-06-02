@@ -11,6 +11,11 @@ use Symfony\Component\HttpClient\HttpClient;
 
 abstract class AbstractKaikkiDictionaryBuilder extends AbstractFastSetDictionaryBuilder
 {
+    /**
+     * @var array<string>
+     */
+    protected const EXTRA_TERMS = [];
+
     private const COMMON_FILTER_TAGS = [
         'form-of',
         'form_of',
@@ -64,6 +69,10 @@ abstract class AbstractKaikkiDictionaryBuilder extends AbstractFastSetDictionary
         $io->progressFinish();
 
         gzclose($gz);
+
+        foreach (static::EXTRA_TERMS as $additionalTerm) {
+            $terms[] = $additionalTerm;
+        }
 
         return $terms;
     }
