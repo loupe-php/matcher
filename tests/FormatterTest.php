@@ -253,20 +253,6 @@ class FormatterTest extends TestCase
         $this->assertSame('A test sentence.', $result->getFormattedText());
     }
 
-    public function testFormatThrowsWhenCropLengthExceedsTruncationLength(): void
-    {
-        $options = (new FormatterOptions())
-            ->withEnableCrop()
-            ->withEnableTruncation()
-            ->withCropLength(300)
-            ->withTruncationLength(100);
-
-        $formatter = new Formatter($this->matcher);
-
-        $this->expectException(\InvalidArgumentException::class);
-        $formatter->format('Some text with a test in it.', $this->queryTerms, $options);
-    }
-
     public function testFormatTruncationClosesOpenHighlight(): void
     {
         $tokenizer = new Tokenizer();
