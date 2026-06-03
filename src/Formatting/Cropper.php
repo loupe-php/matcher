@@ -42,13 +42,10 @@ class Cropper implements Transformer
             return $input;
         }
 
-        $tagOverhead = mb_strlen($this->highlightStartTag, 'UTF-8') + mb_strlen($this->highlightEndTag, 'UTF-8');
-
         $windows = (new WindowPlanner())->planCropWindows(
             $input->getText(),
             $input->getSpans(),
             $this->cropLength,
-            $tagOverhead,
             $this->cropMaxFragments,
             $this->prioritizeMatches,
         );
