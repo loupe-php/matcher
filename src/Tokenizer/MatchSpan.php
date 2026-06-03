@@ -13,7 +13,7 @@ namespace Loupe\Matcher\Tokenizer;
 class MatchSpan extends Span
 {
     /**
-     * @param array<int, string>
+     * @param array<int, string> $terms
      */
     public function __construct(
         int $startPosition,
