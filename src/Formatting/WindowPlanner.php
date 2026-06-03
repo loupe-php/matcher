@@ -112,8 +112,6 @@ class WindowPlanner
     }
 
     /**
-     * Measure how well the contained matches are centered within a window.
-     *
      * @param MatchSpan[] $matchSpans
      */
     private function centeringScore(Span $window, array $matchSpans): int
@@ -200,7 +198,6 @@ class WindowPlanner
             $start = max(0, min($rawPos, $textLength - $windowLength));
             $end = min($textLength, $start + $windowLength);
 
-            // Snap to word boundaries
             if ($start > 0) {
                 $start = $this->closestCropBoundary($text, $start, false);
             }
@@ -257,7 +254,7 @@ class WindowPlanner
      *
      * @param Span[]      $candidates
      * @param MatchSpan[] $matchSpans
-     * @return Span[] in document order
+     * @return Span[]
      */
     private function selectNonOverlapping(array $candidates, array $matchSpans, int $maxFragments, bool $prioritizeMatches): array
     {

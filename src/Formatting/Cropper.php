@@ -57,9 +57,6 @@ class Cropper implements Transformer
         return $this->renderWindows($input->getText(), $input->getSpans(), $windows);
     }
 
-    /**
-     * Parse a string with highlight tags into (originalText, spans).
-     */
     private function parseTaggedText(string $text): FormattedText
     {
         if ($this->highlightStartTag === '' || $this->highlightEndTag === '') {
@@ -136,10 +133,6 @@ class Cropper implements Transformer
     }
 
     /**
-     * Fallback used by the cropHighlightedText() public adapter: when we only have
-     * tagged text to work from, derive the matched terms by splitting the highlighted
-     * chunk on whitespace.
-     *
      * @return array<int, string>
      */
     private function splitChunkIntoTerms(string $chunk): array
