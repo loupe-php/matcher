@@ -91,70 +91,37 @@ class WindowPlannerTest extends TestCase
         $this->assertCount(3, $windows);
     }
 
-    public function testTagOverheadCanChangePrioritizationOutcome(): void
-    {
-        $text = <<<'TEXT'
-            Here alpha and then more words before beta in text.
-            Far far far far far far far far far far far far far far far away from the first cluster entirely.
-            At the end gamma gamma gamma tightly packed.
-            TEXT;
-        $spans = $this->findSpansForTerms($text, 'alpha', 'beta', 'gamma');
 
-        // Without overhead a wide window around alpha also captures beta → 2 distinct terms,
-        // which beats gamma's 1 distinct term under prioritization.
-        $withoutOverhead = (new WindowPlanner())->planCropWindows(
+
+    public function testSlidingWindowFindsClusterAcrossSeparatedSpans(): void
+    {
+        // 4 distinct match terms spread across ~35 characters, each separated by non-match words.
+        // The old per-match algorithm would score each span individually as [1, 1].
+        // The sliding window algorithm finds a single window capturing all 4 → [4, 4].
+        $text = 'Filler before alpha word beta word gamma word delta filler after all of them end here.';
+        $spans = $this->findSpansForTerms($text, 'alpha', 'beta', 'gamma', 'delta');
+
+        $this->assertCount(4, $spans);
+
+        $windows = (new WindowPlanner())->planCropWindows(
             $text,
             $spans,
-            cropLength: 30,
-            tagOverhead: 0,
+            cropLength: 45,
             maxFragments: 1,
             prioritizeMatches: true,
         );
-        $textWithout = $this->combinedWindowText($text, $withoutOverhead);
-        $this->assertStringContainsString('alpha', $textWithout);
-        $this->assertStringContainsString('beta', $textWithout);
 
-        // With large overhead the window around alpha shrinks and no longer reaches beta →
-        // both clusters score 1 distinct term, but gamma has 3 total matches and wins.
-        $withOverhead = (new WindowPlanner())->planCropWindows(
-            $text,
-            $spans,
-            cropLength: 30,
-            tagOverhead: 15,
-            maxFragments: 1,
-            prioritizeMatches: true,
-        );
-        $textWith = $this->combinedWindowText($text, $withOverhead);
-        $this->assertStringContainsString('gamma', $textWith);
-        $this->assertStringNotContainsString('alpha', $textWith);
+        $this->assertCount(1, $windows);
+        $combined = $this->combinedWindowText($text, $windows);
+
+        // All 4 terms captured in a single window
+        $this->assertStringContainsString('alpha', $combined);
+        $this->assertStringContainsString('beta', $combined);
+        $this->assertStringContainsString('gamma', $combined);
+        $this->assertStringContainsString('delta', $combined);
     }
 
-    public function testTagOverheadCanPreventWindowMerging(): void
-    {
-        $text = 'Words before alpha and then a moderate gap of several filler words separating them before beta appears after.';
-        $spans = $this->findSpansForTerms($text, 'alpha', 'beta');
 
-        $merged = (new WindowPlanner())->planCropWindows($text, $spans, cropLength: 50, tagOverhead: 0);
-        $separate = (new WindowPlanner())->planCropWindows($text, $spans, cropLength: 50, tagOverhead: 20);
-
-        // Without overhead the wider windows overlap and merge into one
-        $this->assertCount(1, $merged);
-        // With overhead the narrower windows remain separate
-        $this->assertCount(2, $separate);
-    }
-
-    public function testTagOverheadProducesNarrowerWindow(): void
-    {
-        $text = 'Plenty of prefix filler content before the keyword and plenty of suffix filler content after it ends here at last.';
-        $spans = $this->findSpansForTerms($text, 'keyword');
-
-        $without = (new WindowPlanner())->planCropWindows($text, $spans, cropLength: 40, tagOverhead: 0);
-        $with = (new WindowPlanner())->planCropWindows($text, $spans, cropLength: 40, tagOverhead: 20);
-
-        $this->assertCount(1, $without);
-        $this->assertCount(1, $with);
-        $this->assertLessThan($without[0]->getLength(), $with[0]->getLength());
-    }
 
     public function testWithoutPrioritizationTakesFirstN(): void
     {
@@ -236,6 +203,70 @@ class WindowPlannerTest extends TestCase
         $this->assertStringContainsString('gamma', $combined);
         $this->assertStringNotContainsString('alpha', $combined);
         $this->assertStringNotContainsString('beta', $combined);
+    }
+
+    public function testWindowsAreNeverWiderThanCropLengthPlusBoundarySnap(): void
+    {
+        $text = 'Alpha sits in the very beginning then far away beta in the deep middle then gamma at the very end of this text here.';
+        $spans = $this->findSpansForTerms($text, 'alpha', 'beta', 'gamma');
+
+        $windows = (new WindowPlanner())->planCropWindows(
+            $text,
+            $spans,
+            cropLength: 30,
+        );
+
+        foreach ($windows as $window) {
+            // Each window should be roughly cropLength. Allow +10 chars for word-boundary snapping.
+            $this->assertLessThanOrEqual(40, $window->getLength(),
+                sprintf('Window [%d, %d] is %d chars, exceeds cropLength+snap budget',
+                    $window->getStartPosition(), $window->getEndPosition(), $window->getLength()));
+        }
+    }
+
+    public function testSelectedWindowsNeverOverlap(): void
+    {
+        // Dense matches where many candidate windows overlap — selection must be non-overlapping.
+        $text = 'aa bb cc dd ee ff gg hh ii jj kk ll mm nn oo pp qq rr ss tt uu vv ww xx yy zz';
+        $spans = $this->findSpansForTerms($text, 'cc', 'ff', 'ii', 'll', 'oo', 'rr', 'uu', 'xx');
+
+        $windows = (new WindowPlanner())->planCropWindows(
+            $text,
+            $spans,
+            cropLength: 15,
+            prioritizeMatches: true,
+        );
+
+        $this->assertNotEmpty($windows);
+
+        for ($i = 1; $i < \count($windows); $i++) {
+            $this->assertGreaterThanOrEqual(
+                $windows[$i - 1]->getEndPosition(),
+                $windows[$i]->getStartPosition(),
+                sprintf('Windows %d [%d,%d] and %d [%d,%d] overlap',
+                    $i - 1, $windows[$i - 1]->getStartPosition(), $windows[$i - 1]->getEndPosition(),
+                    $i, $windows[$i]->getStartPosition(), $windows[$i]->getEndPosition()),
+            );
+        }
+    }
+
+    public function testSingleMatchAllAloneGetsOneWindow(): void
+    {
+        $text = 'All the matches cluster into one tiny region alpha and nothing else matches anywhere at all in the remaining text.';
+        $spans = $this->findSpansForTerms($text, 'alpha');
+
+        $windows = (new WindowPlanner())->planCropWindows(
+            $text,
+            $spans,
+            cropLength: 30,
+            maxFragments: 3,
+            prioritizeMatches: true,
+        );
+
+        // Asked for 3 fragments, but only 1 match exists → 1 window
+        $this->assertCount(1, $windows);
+        $combined = $this->combinedWindowText($text, $windows);
+        $this->assertStringContainsString('alpha', $combined);
     }
 
     /**
