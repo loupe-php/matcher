@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher\Tests\Benchmark;
 
+use Loupe\Matcher\Locale;
 use Loupe\Matcher\Tokenizer\Tokenizer;
 use PhpBench\Attributes\BeforeMethods;
 use PhpBench\Attributes\Groups;
@@ -29,7 +30,7 @@ class TokenizerBench
      */
     public function setUp(array $params): void
     {
-        $this->tokenizer = new Tokenizer($params['locale']);
+        $this->tokenizer = Tokenizer::createFromPreconfiguredLocaleConfiguration(Locale::fromString($params['locale']));
         $this->text = self::loadFixture($params['locale'], $params['size']);
     }
 
