@@ -112,6 +112,65 @@ class WindowPlanner
     }
 
     /**
+     * Measure how well the contained matches are centered within a window.
+     *
+     * @param MatchSpan[] $matchSpans
+     */
+    private function centeringScore(Span $window, array $matchSpans): int
+    {
+        $firstMatch = null;
+        $lastMatch = null;
+
+        foreach ($matchSpans as $matchSpan) {
+            if ($matchSpan->getStartPosition() < $window->getStartPosition()
+                || $matchSpan->getEndPosition() > $window->getEndPosition()) {
+                continue;
+            }
+            if ($firstMatch === null || $matchSpan->getStartPosition() < $firstMatch) {
+                $firstMatch = $matchSpan->getStartPosition();
+            }
+            if ($lastMatch === null || $matchSpan->getEndPosition() > $lastMatch) {
+                $lastMatch = $matchSpan->getEndPosition();
+            }
+        }
+
+        if ($firstMatch === null) {
+            return 0;
+        }
+
+        $leftPad = $firstMatch - $window->getStartPosition();
+        $rightPad = $window->getEndPosition() - $lastMatch;
+
+        return min($leftPad, $rightPad);
+    }
+
+    private function closestCropBoundary(string $text, int $position, bool $forward): int
+    {
+        $textLength = mb_strlen($text, 'UTF-8');
+        $boundaries = [];
+        foreach (self::CROP_BOUNDARY_CHARS as $char) {
+            if ($forward) {
+                $boundary = mb_strpos($text, $char, $position, 'UTF-8');
+                if ($boundary !== false) {
+                    $boundaries[] = $boundary;
+                }
+            } else {
+                $boundary = mb_strrpos($text, $char, 0 - ($textLength - $position), 'UTF-8');
+                if ($boundary !== false) {
+                    $boundaries[] = $boundary + 1;
+                }
+            }
+        }
+
+        if (empty($boundaries)) {
+            // No word boundary found — snap to text edge rather than cutting mid-word
+            return $forward ? $textLength : 0;
+        }
+
+        return $forward ? min($boundaries) : max($boundaries);
+    }
+
+    /**
      * Generate candidate windows at each match span position.
      * Two candidates per span: centered on the span, and start-aligned at the span.
      * All candidates are bounded to windowLength and snapped to word boundaries.
@@ -163,6 +222,32 @@ class WindowPlanner
         }
 
         return $windows;
+    }
+
+    /**
+     * Score a candidate window against the match spans.
+     * Larger tuple = better window: [distinct query terms, total matched tokens, -length].
+     *
+     * @param MatchSpan[] $matchSpans
+     * @return array{int, int, int}
+     */
+    private function scoreWindow(Span $window, array $matchSpans): array
+    {
+        $distinct = [];
+        $total = 0;
+
+        foreach ($matchSpans as $matchSpan) {
+            if ($matchSpan->getStartPosition() < $window->getStartPosition()
+                || $matchSpan->getEndPosition() > $window->getEndPosition()) {
+                continue;
+            }
+            foreach ($matchSpan->getTerms() as $term) {
+                $distinct[$term] = true;
+                $total++;
+            }
+        }
+
+        return [\count($distinct), $total, -$window->getLength()];
     }
 
     /**
@@ -229,91 +314,6 @@ class WindowPlanner
         usort($selected, fn ($a, $b) => $a->getStartPosition() <=> $b->getStartPosition());
 
         return $selected;
-    }
-
-    /**
-     * Measure how well the contained matches are centered within a window.
-     *
-     * @param MatchSpan[] $matchSpans
-     */
-    private function centeringScore(Span $window, array $matchSpans): int
-    {
-        $firstMatch = null;
-        $lastMatch = null;
-
-        foreach ($matchSpans as $matchSpan) {
-            if ($matchSpan->getStartPosition() < $window->getStartPosition()
-                || $matchSpan->getEndPosition() > $window->getEndPosition()) {
-                continue;
-            }
-            if ($firstMatch === null || $matchSpan->getStartPosition() < $firstMatch) {
-                $firstMatch = $matchSpan->getStartPosition();
-            }
-            if ($lastMatch === null || $matchSpan->getEndPosition() > $lastMatch) {
-                $lastMatch = $matchSpan->getEndPosition();
-            }
-        }
-
-        if ($firstMatch === null) {
-            return 0;
-        }
-
-        $leftPad = $firstMatch - $window->getStartPosition();
-        $rightPad = $window->getEndPosition() - $lastMatch;
-
-        return min($leftPad, $rightPad);
-    }
-
-    private function closestCropBoundary(string $text, int $position, bool $forward): int
-    {
-        $textLength = mb_strlen($text, 'UTF-8');
-        $boundaries = [];
-        foreach (self::CROP_BOUNDARY_CHARS as $char) {
-            if ($forward) {
-                $boundary = mb_strpos($text, $char, $position, 'UTF-8');
-                if ($boundary !== false) {
-                    $boundaries[] = $boundary;
-                }
-            } else {
-                $boundary = mb_strrpos($text, $char, 0 - ($textLength - $position), 'UTF-8');
-                if ($boundary !== false) {
-                    $boundaries[] = $boundary + 1;
-                }
-            }
-        }
-
-        if (empty($boundaries)) {
-            // No word boundary found — snap to text edge rather than cutting mid-word
-            return $forward ? $textLength : 0;
-        }
-
-        return $forward ? min($boundaries) : max($boundaries);
-    }
-
-    /**
-     * Score a candidate window against the match spans.
-     * Larger tuple = better window: [distinct query terms, total matched tokens, -length].
-     *
-     * @param MatchSpan[] $matchSpans
-     * @return array{int, int, int}
-     */
-    private function scoreWindow(Span $window, array $matchSpans): array
-    {
-        $distinct = [];
-        $total = 0;
-
-        foreach ($matchSpans as $matchSpan) {
-            if ($matchSpan->getStartPosition() < $window->getStartPosition()
-                || $matchSpan->getEndPosition() > $window->getEndPosition()) {
-                continue;
-            }
-            foreach ($matchSpan->getTerms() as $term) {
-                $distinct[$term] = true;
-                $total++;
-            }
-        }
-
-        return [\count($distinct), $total, -$window->getLength()];
     }
 
     private function snapEndBackwardToWhitespace(string $text, int $position): int

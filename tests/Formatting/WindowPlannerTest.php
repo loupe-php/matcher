@@ -91,7 +91,56 @@ class WindowPlannerTest extends TestCase
         $this->assertCount(3, $windows);
     }
 
+    public function testSelectedWindowsNeverOverlap(): void
+    {
+        // Dense matches where many candidate windows overlap — selection must be non-overlapping.
+        $text = 'aa bb cc dd ee ff gg hh ii jj kk ll mm nn oo pp qq rr ss tt uu vv ww xx yy zz';
+        $spans = $this->findSpansForTerms($text, 'cc', 'ff', 'ii', 'll', 'oo', 'rr', 'uu', 'xx');
 
+        $windows = (new WindowPlanner())->planCropWindows(
+            $text,
+            $spans,
+            cropLength: 15,
+            prioritizeMatches: true,
+        );
+
+        $this->assertNotEmpty($windows);
+
+        for ($i = 1; $i < \count($windows); $i++) {
+            $this->assertGreaterThanOrEqual(
+                $windows[$i - 1]->getEndPosition(),
+                $windows[$i]->getStartPosition(),
+                \sprintf(
+                    'Windows %d [%d,%d] and %d [%d,%d] overlap',
+                    $i - 1,
+                    $windows[$i - 1]->getStartPosition(),
+                    $windows[$i - 1]->getEndPosition(),
+                    $i,
+                    $windows[$i]->getStartPosition(),
+                    $windows[$i]->getEndPosition()
+                ),
+            );
+        }
+    }
+
+    public function testSingleMatchAllAloneGetsOneWindow(): void
+    {
+        $text = 'All the matches cluster into one tiny region alpha and nothing else matches anywhere at all in the remaining text.';
+        $spans = $this->findSpansForTerms($text, 'alpha');
+
+        $windows = (new WindowPlanner())->planCropWindows(
+            $text,
+            $spans,
+            cropLength: 30,
+            maxFragments: 3,
+            prioritizeMatches: true,
+        );
+
+        // Asked for 3 fragments, but only 1 match exists → 1 window
+        $this->assertCount(1, $windows);
+        $combined = $this->combinedWindowText($text, $windows);
+        $this->assertStringContainsString('alpha', $combined);
+    }
 
     public function testSlidingWindowFindsClusterAcrossSeparatedSpans(): void
     {
@@ -121,7 +170,31 @@ class WindowPlannerTest extends TestCase
         $this->assertStringContainsString('delta', $combined);
     }
 
+    public function testWindowsAreNeverWiderThanCropLengthPlusBoundarySnap(): void
+    {
+        $text = 'Alpha sits in the very beginning then far away beta in the deep middle then gamma at the very end of this text here.';
+        $spans = $this->findSpansForTerms($text, 'alpha', 'beta', 'gamma');
 
+        $windows = (new WindowPlanner())->planCropWindows(
+            $text,
+            $spans,
+            cropLength: 30,
+        );
+
+        foreach ($windows as $window) {
+            // Each window should be roughly cropLength. Allow +10 chars for word-boundary snapping.
+            $this->assertLessThanOrEqual(
+                40,
+                $window->getLength(),
+                \sprintf(
+                    'Window [%d, %d] is %d chars, exceeds cropLength+snap budget',
+                    $window->getStartPosition(),
+                    $window->getEndPosition(),
+                    $window->getLength()
+                )
+            );
+        }
+    }
 
     public function testWithoutPrioritizationTakesFirstN(): void
     {
@@ -203,70 +276,6 @@ class WindowPlannerTest extends TestCase
         $this->assertStringContainsString('gamma', $combined);
         $this->assertStringNotContainsString('alpha', $combined);
         $this->assertStringNotContainsString('beta', $combined);
-    }
-
-    public function testWindowsAreNeverWiderThanCropLengthPlusBoundarySnap(): void
-    {
-        $text = 'Alpha sits in the very beginning then far away beta in the deep middle then gamma at the very end of this text here.';
-        $spans = $this->findSpansForTerms($text, 'alpha', 'beta', 'gamma');
-
-        $windows = (new WindowPlanner())->planCropWindows(
-            $text,
-            $spans,
-            cropLength: 30,
-        );
-
-        foreach ($windows as $window) {
-            // Each window should be roughly cropLength. Allow +10 chars for word-boundary snapping.
-            $this->assertLessThanOrEqual(40, $window->getLength(),
-                sprintf('Window [%d, %d] is %d chars, exceeds cropLength+snap budget',
-                    $window->getStartPosition(), $window->getEndPosition(), $window->getLength()));
-        }
-    }
-
-    public function testSelectedWindowsNeverOverlap(): void
-    {
-        // Dense matches where many candidate windows overlap — selection must be non-overlapping.
-        $text = 'aa bb cc dd ee ff gg hh ii jj kk ll mm nn oo pp qq rr ss tt uu vv ww xx yy zz';
-        $spans = $this->findSpansForTerms($text, 'cc', 'ff', 'ii', 'll', 'oo', 'rr', 'uu', 'xx');
-
-        $windows = (new WindowPlanner())->planCropWindows(
-            $text,
-            $spans,
-            cropLength: 15,
-            prioritizeMatches: true,
-        );
-
-        $this->assertNotEmpty($windows);
-
-        for ($i = 1; $i < \count($windows); $i++) {
-            $this->assertGreaterThanOrEqual(
-                $windows[$i - 1]->getEndPosition(),
-                $windows[$i]->getStartPosition(),
-                sprintf('Windows %d [%d,%d] and %d [%d,%d] overlap',
-                    $i - 1, $windows[$i - 1]->getStartPosition(), $windows[$i - 1]->getEndPosition(),
-                    $i, $windows[$i]->getStartPosition(), $windows[$i]->getEndPosition()),
-            );
-        }
-    }
-
-    public function testSingleMatchAllAloneGetsOneWindow(): void
-    {
-        $text = 'All the matches cluster into one tiny region alpha and nothing else matches anywhere at all in the remaining text.';
-        $spans = $this->findSpansForTerms($text, 'alpha');
-
-        $windows = (new WindowPlanner())->planCropWindows(
-            $text,
-            $spans,
-            cropLength: 30,
-            maxFragments: 3,
-            prioritizeMatches: true,
-        );
-
-        // Asked for 3 fragments, but only 1 match exists → 1 window
-        $this->assertCount(1, $windows);
-        $combined = $this->combinedWindowText($text, $windows);
-        $this->assertStringContainsString('alpha', $combined);
     }
 
     /**
