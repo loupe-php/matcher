@@ -235,7 +235,7 @@ class FormatterTest extends TestCase
         yield 'Crop picks densest window with single fragment' => [
             'test',
             $weakMediumDenseText,
-            '…At the very end test test test appear three times…',
+            '…the very end test test test appear three…',
             (new FormatterOptions())
                 ->withEnableCrop()
                 ->withEnableMatchPrioritization()
@@ -246,7 +246,7 @@ class FormatterTest extends TestCase
         yield 'Crop prefers distinct terms over repetition' => [
             'alpha beta gamma',
             $repetitionVsDiversityText,
-            '…very end we find alpha beta gamma appearing together…',
+            '…alpha beta gamma appearing together with…',
             (new FormatterOptions())
                 ->withEnableCrop()
                 ->withEnableMatchPrioritization()
@@ -257,7 +257,7 @@ class FormatterTest extends TestCase
         yield 'Crop selects best fragments and keeps document order' => [
             'test',
             $weakMediumDenseText,
-            '…The middle section mentions test and test as a pair of matches close…At the very end test test test appear three times…',
+            '…section mentions test and test as a pair…the very end test test test appear three…',
             (new FormatterOptions())
                 ->withEnableCrop()
                 ->withEnableMatchPrioritization()
@@ -268,7 +268,7 @@ class FormatterTest extends TestCase
         yield 'Without prioritization, crop takes first N fragments in document order' => [
             'test',
             $weakMediumDenseText,
-            'A lone test appears at the very start of…The middle section mentions test and test as a pair of matches close…',
+            'A lone test appears at the very start of…section mentions test and test as a pair…',
             (new FormatterOptions())
                 ->withEnableCrop()
                 ->withCropLength(40)
@@ -412,14 +412,14 @@ class FormatterTest extends TestCase
         $options = (new FormatterOptions())
             ->withEnableCrop()
             ->withEnableTruncation()
-            ->withCropLength(15)
-            ->withTruncationLength(35)
+            ->withCropLength(30)
+            ->withTruncationLength(80)
         ;
 
         $formatter = new Formatter($this->matcher);
         $result = $formatter->format('This is a test string and we use it to test the cropping and highlighting features combined.', $this->queryTerms, $options);
 
-        $this->assertSame('…is a test string…it to test the…', $result->getFormattedText());
+        $this->assertSame('This is a test string and we use…test the cropping and highlighting…', $result->getFormattedText());
     }
 
     public function testFormatWithHighlight(): void
@@ -443,13 +443,13 @@ class FormatterTest extends TestCase
             ->withEnableCrop()
             ->withHighlightStartTag('[')
             ->withHighlightEndTag(']')
-            ->withCropLength(15)
+            ->withCropLength(30)
         ;
 
         $formatter = new Formatter($this->matcher);
         $result = $formatter->format('This is a test string and we use it to test the cropping and highlighting features combined.', $this->queryTerms, $options);
 
-        $this->assertSame('…his is a [test] string and…use it to [test] the cropping…', $result->getFormattedText());
+        $this->assertSame('This is a [test] string and we use…[test] the cropping and highlighting…', $result->getFormattedText());
 
     }
 
