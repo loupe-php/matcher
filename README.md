@@ -126,12 +126,10 @@ echo $result->getFormattedText();
 
 #### Match Prioritization
 
-By default, cropping emits a context window around every match in document order, and truncation cuts from the start. Enabling `withEnableMatchPrioritization()` makes both budget-aware:
+By default, cropping emits snippets around every match cluster and truncation cuts from the start. Enabling `withEnableMatchPrioritization()` will attempt to choose the most relevant window(s) for display. Windows are scored by distinct query terms hit, then total matches, then density.
 
-- **Cropping** scores candidate windows by distinct query terms hit, then total matches, then tightness, and selects the best subset that fits inside `truncation_length` (windows still emitted in document order).
-- **Truncation** picks a single `truncation_length`-sized window centered on the densest cluster of matches; if the window doesn't start at the beginning, a leading truncation marker is added. With no matches, it falls back to head truncation.
-
-When both `enable_crop` and `enable_truncation` are on, `crop_length` must not exceed `truncation_length` — `format()` throws `InvalidArgumentException` otherwise.
+- **Cropping** now finds the best windows around matches, limits each window to `crop_length` and shows up to `crop_max_fragments` windows in document order.
+- **Truncation** picks a single window centered on the best cluster of matches and falls back to truncating from the start if no matches are found in the attribute.
 
 ## Advanced Usage
 
