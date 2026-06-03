@@ -11,9 +11,15 @@ use Loupe\Matcher\Tokenizer\Span;
  * Window Planner.
  *
  * Plans which regions ("windows") of a source text to keep around match spans.
- * Handles  building candidate windows around matches, scoring them by query coverage,
- * selecting subsets into max fragment budget, and picking single windows centered on
- * the densest match cluster.
+ * Uses a sliding-window greedy algorithm for cropping:
+ *  1. Generate candidate windows at each match position (start-aligned + centered)
+ *  2. Score each candidate by query coverage [distinct_terms, total_matches, -length]
+ *  3. Select the best non-overlapping subset via greedy selection
+ *
+ * Each crop window is bounded to cropLength (plus minor word-boundary snapping),
+ * ensuring predictable output: total <= maxFragments × cropLength + markers.
+ *
+ * For truncation, picks a single window centered on the densest match cluster.
  */
 class WindowPlanner
 {
@@ -22,10 +28,11 @@ class WindowPlanner
     private const TRUNCATION_BOUNDARY_CHARS = [' ', "\t", "\n", "\r"];
 
     /**
-     * Plan a sequence of context windows for cropping, one per match cluster.
-     * Selection strategy depends on prioritizeMatches:
-     *  - false: return the first N windows in document order
-     *  - true: score windows by relevance, pick the best N, return in document order
+     * Plan a sequence of context windows for cropping.
+     * Each window is bounded to cropLength (before word-boundary snapping).
+     * Selection is greedy and non-overlapping:
+     *  - prioritizeMatches=true:  pick best-scoring windows first, return in document order
+     *  - prioritizeMatches=false: pick windows in document order (first-come-first-served)
      *
      * @param MatchSpan[] $matchSpans
      * @return Span[]
@@ -34,7 +41,6 @@ class WindowPlanner
         string $text,
         array $matchSpans,
         int $cropLength,
-        int $tagOverhead = 0,
         int $maxFragments = -1,
         bool $prioritizeMatches = false,
     ): array {
@@ -42,17 +48,9 @@ class WindowPlanner
             return [];
         }
 
-        $windows = $this->buildPerMatchWindows($text, $matchSpans, $cropLength, $tagOverhead);
+        $candidates = $this->generateCandidateWindows($text, $matchSpans, $cropLength);
 
-        if ($maxFragments < 0 || \count($windows) <= $maxFragments) {
-            return $windows;
-        }
-
-        if ($prioritizeMatches) {
-            return $this->selectByPriority($windows, $matchSpans, $maxFragments);
-        }
-
-        return \array_slice($windows, 0, $maxFragments);
+        return $this->selectNonOverlapping($candidates, $matchSpans, $maxFragments, $prioritizeMatches);
     }
 
     /**
@@ -114,45 +112,123 @@ class WindowPlanner
     }
 
     /**
-     * Build one context window per match span. Merge adjacent/overlapping windows.
+     * Generate candidate windows at each match span position.
+     * Two candidates per span: centered on the span, and start-aligned at the span.
+     * All candidates are bounded to windowLength and snapped to word boundaries.
      *
      * @param MatchSpan[] $matchSpans
      * @return Span[]
      */
-    private function buildPerMatchWindows(string $text, array $matchSpans, int $cropLength, int $tagOverhead): array
+    private function generateCandidateWindows(string $text, array $matchSpans, int $windowLength): array
     {
         $textLength = mb_strlen($text, 'UTF-8');
-        $effectiveCropLength = max(1, $cropLength - $tagOverhead);
-        $windows = [];
 
+        if ($textLength <= $windowLength) {
+            return [new Span(0, $textLength)];
+        }
+
+        $positions = [];
         foreach ($matchSpans as $span) {
-            $spanLength = $span->getLength();
+            // Centered: window centered on the match span
+            $positions[] = $span->getStartPosition() - (int) floor(($windowLength - $span->getLength()) / 2);
+            // Start-aligned: window starts at the match span
+            $positions[] = $span->getStartPosition();
+        }
 
-            if ($spanLength >= $cropLength) {
-                $window = $span;
-            } else {
-                $padding = (int) floor(($cropLength - $spanLength) / 2);
-                $contextStart = max(0, $span->getStartPosition() - $padding);
-                $contextEnd = min($textLength, $span->getEndPosition() + $padding);
-                $adjustedStart = max(0, min($contextStart, $span->getEndPosition() - $effectiveCropLength));
-                $adjustedEnd = min($textLength, max($contextEnd, $span->getStartPosition() + $effectiveCropLength));
+        $seen = [];
+        $windows = [];
+        foreach ($positions as $rawPos) {
+            $start = max(0, min($rawPos, $textLength - $windowLength));
+            $end = min($textLength, $start + $windowLength);
 
-                $window = new Span(
-                    $this->closestCropBoundary($text, $adjustedStart, false),
-                    $this->closestCropBoundary($text, $adjustedEnd, true),
-                );
+            // Snap to word boundaries
+            if ($start > 0) {
+                $start = $this->closestCropBoundary($text, $start, false);
+            }
+            if ($end < $textLength) {
+                $end = $this->closestCropBoundary($text, $end, true);
             }
 
-            $prev = $windows[\count($windows) - 1] ?? null;
-            if ($prev && $prev->getEndPosition() >= $window->getStartPosition()) {
-                $window = new Span($prev->getStartPosition(), max($prev->getEndPosition(), $window->getEndPosition()));
-                array_pop($windows);
+            if ($start >= $end) {
+                continue;
             }
 
-            $windows[] = $window;
+            $key = $start . ':' . $end;
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+
+            $windows[] = new Span($start, $end);
         }
 
         return $windows;
+    }
+
+    /**
+     * Score and select non-overlapping windows via greedy selection.
+     * With prioritization: pick best-scoring first. Without: pick in document order.
+     * Always returns results in document order.
+     *
+     * @param Span[]      $candidates
+     * @param MatchSpan[] $matchSpans
+     * @return Span[] in document order
+     */
+    private function selectNonOverlapping(array $candidates, array $matchSpans, int $maxFragments, bool $prioritizeMatches): array
+    {
+        $scored = [];
+        foreach ($candidates as $window) {
+            $score = $this->scoreWindow($window, $matchSpans);
+            $centering = $this->centeringScore($window, $matchSpans);
+            $scored[] = [
+                'window' => $window,
+                'score' => $score,
+                'centering' => $centering,
+            ];
+        }
+
+        if ($prioritizeMatches) {
+            // Best score first, then best centering, then earliest position
+            usort($scored, function ($a, $b) {
+                $cmp = $b['score'] <=> $a['score'];
+                if ($cmp !== 0) {
+                    return $cmp;
+                }
+                $cmp = $b['centering'] <=> $a['centering'];
+                if ($cmp !== 0) {
+                    return $cmp;
+                }
+                return $a['window']->getStartPosition() <=> $b['window']->getStartPosition();
+            });
+        } else {
+            // Document order (first-come-first-served)
+            usort($scored, fn ($a, $b) => $a['window']->getStartPosition() <=> $b['window']->getStartPosition());
+        }
+
+        $selected = [];
+        foreach ($scored as $entry) {
+            if ($maxFragments >= 0 && \count($selected) >= $maxFragments) {
+                break;
+            }
+
+            $candidate = $entry['window'];
+            $overlaps = false;
+            foreach ($selected as $existing) {
+                if ($candidate->getStartPosition() < $existing->getEndPosition()
+                    && $existing->getStartPosition() < $candidate->getEndPosition()) {
+                    $overlaps = true;
+                    break;
+                }
+            }
+
+            if (!$overlaps) {
+                $selected[] = $candidate;
+            }
+        }
+
+        usort($selected, fn ($a, $b) => $a->getStartPosition() <=> $b->getStartPosition());
+
+        return $selected;
     }
 
     /**
@@ -190,6 +266,7 @@ class WindowPlanner
 
     private function closestCropBoundary(string $text, int $position, bool $forward): int
     {
+        $textLength = mb_strlen($text, 'UTF-8');
         $boundaries = [];
         foreach (self::CROP_BOUNDARY_CHARS as $char) {
             if ($forward) {
@@ -198,7 +275,7 @@ class WindowPlanner
                     $boundaries[] = $boundary;
                 }
             } else {
-                $boundary = mb_strrpos($text, $char, 0 - (mb_strlen($text) - $position), 'UTF-8');
+                $boundary = mb_strrpos($text, $char, 0 - ($textLength - $position), 'UTF-8');
                 if ($boundary !== false) {
                     $boundaries[] = $boundary + 1;
                 }
@@ -206,7 +283,8 @@ class WindowPlanner
         }
 
         if (empty($boundaries)) {
-            return $position;
+            // No word boundary found — snap to text edge rather than cutting mid-word
+            return $forward ? $textLength : 0;
         }
 
         return $forward ? min($boundaries) : max($boundaries);
@@ -236,33 +314,6 @@ class WindowPlanner
         }
 
         return [\count($distinct), $total, -$window->getLength()];
-    }
-
-    /**
-     * Score all windows by query coverage and pick the best N.
-     *
-     * @param Span[]      $windows
-     * @param MatchSpan[] $matchSpans
-     * @return Span[] in document order
-     */
-    private function selectByPriority(array $windows, array $matchSpans, int $maxFragments): array
-    {
-        $scored = [];
-        foreach ($windows as $window) {
-            $score = $this->scoreWindow($window, $matchSpans);
-            $scored[] = [
-                'window' => $window,
-                'score' => $score,
-            ];
-        }
-
-        usort($scored, fn ($a, $b) => $b['score'] <=> $a['score']);
-
-        $selected = \array_slice($scored, 0, $maxFragments);
-
-        usort($selected, fn ($a, $b) => $a['window']->getStartPosition() <=> $b['window']->getStartPosition());
-
-        return array_map(fn ($e) => $e['window'], $selected);
     }
 
     private function snapEndBackwardToWhitespace(string $text, int $position): int
