@@ -19,8 +19,6 @@ class Formatter
 
     public function format(string $text, TokenCollection|string $query, FormatterOptions $options, TokenCollection|null $matches = null): FormatterResult
     {
-        $options->validate();
-
         $matches = $matches ?? $this->matcher->calculateMatches($text, $query);
         $spans = $this->matcher->calculateMatchSpans($text, $query, $matches);
 

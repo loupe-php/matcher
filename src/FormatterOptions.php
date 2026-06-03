@@ -157,10 +157,6 @@ class FormatterOptions
         return $this->shouldTruncate;
     }
 
-    public function validate(): void
-    {
-    }
-
     public function withCropLength(int $cropLength): self
     {
         $clone = clone $this;
