@@ -49,7 +49,11 @@ class Token
      */
     public function allTerms(): array
     {
-        return array_unique(array_merge([$this->getTerm()], $this->getVariants()));
+        if ($this->variants === []) {
+            return [$this->term];
+        }
+
+        return array_unique(array_merge([$this->term], $this->variants));
     }
 
     public function getEndPosition(): int
