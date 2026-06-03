@@ -41,70 +41,70 @@ class FormatterTest extends TestCase
             'A wonderful serenity has taken possession of my entire soul.',
         ];
 
-        yield 'Cropping with too much context and no change' => [
+        yield 'Cropping with too much context' => [
             'taken',
             'A wonderful serenity has taken possession of my entire soul, like these sweet mornings have taken all spring.',
-            'A wonderful serenity has taken possession of my entire soul, like these sweet mornings have taken all spring.',
+            '…wonderful serenity has taken possession of my entire… like these sweet mornings have taken all spring.',
             true,
         ];
 
         yield 'Cropping with less context and change' => [
             'taken',
             'A wonderful serenity has taken possession of my entire soul, like these sweet mornings have taken all spring.',
-            '…serenity has taken possession…mornings have taken all spring…',
+            '…wonderful serenity has taken possession of my…sweet mornings have taken all spring.',
             true,
-            25,
+            35,
         ];
 
         yield 'Cropping around single term in center' => [
             'soul',
             'A wonderful serenity has taken possession of my entire soul, like these sweet mornings have taken all spring.',
-            '…serenity has taken possession of my entire soul, like these sweet mornings have taken…',
+            '…possession of my entire soul, like these sweet mornings…',
             true,
         ];
 
         yield 'Cropping around repeating term' => [
             'soul',
             'A wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole soul. I am alone, and feel the charm of existence in this spot, which was created for the bliss of a soul like mine.',
-            '…serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole soul. I am alone, and feel the charm of existence…which was created for the bliss of a soul like mine.',
+            '…possession of my entire soul, like these sweet mornings…I enjoy with my whole soul. I am alone, and feel the…which was created for the bliss of a soul like mine.',
             true,
         ];
 
         yield 'Cropping around multiple terms' => [
             'soul bliss',
             'A wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole being. I am alone, and feel the charm of existence in this spot, which was created for the bliss of a heart like mine.',
-            '…serenity has taken possession of my entire soul, like these sweet mornings of spring…this spot, which was created for the bliss of a heart like mine.',
+            '…possession of my entire soul, like these sweet mornings…which was created for the bliss of a heart like mine.',
             true,
         ];
 
         yield 'Cropping at start' => [
             'Wonderful',
             'Wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole soul.',
-            'Wonderful serenity has taken possession of…',
+            'Wonderful serenity has taken possession of my entire…',
             true,
         ];
 
         yield 'Cropping at end' => [
             'panorama',
             'Wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole panorama.',
-            '…spring which I enjoy with my whole panorama.',
+            '…mornings of spring which I enjoy with my whole panorama.',
             true,
         ];
 
         yield 'Cropping with custom length' => [
             'whole entire',
             'Wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole panorama.',
-            '…my entire soul…with my whole pano…',
+            '…possession of my entire soul, like these…enjoy with my whole panorama.',
             true,
-            15,
+            30,
         ];
 
         yield 'Cropping with custom marker' => [
             'whole entire',
             'Wonderful serenity has taken possession of my entire soul, like these sweet mornings of spring which I enjoy with my whole panorama.',
-            ' --- possession of my entire soul, like --- enjoy with my whole panorama.',
+            ' --- possession of my entire soul, like these --- spring which I enjoy with my whole panorama.',
             true,
-            25,
+            40,
             ' --- ',
         ];
     }
