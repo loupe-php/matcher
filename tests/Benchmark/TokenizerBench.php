@@ -35,9 +35,8 @@ class TokenizerBench
     }
 
     /**
-     * Pure ICU break-iterator pass — no Tokenizer code involved.
-     * Drift here between baseline and PR indicates environmental noise
-     * (runner load, thermal state), not a real regression in Tokenizer.
+     * Pure ICU break-iterator pass over 1000 terms without Tokenizer involved.
+     * Used to distinguish environmental noise (runner load, thermal state) from real regressions in Tokenizer.
      */
     #[ParamProviders('provideCorpus')]
     #[Groups(['control'])]
@@ -49,13 +48,23 @@ class TokenizerBench
         }
     }
 
-    #[ParamProviders('provideCorpus')]
+    #[ParamProviders('provideVariableLengthCorpuses')]
     public function benchTokenize(): void
     {
         $this->tokenizer->tokenize($this->text);
     }
 
     public function provideCorpus(): \Generator
+    {
+        foreach (['en', 'de'] as $locale) {
+            yield "{$locale}-1000" => [
+                'locale' => $locale,
+                'size' => 1000,
+            ];
+        }
+    }
+
+    public function provideVariableLengthCorpuses(): \Generator
     {
         foreach (['en', 'de'] as $locale) {
             foreach ([100, 1000, 10000] as $size) {
@@ -69,7 +78,7 @@ class TokenizerBench
 
     private static function loadFixture(string $locale, int $size): string
     {
-        $raw = file_get_contents(__DIR__ . "/fixtures/{$locale}.txt");
+        $raw = file_get_contents(__DIR__ . "/fixtures/text/{$locale}.txt");
         if ($raw === false) {
             throw new \RuntimeException("Missing fixture for locale {$locale}");
         }
