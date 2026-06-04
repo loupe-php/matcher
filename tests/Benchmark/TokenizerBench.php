@@ -78,7 +78,7 @@ class TokenizerBench
 
     private static function loadFixture(string $locale, int $size): string
     {
-        $raw = file_get_contents(__DIR__ . "/fixtures/{$locale}.txt");
+        $raw = file_get_contents(__DIR__ . "/fixtures/text/{$locale}.txt");
         if ($raw === false) {
             throw new \RuntimeException("Missing fixture for locale {$locale}");
         }
