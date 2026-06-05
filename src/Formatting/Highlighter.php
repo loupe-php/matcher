@@ -4,45 +4,49 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher\Formatting;
 
-use Loupe\Matcher\Matcher;
-use Loupe\Matcher\Tokenizer\TokenCollection;
+use Loupe\Matcher\Tokenizer\MatchSpan;
 
 class Highlighter implements Transformer
 {
     public function __construct(
-        private Matcher $matcher,
         private string $startTag,
-        private string $endTag
+        private string $endTag,
     ) {
     }
 
-    public function transform(string $text, TokenCollection|string $query, TokenCollection $matches): string
+    public function transform(FormattedText $input): FormattedText
     {
-        $spans = $this->matcher->calculateMatchSpans($text, $query, $matches);
-
-        if (empty($spans)) {
-            return $text;
+        if ($input->getSpans() === [] || $this->startTag === '' || $this->endTag === '') {
+            return $input;
         }
 
+        $startTagLength = mb_strlen($this->startTag, 'UTF-8');
+        $endTagLength = mb_strlen($this->endTag, 'UTF-8');
+
+        $text = $input->getText();
         $result = '';
         $end = 0;
+        $offset = 0;
+        $rebasedSpans = [];
 
-        foreach ($spans as $span) {
-            // Insert start tag before span
+        foreach ($input->getSpans() as $span) {
             $result .= mb_substr($text, $end, $span->getStartPosition() - $end, 'UTF-8');
             $result .= $this->startTag;
-
-            // Insert span text
             $result .= mb_substr($text, $span->getStartPosition(), $span->getLength(), 'UTF-8');
-
-            // Insert end tag after span
             $result .= $this->endTag;
             $end = $span->getEndPosition();
+
+            $offset += $startTagLength;
+            $rebasedSpans[] = new MatchSpan(
+                $span->getStartPosition() + $offset,
+                $span->getEndPosition() + $offset,
+                $span->getTerms(),
+            );
+            $offset += $endTagLength;
         }
 
-        // Add remaining text after last span
         $result .= mb_substr($text, $end, null, 'UTF-8');
 
-        return $result;
+        return new FormattedText($result, $rebasedSpans);
     }
 }

@@ -16,8 +16,10 @@ final class FormatterOptionsTest extends TestCase
         $this->assertFalse($options->shouldCrop());
         $this->assertFalse($options->shouldHighlight());
         $this->assertFalse($options->shouldTruncate());
+        $this->assertFalse($options->shouldTruncate());
         $this->assertEquals(50, $options->getCropLength());
         $this->assertEquals('…', $options->getCropMarker());
+        $this->assertEquals(10, $options->getCropMaxFragments());
         $this->assertEquals(250, $options->getTruncationLength());
         $this->assertEquals('…', $options->getTruncationMarker());
         $this->assertEquals('<em>', $options->getHighlightStartTag());
@@ -29,6 +31,7 @@ final class FormatterOptionsTest extends TestCase
         $options = FormatterOptions::fromArray([
             'crop_length' => 20,
             'crop_marker' => '...',
+            'crop_max_fragments' => 3,
             'enable_crop' => true,
             'enable_highlight' => true,
             'highlight_start_tag' => '<strong>',
@@ -41,10 +44,16 @@ final class FormatterOptionsTest extends TestCase
         $this->assertTrue($options->shouldCrop());
         $this->assertTrue($options->shouldHighlight());
         $this->assertTrue($options->shouldTruncate());
+        $this->assertTrue($options->shouldCrop());
+        $this->assertTrue($options->shouldHighlight());
+        $this->assertTrue($options->shouldTruncate());
         $this->assertEquals(20, $options->getCropLength());
         $this->assertEquals('...', $options->getCropMarker());
+        $this->assertEquals(3, $options->getCropMaxFragments());
         $this->assertEquals('<strong>', $options->getHighlightStartTag());
         $this->assertEquals('</strong>', $options->getHighlightEndTag());
+        $this->assertEquals(100, $options->getTruncationLength());
+        $this->assertEquals(' ...', $options->getTruncationMarker());
         $this->assertEquals(100, $options->getTruncationLength());
         $this->assertEquals(' ...', $options->getTruncationMarker());
     }
@@ -58,6 +67,7 @@ final class FormatterOptionsTest extends TestCase
         $this->assertFalse($options->shouldTruncate());
         $this->assertEquals(50, $options->getCropLength());
         $this->assertEquals('…', $options->getCropMarker());
+        $this->assertEquals(10, $options->getCropMaxFragments());
         $this->assertEquals(250, $options->getTruncationLength());
         $this->assertEquals('…', $options->getTruncationMarker());
         $this->assertEquals('<em>', $options->getHighlightStartTag());
@@ -93,6 +103,18 @@ final class FormatterOptionsTest extends TestCase
 
         $this->assertEquals('…', $options->getCropMarker());
         $this->assertEquals('...', $newOptions->getCropMarker());
+    }
+
+    public function testWithCropMaxFragments(): void
+    {
+        $options = new FormatterOptions();
+        $newOptions = $options->withCropMaxFragments(3);
+
+        $this->assertEquals(10, $options->getCropMaxFragments());
+        $this->assertEquals(3, $newOptions->getCropMaxFragments());
+
+        $unlimited = $options->withCropMaxFragments(-1);
+        $this->assertEquals(-1, $unlimited->getCropMaxFragments());
     }
 
     public function testWithDisableCrop(): void

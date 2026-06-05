@@ -117,11 +117,19 @@ $options = (new FormatterOptions())
     ->withCropMarker(' ... ')
     ->withEnableTruncation()
     ->withTruncationLength(200)
-    ->withTruncationMarker('...');
+    ->withTruncationMarker('...')
+    ->withEnableMatchPrioritization();
 
 $result = $formatter->format($text, $query, $options);
 echo $result->getFormattedText();
 ```
+
+#### Match Prioritization
+
+By default, cropping emits snippets around every match cluster and truncation cuts from the start. Enabling `withEnableMatchPrioritization()` will attempt to choose the most relevant window(s) for display. Windows are scored by distinct query terms hit, then total matches, then density.
+
+- **Cropping** now finds the best windows around matches, limits each window to `crop_length` and shows up to `crop_max_fragments` windows in document order.
+- **Truncation** picks a single window centered on the best cluster of matches and falls back to truncating from the start if no matches are found in the attribute.
 
 ## Advanced Usage
 

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher\Formatting;
 
+use Loupe\Matcher\Tokenizer\MatchSpan;
 use Loupe\Matcher\Tokenizer\Span;
-use Loupe\Matcher\Tokenizer\TokenCollection;
 
 class Cropper implements Transformer
 {
@@ -13,21 +13,56 @@ class Cropper implements Transformer
         private int $cropLength,
         private string $cropMarker,
         private string $highlightStartTag,
-        private string $highlightEndTag
+        private string $highlightEndTag,
+        private bool $prioritizeMatches = false,
+        private int $cropMaxFragments = -1,
     ) {
     }
 
+    /**
+     * Crop pre-highlighted text. Convenience entry-point that parses highlight tags
+     * back into spans, runs the spans-based cropping logic, then re-renders tags.
+     */
     public function cropHighlightedText(string $text): string
     {
-        if (!$text || $this->cropLength <= 0) {
-            return $text;
-        }
-
         if ($this->highlightStartTag === '' || $this->highlightEndTag === '') {
             return $text;
         }
 
-        // Split the text into chunks based on the highlight tags
+        $parsed = $this->parseTaggedText($text);
+        $cropped = $this->transform($parsed);
+        $highlighter = new Highlighter($this->highlightStartTag, $this->highlightEndTag);
+
+        return $highlighter->transform($cropped)->getText();
+    }
+
+    public function transform(FormattedText $input): FormattedText
+    {
+        if ($this->cropLength <= 0 || $input->getText() === '' || $input->getSpans() === []) {
+            return $input;
+        }
+
+        $windows = (new WindowPlanner())->planCropWindows(
+            $input->getText(),
+            $input->getSpans(),
+            $this->cropLength,
+            $this->cropMaxFragments,
+            $this->prioritizeMatches,
+        );
+
+        if ($windows === []) {
+            return $input;
+        }
+
+        return $this->renderWindows($input->getText(), $input->getSpans(), $windows);
+    }
+
+    private function parseTaggedText(string $text): FormattedText
+    {
+        if ($this->highlightStartTag === '' || $this->highlightEndTag === '') {
+            return new FormattedText($text);
+        }
+
         $chunks = [];
         foreach (explode($this->highlightStartTag, $text) as $outer) {
             foreach (explode($this->highlightEndTag, $outer, 2) as $inner) {
@@ -36,98 +71,80 @@ class Cropper implements Transformer
         }
 
         if (\count($chunks) < 3 || \count($chunks) % 2 !== 1) {
-            return $text;
+            return new FormattedText($text);
         }
 
-        // Create context window spans around each highlighted chunk
-        $textLength = mb_strlen($text, 'UTF-8');
-        $startTagLength = mb_strlen($this->highlightStartTag, 'UTF-8');
-        $endTagLength = mb_strlen($this->highlightEndTag, 'UTF-8');
-        $position = 0;
+        $original = '';
         $spans = [];
+        $position = 0;
         foreach ($chunks as $i => $chunk) {
             $chunkLength = mb_strlen($chunk, 'UTF-8');
+            $original .= $chunk;
 
-            if ($i % 2 === 0) {
-                $position += $chunkLength;
-                continue;
+            if ($i % 2 === 1) {
+                $spans[] = new MatchSpan($position, $position + $chunkLength, $this->splitChunkIntoTerms($chunk));
             }
 
-            $highlightStart = $position;
-            $highlightEnd = $position + $startTagLength + $chunkLength + $endTagLength;
-            $position = $highlightEnd;
-
-            if ($chunkLength >= $this->cropLength) {
-                $spans[] = new Span($highlightStart, $highlightEnd);
-                continue;
-            }
-
-            $contextPadding = (int) floor(($this->cropLength - $chunkLength) / 2);
-            $contextStart = max(0, $highlightStart - $contextPadding);
-            $contextEnd = min($textLength, $highlightEnd + $contextPadding);
-            $adjustedContextStart = max(0, min($contextStart, $highlightEnd - $this->cropLength));
-            $adjustedContextEnd = min($textLength, max($contextEnd, $highlightStart + $this->cropLength));
-
-            $span = new Span(
-                $this->closestWordBoundary($text, $adjustedContextStart, false),
-                $this->closestWordBoundary($text, $adjustedContextEnd, true),
-            );
-
-            $prev = $spans[\count($spans) - 1] ?? null;
-            if ($prev && $prev->getEndPosition() >= $span->getStartPosition()) {
-                $span = new Span($prev->getStartPosition(), max($prev->getEndPosition(), $span->getEndPosition()));
-                array_pop($spans);
-            }
-
-            $spans[] = $span;
+            $position += $chunkLength;
         }
 
-        // Put back together and add crop markers
+        return new FormattedText($original, $spans);
+    }
+
+    /**
+     * @param MatchSpan[] $matchSpans
+     * @param Span[]      $windows
+     */
+    private function renderWindows(string $text, array $matchSpans, array $windows): FormattedText
+    {
+        $textLength = mb_strlen($text, 'UTF-8');
         $result = '';
-        foreach ($spans as $span) {
-            if ($span->getStartPosition() > 0) {
+        $outputSpans = [];
+
+        foreach ($windows as $i => $window) {
+            $needsLeadingMarker = $i === 0 ? $window->getStartPosition() > 0 : true;
+            if ($needsLeadingMarker) {
                 $result .= $this->cropMarker;
             }
-            $result .= mb_substr($text, $span->getStartPosition(), $span->getLength(), 'UTF-8');
-            if ($span->getEndPosition() < $textLength) {
-                $result .= $this->cropMarker;
+
+            $offsetInOutput = ($i === 0 && !$needsLeadingMarker) ? 0 : mb_strlen($result, 'UTF-8');
+            $result .= mb_substr($text, $window->getStartPosition(), $window->getLength(), 'UTF-8');
+
+            foreach ($matchSpans as $matchSpan) {
+                if ($matchSpan->getStartPosition() < $window->getStartPosition()
+                    || $matchSpan->getEndPosition() > $window->getEndPosition()) {
+                    continue;
+                }
+                $delta = $offsetInOutput - $window->getStartPosition();
+                $outputSpans[] = new MatchSpan(
+                    $matchSpan->getStartPosition() + $delta,
+                    $matchSpan->getEndPosition() + $delta,
+                    $matchSpan->getTerms(),
+                );
             }
         }
 
-        // Remove duplicate crop markers
-        return str_replace($this->cropMarker . $this->cropMarker, $this->cropMarker, $result);
+        $lastWindow = $windows[\count($windows) - 1] ?? null;
+        if ($lastWindow && $lastWindow->getEndPosition() < $textLength) {
+            $result .= $this->cropMarker;
+        }
+
+        return new FormattedText($result, $outputSpans);
     }
 
-    public function transform(string $text, TokenCollection|string $query, TokenCollection $matches): string
+    /**
+     * @return array<int, string>
+     */
+    private function splitChunkIntoTerms(string $chunk): array
     {
-        if (!$matches->count()) {
-            return $text;
+        $trimmed = trim($chunk);
+        if ($trimmed === '') {
+            return [];
         }
 
-        return $this->cropHighlightedText($text);
-    }
+        $parts = preg_split('/\s+/u', $trimmed) ?: [];
+        $terms = array_map(fn ($t) => mb_strtolower($t, 'UTF-8'), $parts);
 
-    private function closestWordBoundary(string $string, int $position, bool $forward = true): int
-    {
-        $boundaries = [];
-        foreach ([' ', "\r", "\n", "\t", ','] as $char) {
-            if ($forward) {
-                $boundary = mb_strpos($string, $char, $position, 'UTF-8');
-                if ($boundary !== false) {
-                    $boundaries[] = $boundary;
-                }
-            } else {
-                $boundary = mb_strrpos($string, $char, 0 - (mb_strlen($string) - $position), 'UTF-8');
-                if ($boundary !== false) {
-                    $boundaries[] = $boundary + 1;
-                }
-            }
-        }
-
-        if (empty($boundaries)) {
-            return $position;
-        }
-
-        return $forward ? min($boundaries) : max($boundaries);
+        return $terms;
     }
 }

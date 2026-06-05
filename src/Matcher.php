@@ -6,7 +6,7 @@ namespace Loupe\Matcher;
 
 use Loupe\Matcher\StopWords\InMemoryStopWords;
 use Loupe\Matcher\StopWords\StopWordsInterface;
-use Loupe\Matcher\Tokenizer\Span;
+use Loupe\Matcher\Tokenizer\MatchSpan;
 use Loupe\Matcher\Tokenizer\Token;
 use Loupe\Matcher\Tokenizer\TokenCollection;
 use Loupe\Matcher\Tokenizer\TokenizerInterface;
@@ -46,7 +46,7 @@ class Matcher
 
     /**
      * Merge adjacent matching tokens, including any surrounding stopwords.
-     * @return Span[]
+     * @return MatchSpan[]
      */
     public function calculateMatchSpans(TokenCollection|string $text, TokenCollection|string $query, TokenCollection $matches): array
     {
@@ -55,6 +55,7 @@ class Matcher
 
         $spans = [];
         $currentSpan = null;
+        $currentSpanTerms = [];
         $currentSpanHasMatch = false;
 
         foreach ($textTokens->all() as $textToken) {
@@ -69,25 +70,27 @@ class Matcher
             if (!$isRelevant) {
                 // Close the current span
                 if ($currentSpan && $currentSpanHasMatch) {
-                    $spans[] = $currentSpan;
+                    $spans[] = $currentSpan->withTerms($currentSpanTerms);
                 }
                 $currentSpan = null;
+                $currentSpanTerms = [];
                 $currentSpanHasMatch = false;
                 continue;
             }
 
             if ($currentSpan) {
-                // Extend the current span
                 $currentSpan = $currentSpan->withEndPosition($textToken->getOriginalEndPosition());
             } else {
-                // Start a new span
-                $currentSpan = new Span($textToken->getOriginalStartPosition(), $textToken->getOriginalEndPosition());
+                $currentSpan = new MatchSpan($textToken->getOriginalStartPosition(), $textToken->getOriginalEndPosition());
+            }
+
+            if ($isMatch) {
+                $currentSpanTerms[] = mb_strtolower($textToken->getTerm(), 'UTF-8');
             }
         }
 
-        // If we have an open span at the end, close it
         if ($currentSpan && $currentSpanHasMatch) {
-            $spans[] = $currentSpan;
+            $spans[] = $currentSpan->withTerms($currentSpanTerms);
         }
 
         return $spans;
