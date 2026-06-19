@@ -102,6 +102,12 @@ class Tokenizer implements TokenizerInterface
                 continue;
             }
 
+            // A bare negative number like "-1" is usually part of a message or line reference,
+            // not a negation operator.
+            if (!$phrase && $negated && $this->isNumericTerm($term)) {
+                $negated = false;
+            }
+
             // $id is incremented per kept token, so it doubles as count
             if ($maxTokens !== null && $id >= $maxTokens) {
                 break;
@@ -142,5 +148,10 @@ class Tokenizer implements TokenizerInterface
         }
 
         return new TokenCollection($tokenList);
+    }
+
+    private function isNumericTerm(string $term): bool
+    {
+        return preg_match('/^\d+$/', $term) === 1;
     }
 }

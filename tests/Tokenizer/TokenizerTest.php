@@ -306,4 +306,13 @@ class TokenizerTest extends TestCase
         $this->assertTrue($tokens->all()[1]->wasFolded());
         $this->assertFalse($tokens->all()[2]->wasFolded());
     }
+
+    public function testNegativeNumberIsNotTreatedAsNegation(): void
+    {
+        $tokenizer = new Tokenizer();
+        $tokens = $tokenizer->tokenize('template.html.twig at line -1');
+
+        $this->assertSame(['template.html.twig', 'at', 'line', '1'], $tokens->allTermsWithVariants());
+        $this->assertFalse($tokens->all()[3]->isNegated());
+    }
 }
