@@ -6,6 +6,7 @@ namespace Loupe\Matcher\Tests\Tokenizer;
 
 use Loupe\Matcher\Locale;
 use Loupe\Matcher\Tokenizer\LocaleConfiguration\German;
+use Loupe\Matcher\Tokenizer\Token;
 use Loupe\Matcher\Tokenizer\Tokenizer;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -73,6 +74,40 @@ final class TokenizerTest extends TestCase
             ],
             $tokenizer->tokenize('Það er gott að lesa íslenska.')
                 ->allTermsWithVariants(),
+        );
+    }
+
+    public function testChineseCrawlerQuery(): void
+    {
+        $tokenizer = new Tokenizer();
+
+        $this->assertSame(
+            [
+                '关于',
+                '举办',
+                '河',
+                '东区',
+                '2026',
+                '年度',
+                '新兴',
+                '领域',
+                '党',
+                '建',
+                '培训',
+                '班',
+                '暨',
+                '两',
+                '企',
+                '三',
+                '新',
+                '党',
+                '组织',
+                '书记',
+            ],
+            array_map(
+                static fn (Token $token): string => $token->getTerm(),
+                $tokenizer->tokenize('关于举办河东区2026年度新兴领域党建培训班暨“两企三新”党组织书记')->all(),
+            ),
         );
     }
 
