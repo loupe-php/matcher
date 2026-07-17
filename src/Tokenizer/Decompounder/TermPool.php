@@ -17,9 +17,8 @@ final class TermPool
 
     public function __construct(
         private readonly TermValidatorInterface $termValidator,
-        private readonly int $maxCacheEntries = 0
+        private readonly int $maxCacheEntries = 0,
     ) {
-
     }
 
     public function term(string $term): Term
@@ -39,14 +38,14 @@ final class TermPool
         // I have benched LRU but tracking access performs way worse.
         if ($this->size >= $this->maxCacheEntries) {
             $first = array_key_first($this->pool);
-            if ($first !== null) {
+            if (null !== $first) {
                 unset($this->pool[$first]);
-                $this->size--;
+                --$this->size;
             }
         }
 
         $this->pool[$term] = $termInstance;
-        $this->size++;
+        ++$this->size;
 
         return $termInstance;
     }

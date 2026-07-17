@@ -6,9 +6,8 @@ namespace Loupe\Matcher;
 
 class Locale implements \Stringable
 {
-    private function __construct(
-        private string $locale
-    ) {
+    private function __construct(private readonly string $locale)
+    {
     }
 
     public function __toString(): string
@@ -20,8 +19,8 @@ class Locale implements \Stringable
     {
         $canonical = \Locale::canonicalize($locale);
 
-        if (!$canonical || \Locale::getDisplayName($canonical, $canonical) === '') {
-            throw new \InvalidArgumentException("Invalid locale: {$locale}");
+        if (!$canonical || '' === \Locale::getDisplayName($canonical, $canonical)) {
+            throw new \InvalidArgumentException(\sprintf('Invalid locale: %s', $locale));
         }
 
         return new self($canonical);

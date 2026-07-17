@@ -31,6 +31,9 @@ class EnglishBuilder extends AbstractKaikkiDictionaryBuilder
         return Locale::fromString('en');
     }
 
+    /**
+     * @param array<string, mixed> $json
+     */
     protected function allowTermPostNormalize(string $term, array $json): bool
     {
         if (\in_array($term, self::DISALLOW_LIST, true)) {
@@ -40,10 +43,13 @@ class EnglishBuilder extends AbstractKaikkiDictionaryBuilder
         return true;
     }
 
+    /**
+     * @param array<string, mixed> $json
+     */
     protected function allowTermPreNormalize(string $term, array $json): bool
     {
         // This already filters out anything that does e.g. start with capital letters
-        if (!preg_match('/^[a-z]{' . English::MIN_DECOMPOSITION_TERM_LENGTH . ',}$/u', $term)) {
+        if (!preg_match('/^[a-z]{'.English::MIN_DECOMPOSITION_TERM_LENGTH.',}$/u', $term)) {
             return false;
         }
 

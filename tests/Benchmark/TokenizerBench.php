@@ -42,8 +42,9 @@ class TokenizerBench
     #[Groups(['control'])]
     public function benchControlBreakIterator(): void
     {
-        $bi = \IntlRuleBasedBreakIterator::createWordInstance(null); // @phpstan-ignore-line - null is allowed
+        $bi = \IntlRuleBasedBreakIterator::createWordInstance(); // @phpstan-ignore-line - null is allowed
         $bi->setText($this->text);
+
         foreach ($bi->getPartsIterator() as $_) {
         }
     }
@@ -78,9 +79,9 @@ class TokenizerBench
 
     private static function loadFixture(string $locale, int $size): string
     {
-        $raw = file_get_contents(__DIR__ . "/fixtures/text/{$locale}.txt");
-        if ($raw === false) {
-            throw new \RuntimeException("Missing fixture for locale {$locale}");
+        $raw = file_get_contents(__DIR__."/fixtures/text/{$locale}.txt");
+        if (false === $raw) {
+            throw new \RuntimeException(\sprintf('Missing fixture for locale %s', $locale));
         }
 
         // Repeat until long enough, then trim to the exact byte length.

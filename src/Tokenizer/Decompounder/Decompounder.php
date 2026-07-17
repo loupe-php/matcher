@@ -8,11 +8,11 @@ class Decompounder
 {
     public const COSTLY_PENALTY = 100;
 
-    private TermPool $termPool;
+    private readonly TermPool $termPool;
 
     public function __construct(
-        private ConfigurationInterface $configuration,
-        private bool $includeIntermediateTerms
+        private readonly ConfigurationInterface $configuration,
+        private readonly bool $includeIntermediateTerms,
     ) {
         $this->termPool = $this->configuration->getTermPool();
     }
@@ -20,6 +20,7 @@ class Decompounder
     /**
      * Returns all decomposition split variants (meaning no part can be further decomposed),
      * and never returns the term itself.
+     *
      * @return array<string>
      */
     public function decompoundTerm(string $term): array
@@ -64,11 +65,11 @@ class Decompounder
             [$rightLeaves, $rightPenalty] = $this->collectLeavesOrSelf($right, $leafCache);
             $penalty = $leftPenalty + $rightPenalty + $candidate->penalty;
 
-            if ($bestPenalty !== null && $penalty > $bestPenalty) {
+            if (null !== $bestPenalty && $penalty > $bestPenalty) {
                 continue; // This is worse, ignore
             }
 
-            if ($bestPenalty === null || $penalty < $bestPenalty) {
+            if (null === $bestPenalty || $penalty < $bestPenalty) {
                 $bestPenalty = $penalty;
                 $bestTerms = []; // We found a new best: remove the ones found so far
             }
@@ -76,6 +77,7 @@ class Decompounder
             foreach ($leftLeaves as $leafTerm) {
                 $bestTerms[$leafTerm->term] = $leafTerm;
             }
+
             foreach ($rightLeaves as $leafTerm) {
                 $bestTerms[$leafTerm->term] = $leafTerm;
             }
@@ -91,7 +93,7 @@ class Decompounder
             return $leafCache[$term->term] = ($term->isValid ? [$term] : false);
         }
 
-        if ($bestTerms === []) {
+        if ([] === $bestTerms) {
             return $leafCache[$term->term] = false;
         }
 
@@ -100,12 +102,13 @@ class Decompounder
 
     /**
      * @param array<string, array<Term>|false> $leafCache
-     * @return array{0:array<Term>,1:int}|false
+     *
+     * @return array{0:array<Term>, 1:int}|false
      */
     private function collectLeafTermsWithPenalty(Term $term, array &$leafCache): array|false
     {
         $leaves = $this->collectLeafTerms($term, $leafCache);
-        if ($leaves === false) {
+        if (false === $leaves) {
             return false;
         }
 
@@ -116,13 +119,13 @@ class Decompounder
     /**
      * @param array<string, array<Term>|false> $leafCache
      *
-     * @return array{0:array<Term>,1:int} A tuple of (leaf terms, penalty)
+     * @return array{0:array<Term>, 1:int} A tuple of (leaf terms, penalty)
      */
     private function collectLeavesOrSelf(Term $term, array &$leafCache): array
     {
         $result = $this->collectLeafTermsWithPenalty($term, $leafCache);
 
-        if ($result === false) {
+        if (false === $result) {
             // Only fallback to the term itself if it is valid. Otherwise, make it very costly.
             return $term->isValid ? [[$term], 0] : [[], self::COSTLY_PENALTY];
         }
@@ -139,7 +142,7 @@ class Decompounder
         $result = [];
         $leaves = $this->collectLeafTerms($term, $leafCache);
 
-        if ($leaves === false) {
+        if (false === $leaves) {
             return $result;
         }
 
@@ -164,14 +167,14 @@ class Decompounder
             return;
         }
 
-        for ($i = 1; $i <= $term->length - 1; $i++) {
+        for ($i = 1; $i <= $term->length - 1; ++$i) {
             yield from $this->configuration->boundaryCandidates(
                 new BoundaryContext(
                     $term,
                     $i,
                     $this->termPool->term(mb_substr($term->term, 0, $i)),
                     $this->termPool->term(mb_substr($term->term, $i)),
-                )
+                ),
             );
         }
     }

@@ -6,21 +6,20 @@ namespace Loupe\Matcher\Tokenizer\Normalizer;
 
 class Normalizer implements NormalizerInterface
 {
-    private ?\Transliterator $transliterator = null;
+    private \Transliterator|null $transliterator = null;
 
     public function normalize(string $term): string
     {
         $term = $this->transliterateToAscii($term);
-        $term = mb_strtolower($term, 'UTF-8');
 
-        return $term;
+        return mb_strtolower($term, 'UTF-8');
     }
 
     private function transliterateToAscii(string $term): string
     {
         $transliterator = $this->transliterator;
 
-        if ($transliterator === null) {
+        if (null === $transliterator) {
             $transliterator = \Transliterator::create('NFKD; [:Nonspacing Mark:] Remove; Latin-ASCII');
             if (!$transliterator instanceof \Transliterator) {
                 return $term;
@@ -30,6 +29,6 @@ class Normalizer implements NormalizerInterface
 
         $result = $transliterator->transliterate($term);
 
-        return $result !== false ? $result : $term;
+        return false !== $result ? $result : $term;
     }
 }

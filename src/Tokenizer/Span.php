@@ -7,8 +7,8 @@ namespace Loupe\Matcher\Tokenizer;
 class Span
 {
     public function __construct(
-        private int $startPosition,
-        private int $endPosition,
+        private readonly int $startPosition,
+        private readonly int $endPosition,
     ) {
     }
 

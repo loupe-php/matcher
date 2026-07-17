@@ -9,12 +9,12 @@ use Loupe\Matcher\StopWords\StopWordsInterface;
 class TokenCollection implements \Countable
 {
     /**
-     * @var Token[]
+     * @var array<Token>
      */
     private array $tokens = [];
 
     /**
-     * @param Token[] $tokens
+     * @param array<Token> $tokens
      */
     public function __construct(array $tokens = [])
     {
@@ -31,7 +31,7 @@ class TokenCollection implements \Countable
     }
 
     /**
-     * @return Token[]
+     * @return array<Token>
      */
     public function all(): array
     {
@@ -39,11 +39,11 @@ class TokenCollection implements \Countable
     }
 
     /**
-     * @return Token[]
+     * @return array<Token>
      */
     public function allNegated(): array
     {
-        return array_filter($this->tokens, fn (Token $token) => $token->isNegated());
+        return array_filter($this->tokens, static fn (Token $token) => $token->isNegated());
     }
 
     /**
@@ -102,7 +102,7 @@ class TokenCollection implements \Countable
         return array_unique($tokens);
     }
 
-    public function atIndex(int $index): ?Token
+    public function atIndex(int $index): Token|null
     {
         return $this->tokens[$index] ?? null;
     }
@@ -130,10 +130,10 @@ class TokenCollection implements \Countable
 
     public function empty(): bool
     {
-        return $this->tokens === [];
+        return [] === $this->tokens;
     }
 
-    public function last(): ?Token
+    public function last(): Token|null
     {
         $last = end($this->tokens);
         if ($last instanceof Token) {
@@ -155,7 +155,7 @@ class TokenCollection implements \Countable
 
         foreach ($this->tokens as $token) {
             if ($token->isPartOfPhrase()) {
-                $phrase = $phrase ?? new Phrase([], $token->isNegated());
+                $phrase ??= new Phrase([], $token->isNegated());
                 $phrase->add($token);
             } else {
                 if ($phrase) {

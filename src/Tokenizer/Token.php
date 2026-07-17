@@ -24,9 +24,9 @@ class Token
         private bool $isPartOfPhrase,
         private bool $isNegated,
         private bool $wasFolded = false,
-        ?int $originalStartPosition = null,
-        ?int $originalLength = null,
-        ?int $length = null,
+        int|null $originalStartPosition = null,
+        int|null $originalLength = null,
+        int|null $length = null,
     ) {
         $this->length = $length ?? mb_strlen($this->term, 'UTF-8');
         $this->originalLength = $originalLength ?? $this->length;
@@ -49,7 +49,7 @@ class Token
      */
     public function allTerms(): array
     {
-        if ($this->variants === []) {
+        if ([] === $this->variants) {
             return [$this->term];
         }
 
@@ -114,7 +114,7 @@ class Token
      */
     public function isOneOf(array $haystack): bool
     {
-        if ($haystack === []) {
+        if ([] === $haystack) {
             return false;
         }
 
@@ -150,12 +150,13 @@ class Token
      */
     public function withAddedVariants(array $variants): self
     {
-        if ($variants === []) {
+        if ([] === $variants) {
             return $this;
         }
 
         $clone = clone $this;
         $clone->variants = array_unique(array_merge($this->variants, $variants));
+
         return $clone;
     }
 
@@ -166,6 +167,7 @@ class Token
     {
         $clone = clone $this;
         $clone->variants = $variants;
+
         return $clone;
     }
 }

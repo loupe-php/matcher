@@ -8,7 +8,7 @@ use Loupe\Matcher\StopWords\InMemoryStopWords;
 use Loupe\Matcher\Tokenizer\Tokenizer;
 use PHPUnit\Framework\TestCase;
 
-class TokenCollectionTest extends TestCase
+final class TokenCollectionTest extends TestCase
 {
     public function testWithoutStopWords(): void
     {
@@ -21,6 +21,5 @@ class TokenCollectionTest extends TestCase
         $stopwords = new InMemoryStopWords(['this', 'is', 'a', 'text']);
         $this->assertSame([], $tokens->withoutStopWords($stopwords)->allTerms());
         $this->assertSame(['this', 'is', 'a', 'text'], $tokens->withoutStopWords($stopwords, true)->allTerms());
-
     }
 }

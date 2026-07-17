@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher\Build\Command;
 
-use Loupe\Matcher\Build\DictionaryBuilderInterface;
 use Loupe\Matcher\Build\Locale\EnglishBuilder;
 use Loupe\Matcher\Build\Locale\GermanBuilder;
 use Loupe\Matcher\Locale;
@@ -25,20 +24,15 @@ class UpdateDictionariesCommand
         ];
 
         foreach ($builders as $builder) {
-            if (!$builder instanceof DictionaryBuilderInterface) {
-                $io->error('All builders must implement the DictionaryBuilderInterface!');
-                return Command::FAILURE;
-            }
-
-            if ($locale !== null && !$builder->getLocale()->matches(Locale::fromString($locale))) {
+            if (null !== $locale && !$builder->getLocale()->matches(Locale::fromString($locale))) {
                 continue;
             }
 
             $this->info($io, $builder->getLocale(), 'Building directory now.');
             $builder->buildDirectory(
                 $io,
-                __DIR__ . '/../../dictionaries/' . $builder->getLocale()->toString(),
-                $debug
+                __DIR__.'/../../dictionaries/'.$builder->getLocale()->toString(),
+                $debug,
             );
         }
 

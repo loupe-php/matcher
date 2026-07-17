@@ -18,7 +18,7 @@ class MatchSpan extends Span
     public function __construct(
         int $startPosition,
         int $endPosition,
-        private array $terms = [],
+        private readonly array $terms = [],
     ) {
         parent::__construct($startPosition, $endPosition);
     }

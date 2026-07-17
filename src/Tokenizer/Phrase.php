@@ -11,7 +11,7 @@ class Phrase extends TokenCollection
      */
     public function __construct(
         array $tokens,
-        private bool $isNegated
+        private readonly bool $isNegated,
     ) {
         parent::__construct($tokens);
     }

@@ -10,7 +10,7 @@ use Loupe\Matcher\Tokenizer\Decompounder\TermValidator\DefaultTermValidator;
 use Loupe\Matcher\Tokenizer\Decompounder\TermValidator\TermValidatorInterface;
 use PHPUnit\Framework\TestCase;
 
-class TermPoolTest extends TestCase
+final class TermPoolTest extends TestCase
 {
     public function testDelegatesProperly(): void
     {

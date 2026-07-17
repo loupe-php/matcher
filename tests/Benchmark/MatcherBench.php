@@ -53,7 +53,7 @@ class MatcherBench
         $this->matcher = new Matcher($this->tokenizer);
         $this->matcherWithStopWords = new Matcher($this->tokenizer, $stopWords);
         $this->text = self::loadFixture($locale, 10000);
-        $this->query = $locale === 'en' ? 'rabbit alice sister' : 'Gregor Zimmer Bett';
+        $this->query = 'en' === $locale ? 'rabbit alice sister' : 'Gregor Zimmer Bett';
     }
 
     /**
@@ -158,9 +158,9 @@ class MatcherBench
 
     private static function loadFixture(string $locale, int $size): string
     {
-        $raw = file_get_contents(__DIR__ . "/fixtures/text/{$locale}.txt");
-        if ($raw === false) {
-            throw new \RuntimeException("Missing fixture for locale {$locale}");
+        $raw = file_get_contents(__DIR__."/fixtures/text/{$locale}.txt");
+        if (false === $raw) {
+            throw new \RuntimeException(\sprintf('Missing fixture for locale %s', $locale));
         }
 
         // Repeat until long enough, then trim to the exact byte length.
@@ -177,9 +177,9 @@ class MatcherBench
      */
     private static function loadStopWords(string $locale): array
     {
-        $raw = file_get_contents(__DIR__ . "/fixtures/stopwords/{$locale}.txt");
-        if ($raw === false) {
-            throw new \RuntimeException("Missing stop words fixture for locale {$locale}");
+        $raw = file_get_contents(__DIR__."/fixtures/stopwords/{$locale}.txt");
+        if (false === $raw) {
+            throw new \RuntimeException(\sprintf('Missing stop words fixture for locale %s', $locale));
         }
 
         return array_filter(explode("\n", trim($raw)));

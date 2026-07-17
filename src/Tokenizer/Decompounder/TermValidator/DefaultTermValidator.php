@@ -14,9 +14,8 @@ final class DefaultTermValidator implements TermValidatorInterface
         /**
          * @var array<string, bool> $allowList
          */
-        private readonly array $allowList = []
+        private readonly array $allowList = [],
     ) {
-
     }
 
     public function isValid(string $term): bool

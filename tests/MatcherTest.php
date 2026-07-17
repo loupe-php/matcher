@@ -6,7 +6,6 @@ namespace Loupe\Matcher\Tests;
 
 use Loupe\Matcher\Locale;
 use Loupe\Matcher\Matcher;
-use Loupe\Matcher\Tokenizer\TokenCollection;
 use Loupe\Matcher\Tokenizer\Tokenizer;
 use PHPUnit\Framework\TestCase;
 
@@ -45,7 +44,7 @@ final class MatcherTest extends TestCase
         $matches = $matcher->calculateMatches($text, $query);
         $spans = $matcher->calculateMatchSpans($text, $query, $matches);
 
-        $this->assertEquals(2, \count($matches->all()));
+        $this->assertCount(2, $matches->all());
         $this->assertSame([4, 14], [$spans[0]->getStartPosition(), $spans[0]->getEndPosition()]);
         $this->assertSame([37, 56], [$spans[1]->getStartPosition(), $spans[1]->getEndPosition()]);
     }
@@ -53,7 +52,6 @@ final class MatcherTest extends TestCase
     public function testEmptyTextReturnsEmptyCollection(): void
     {
         $result = $this->matcher->calculateMatches('', 'query');
-        $this->assertInstanceOf(TokenCollection::class, $result);
         $this->assertCount(0, $result->all());
     }
 
@@ -67,7 +65,7 @@ final class MatcherTest extends TestCase
         $matches = $matcher->calculateMatches($text, $query);
         $spans = $matcher->calculateMatchSpans($text, $query, $matches);
 
-        $this->assertEquals(2, \count($matches->all()));
+        $this->assertCount(2, $matches->all());
         $this->assertSame([11, 19], [$spans[0]->getStartPosition(), $spans[0]->getEndPosition()]);
         $this->assertSame([40, 45], [$spans[1]->getStartPosition(), $spans[1]->getEndPosition()]);
     }
@@ -78,8 +76,8 @@ final class MatcherTest extends TestCase
         $query = 'quick fox dog';
         $matches = $this->matcher->calculateMatches($text, $query);
 
-        $this->assertEquals(3, \count($matches->all()));
-        $words = array_map(fn ($t) => $t->getTerm(), $matches->all());
+        $this->assertCount(3, $matches->all());
+        $words = array_map(static fn ($t) => $t->getTerm(), $matches->all());
 
         $this->assertContains('quick', $words);
         $this->assertContains('fox', $words);
@@ -137,8 +135,8 @@ final class MatcherTest extends TestCase
         $query = 'the quick fox dog';
         $matches = $this->matcher->calculateMatches($text, $query);
 
-        $this->assertEquals(3, \count($matches->all()));
-        $words = array_map(fn ($t) => $t->getTerm(), $matches->all());
+        $this->assertCount(3, $matches->all());
+        $words = array_map(static fn ($t) => $t->getTerm(), $matches->all());
 
         $this->assertNotContains('the', $words);
     }
