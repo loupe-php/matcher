@@ -10,12 +10,12 @@ class DefaultConfiguration implements ConfigurationInterface
         private readonly TermPool $termPool,
         private readonly int $minimumDecompositionTermLength,
         /**
-         * The interfix as key and its length as value
+         * The interfix as key and its length as value.
+         *
          * @var array<string, int>
          */
         private readonly array $interfixes = [],
     ) {
-
     }
 
     public function boundaryCandidates(BoundaryContext $boundaryContext): iterable

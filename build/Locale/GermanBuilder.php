@@ -32,6 +32,9 @@ class GermanBuilder extends AbstractKaikkiDictionaryBuilder
         return Locale::fromString('de');
     }
 
+    /**
+     * @param array<string, mixed> $json
+     */
     protected function allowTermPostNormalize(string $term, array $json): bool
     {
         if (mb_strlen($term) < German::MIN_DECOMPOSITION_TERM_LENGTH) {
@@ -45,6 +48,9 @@ class GermanBuilder extends AbstractKaikkiDictionaryBuilder
         return true;
     }
 
+    /**
+     * @param array<string, mixed> $json
+     */
     protected function allowTermPreNormalize(string $term, array $json): bool
     {
         if (!preg_match('/^[A-ZÄÖÜa-zäöüß]+$/u', $term)) {

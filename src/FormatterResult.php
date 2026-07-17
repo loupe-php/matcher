@@ -10,8 +10,8 @@ use Loupe\Matcher\Tokenizer\TokenCollection;
 class FormatterResult
 {
     public function __construct(
-        private string $formattedText,
-        private TokenCollection $matches
+        private readonly string $formattedText,
+        private readonly TokenCollection $matches,
     ) {
     }
 
@@ -30,7 +30,7 @@ class FormatterResult
      */
     public function getMatchesArray(): array
     {
-        return array_map(fn (Token $token) => [
+        return array_map(static fn (Token $token) => [
             'start' => $token->getOriginalStartPosition(),
             'length' => $token->getOriginalLength(),
         ], $this->matches->all());

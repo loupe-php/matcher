@@ -16,9 +16,9 @@ final class FormatterResultTest extends TestCase
         $matches = (new Tokenizer())->tokenize('');
         $result = new FormatterResult('text', $matches);
 
-        $this->assertEquals('text', $result->getFormattedText());
-        $this->assertEquals($matches, $result->getMatches());
-        $this->assertEquals(false, $result->hasMatches());
+        $this->assertSame('text', $result->getFormattedText());
+        $this->assertSame($matches, $result->getMatches());
+        $this->assertFalse($result->hasMatches());
     }
 
     public function testMatches(): void
@@ -26,7 +26,7 @@ final class FormatterResultTest extends TestCase
         $matches = (new Tokenizer())->tokenize('foo bar baz');
         $result = new FormatterResult('text', $matches);
 
-        $this->assertEquals(true, $result->hasMatches());
+        $this->assertTrue($result->hasMatches());
     }
 
     public function testMatchesArray(): void
@@ -34,20 +34,23 @@ final class FormatterResultTest extends TestCase
         $matches = (new Tokenizer())->tokenize('foo bar baz');
         $result = new FormatterResult('text', $matches);
 
-        $this->assertEquals([
+        $this->assertSame(
             [
-                'start' => 0,
-                'length' => 3,
+                [
+                    'start' => 0,
+                    'length' => 3,
+                ],
+                [
+                    'start' => 4,
+                    'length' => 3,
+                ],
+                [
+                    'start' => 8,
+                    'length' => 3,
+                ],
             ],
-            [
-                'start' => 4,
-                'length' => 3,
-            ],
-            [
-                'start' => 8,
-                'length' => 3,
-            ],
-        ], $result->getMatchesArray());
+            $result->getMatchesArray(),
+        );
     }
 
     public function testNormalizedMatchesArray(): void
@@ -61,15 +64,18 @@ final class FormatterResultTest extends TestCase
 
         $result = new FormatterResult($text, $matches);
 
-        $this->assertEquals([
+        $this->assertSame(
             [
-                'start' => 4,
-                'length' => 7,
+                [
+                    'start' => 4,
+                    'length' => 7,
+                ],
+                [
+                    'start' => 37,
+                    'length' => 4,
+                ],
             ],
-            [
-                'start' => 37,
-                'length' => 4,
-            ],
-        ], $result->getMatchesArray());
+            $result->getMatchesArray(),
+        );
     }
 }

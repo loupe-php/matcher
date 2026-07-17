@@ -10,15 +10,16 @@ use Loupe\Matcher\Tokenizer\Tokenizer;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 
-class TokenizerTest extends TestCase
+final class TokenizerTest extends TestCase
 {
     #[TestWith(['de'])]
     #[TestWith(['en'])]
     public function testDecomposition(string $locale): void
     {
         $tokenizer = Tokenizer::createFromPreconfiguredLocaleConfiguration(Locale::fromString($locale));
-        $fixture = (string) file_get_contents(__DIR__ . '/Fixtures/Decomposition/' . $locale . '.txt');
+        $fixture = (string) file_get_contents(__DIR__.'/Fixtures/Decomposition/'.$locale.'.txt');
         $tests = [];
+
         foreach (array_filter(explode("\n", $fixture)) as $line) {
             if (!str_starts_with($line, '#')) {
                 $tests[] = $line;
@@ -43,30 +44,36 @@ class TokenizerTest extends TestCase
         $tokens = $tokenizer->tokenize('Die Straße ist neben dem größeren Gebäude.');
 
         // ß should normalize to ss
-        $this->assertSame([
-            'die',
-            'strasse',
-            'ist',
-            'neben',
-            'dem',
-            'grosseren',
-            'gebaude',
-        ], $tokens->allTermsWithVariants());
+        $this->assertSame(
+            [
+                'die',
+                'strasse',
+                'ist',
+                'neben',
+                'dem',
+                'grosseren',
+                'gebaude',
+            ],
+            $tokens->allTermsWithVariants(),
+        );
     }
 
     public function testIcelandicSpecialCharacters(): void
     {
         $tokenizer = new Tokenizer();
         // ð (eth) and þ (thorn) are special characters that should normalize to d and th
-        $this->assertSame([
-            'thad',
-            'er',
-            'gott',
-            'ad',
-            'lesa',
-            'islenska',
-        ], $tokenizer->tokenize('Það er gott að lesa íslenska.')
-            ->allTermsWithVariants());
+        $this->assertSame(
+            [
+                'thad',
+                'er',
+                'gott',
+                'ad',
+                'lesa',
+                'islenska',
+            ],
+            $tokenizer->tokenize('Það er gott að lesa íslenska.')
+                ->allTermsWithVariants(),
+        );
     }
 
     public function testKeepIntermediateTerms(): void
@@ -89,16 +96,19 @@ class TokenizerTest extends TestCase
         $tokenizer = new Tokenizer();
         $tokens = $tokenizer->tokenize('Hallo, mein Name ist Hase und ich weiß von nichts.', true, 5);
 
-        $this->assertSame(5, $tokens->count());
+        $this->assertCount(5, $tokens);
 
-        $this->assertSame([
-            'hallo',
-            'mein',
-            'name',
-            'ist',
-            'hase',
-        ], $tokenizer->tokenize('Hallo, mein Name ist Hase und ich weiß von nichts.', true, 5)
-            ->allTermsWithVariants());
+        $this->assertSame(
+            [
+                'hallo',
+                'mein',
+                'name',
+                'ist',
+                'hase',
+            ],
+            $tokenizer->tokenize('Hallo, mein Name ist Hase und ich weiß von nichts.', true, 5)
+                ->allTermsWithVariants(),
+        );
     }
 
     public function testNegatedPhrases(): void
@@ -106,27 +116,33 @@ class TokenizerTest extends TestCase
         $tokenizer = new Tokenizer();
         $tokens = $tokenizer->tokenize('Hallo, -mein -"Name ist Hase" und -ich "weiß von" -nichts.');
 
-        $this->assertSame([
-            'hallo',
-            'mein',
-            'name',
-            'ist',
-            'hase',
-            'und',
-            'ich',
-            'weiss',
-            'von',
-            'nichts',
-        ], $tokens->allTermsWithVariants());
+        $this->assertSame(
+            [
+                'hallo',
+                'mein',
+                'name',
+                'ist',
+                'hase',
+                'und',
+                'ich',
+                'weiss',
+                'von',
+                'nichts',
+            ],
+            $tokens->allTermsWithVariants(),
+        );
 
-        $this->assertSame([
-            'mein',
-            'name',
-            'ist',
-            'hase',
-            'ich',
-            'nichts',
-        ], $tokens->allNegatedTermsWithVariants());
+        $this->assertSame(
+            [
+                'mein',
+                'name',
+                'ist',
+                'hase',
+                'ich',
+                'nichts',
+            ],
+            $tokens->allNegatedTermsWithVariants(),
+        );
     }
 
     public function testNegatedTokens(): void
@@ -134,24 +150,30 @@ class TokenizerTest extends TestCase
         $tokenizer = new Tokenizer();
         $tokens = $tokenizer->tokenize('Hallo, mein -Name ist -Hase und ich weiß von -nichts.');
 
-        $this->assertSame([
-            'hallo',
-            'mein',
-            'name',
-            'ist',
-            'hase',
-            'und',
-            'ich',
-            'weiss',
-            'von',
-            'nichts',
-        ], $tokens->allTermsWithVariants());
+        $this->assertSame(
+            [
+                'hallo',
+                'mein',
+                'name',
+                'ist',
+                'hase',
+                'und',
+                'ich',
+                'weiss',
+                'von',
+                'nichts',
+            ],
+            $tokens->allTermsWithVariants(),
+        );
 
-        $this->assertSame([
-            'name',
-            'hase',
-            'nichts',
-        ], $tokens->allNegatedTermsWithVariants());
+        $this->assertSame(
+            [
+                'name',
+                'hase',
+                'nichts',
+            ],
+            $tokens->allNegatedTermsWithVariants(),
+        );
     }
 
     public function testNegatedWordPartPhraseTokens(): void
@@ -159,29 +181,35 @@ class TokenizerTest extends TestCase
         $tokenizer = new Tokenizer();
         $tokens = $tokenizer->tokenize('-Hallo, mein -Name-ist-Hase und -"ich weiß" von 64-bit-Dingen.');
 
-        $this->assertSame([
-            'hallo',
-            'mein',
-            'name',
-            'ist',
-            'hase',
-            'und',
-            'ich',
-            'weiss',
-            'von',
-            '64',
-            'bit',
-            'dingen',
-        ], $tokens->allTermsWithVariants());
+        $this->assertSame(
+            [
+                'hallo',
+                'mein',
+                'name',
+                'ist',
+                'hase',
+                'und',
+                'ich',
+                'weiss',
+                'von',
+                '64',
+                'bit',
+                'dingen',
+            ],
+            $tokens->allTermsWithVariants(),
+        );
 
-        $this->assertSame([
-            'hallo',
-            'name',
-            'ist',
-            'hase',
-            'ich',
-            'weiss',
-        ], $tokens->allNegatedTermsWithVariants());
+        $this->assertSame(
+            [
+                'hallo',
+                'name',
+                'ist',
+                'hase',
+                'ich',
+                'weiss',
+            ],
+            $tokens->allNegatedTermsWithVariants(),
+        );
     }
 
     public function testNegatedWordPartTokens(): void
@@ -189,27 +217,33 @@ class TokenizerTest extends TestCase
         $tokenizer = new Tokenizer();
         $tokens = $tokenizer->tokenize('Hallo, mein -Name-ist-Hase und -ich weiß von 64-bit-Dingen.');
 
-        $this->assertSame([
-            'hallo',
-            'mein',
-            'name',
-            'ist',
-            'hase',
-            'und',
-            'ich',
-            'weiss',
-            'von',
-            '64',
-            'bit',
-            'dingen',
-        ], $tokens->allTermsWithVariants());
+        $this->assertSame(
+            [
+                'hallo',
+                'mein',
+                'name',
+                'ist',
+                'hase',
+                'und',
+                'ich',
+                'weiss',
+                'von',
+                '64',
+                'bit',
+                'dingen',
+            ],
+            $tokens->allTermsWithVariants(),
+        );
 
-        $this->assertSame([
-            'name',
-            'ist',
-            'hase',
-            'ich',
-        ], $tokens->allNegatedTermsWithVariants());
+        $this->assertSame(
+            [
+                'name',
+                'ist',
+                'hase',
+                'ich',
+            ],
+            $tokens->allNegatedTermsWithVariants(),
+        );
     }
 
     public function testOriginalTermPositionAndLength(): void
@@ -217,13 +251,16 @@ class TokenizerTest extends TestCase
         $tokenizer = new Tokenizer();
         $tokens = $tokenizer->tokenize('Die größere Straße ist lang.');
 
-        $this->assertSame([
-            'die',
-            'grossere',
-            'strasse',
-            'ist',
-            'lang',
-        ], $tokens->allTermsWithVariants());
+        $this->assertSame(
+            [
+                'die',
+                'grossere',
+                'strasse',
+                'ist',
+                'lang',
+            ],
+            $tokens->allTermsWithVariants(),
+        );
 
         // The original term length should be remembered even after normalization
         $this->assertSame(13, $tokens->all()[2]->getStartPosition());
@@ -239,62 +276,74 @@ class TokenizerTest extends TestCase
     {
         $tokenizer = new Tokenizer();
         // Ł/ł should normalize to l
-        $this->assertSame([
-            'lodz',
-            'ma',
-            'piekne',
-            'zolte',
-            'lodzie',
-        ], $tokenizer->tokenize('Łódź ma piękne żółte łodzie.')
-            ->allTermsWithVariants());
+        $this->assertSame(
+            [
+                'lodz',
+                'ma',
+                'piekne',
+                'zolte',
+                'lodzie',
+            ],
+            $tokenizer->tokenize('Łódź ma piękne żółte łodzie.')
+                ->allTermsWithVariants(),
+        );
     }
 
     public function testSlovakDiacriticsNormalization(): void
     {
         $tokenizer = new Tokenizer();
         // Slovak diacritics: č, š, ž, ň, ľ, ť, ď, á, é, í, ó, ú, ý, ô should normalize to c, s, z, n, l, t, d, a, e, i, o, u, y, o
-        $this->assertSame([
-            'kniznica',
-            'ma',
-            'velky',
-            'vyber',
-            'knih',
-            'a',
-            'casopisov',
-        ], $tokenizer->tokenize('Knižnica má veľký výber kníh a časopisov.')
-            ->allTermsWithVariants());
+        $this->assertSame(
+            [
+                'kniznica',
+                'ma',
+                'velky',
+                'vyber',
+                'knih',
+                'a',
+                'casopisov',
+            ],
+            $tokenizer->tokenize('Knižnica má veľký výber kníh a časopisov.')
+                ->allTermsWithVariants(),
+        );
     }
 
     public function testSwedishDiacriticsNormalization(): void
     {
         $tokenizer = new Tokenizer();
         // å/ä/ö should normalize to a/a/o
-        $this->assertSame([
-            'blabarssoppa',
-            'ar',
-            'god',
-            'och',
-            'sot',
-        ], $tokenizer->tokenize('Blåbärssoppa är god och söt.')
-            ->allTermsWithVariants());
+        $this->assertSame(
+            [
+                'blabarssoppa',
+                'ar',
+                'god',
+                'och',
+                'sot',
+            ],
+            $tokenizer->tokenize('Blåbärssoppa är god och söt.')
+                ->allTermsWithVariants(),
+        );
     }
 
     public function testTokenizeWithPhrases(): void
     {
         $tokenizer = new Tokenizer();
-        $this->assertSame([
-            'hallo',
-            'mein',
-            'name',
-            'ist',
-            'hase',
-            'und',
-            'ich',
-            'weiss',
-            'von',
-            'nichts',
-        ], $tokenizer->tokenize('Hallo, mein "Name ist Hase" und ich weiß von nichts.')
-            ->allTermsWithVariants());
+        $this->assertSame(
+            [
+                'hallo',
+                'mein',
+                'name',
+                'ist',
+                'hase',
+                'und',
+                'ich',
+                'weiss',
+                'von',
+                'nichts',
+            ],
+            $tokenizer->tokenize('Hallo, mein "Name ist Hase" und ich weiß von nichts.')
+                ->allTermsWithVariants(),
+        );
     }
 
     public function testTokenKnowsIfItWasFolded(): void

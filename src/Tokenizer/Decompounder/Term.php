@@ -9,8 +9,7 @@ final class Term
     public function __construct(
         public readonly string $term,
         public readonly int $length,
-        public readonly bool $isValid
+        public readonly bool $isValid,
     ) {
-
     }
 }

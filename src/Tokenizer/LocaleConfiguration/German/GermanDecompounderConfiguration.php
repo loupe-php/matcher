@@ -21,8 +21,8 @@ class GermanDecompounderConfiguration extends DefaultConfiguration
     ];
 
     public function __construct(
-        private TermPool $termPool,
-        int $minimumDecompositionTermLength
+        private readonly TermPool $termPool,
+        int $minimumDecompositionTermLength,
     ) {
         parent::__construct($termPool, $minimumDecompositionTermLength, self::INTERFIXES);
     }
@@ -38,14 +38,13 @@ class GermanDecompounderConfiguration extends DefaultConfiguration
         // e.g. "Schulhof" which is "Schule" and "Hof". So we try that and if it's a valid term, we
         // add that as a candidate as well with a penalty of 1
         if ($right->isValid && !$left->isValid) {
-
             // Performance optimization:
             // The ones that already end on "e" are certainly no candidates
             if (str_ends_with($left->term, 'e')) {
                 return;
             }
 
-            $left = $this->termPool->term($left->term . 'e');
+            $left = $this->termPool->term($left->term.'e');
             if (!$left->isValid) {
                 return;
             }

@@ -7,8 +7,8 @@ namespace Loupe\Matcher\Tokenizer\Decompounder\Dictionary;
 final class VariantDictionary implements DictionaryInterface
 {
     public function __construct(
-        private DictionaryInterface $inner,
-        private VariantExpanderInterface $expander
+        private readonly DictionaryInterface $inner,
+        private readonly VariantExpanderInterface $expander,
     ) {
     }
 

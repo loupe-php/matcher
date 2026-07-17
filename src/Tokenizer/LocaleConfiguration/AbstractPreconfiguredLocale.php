@@ -18,7 +18,7 @@ use Loupe\Matcher\Tokenizer\Token;
 
 abstract class AbstractPreconfiguredLocale implements LocaleConfigurationInterface
 {
-    private Decompounder $decompounder;
+    private readonly Decompounder $decompounder;
 
     public function __construct(bool $keepIntermediateTerms = true)
     {
@@ -28,7 +28,7 @@ abstract class AbstractPreconfiguredLocale implements LocaleConfigurationInterfa
     public function enhanceToken(Token $token): Token
     {
         $variants = $this->decompounder->decompoundTerm($token->getTerm());
-        if ($variants === []) {
+        if ([] === $variants) {
             return $token;
         }
 
@@ -44,7 +44,7 @@ abstract class AbstractPreconfiguredLocale implements LocaleConfigurationInterfa
 
     protected function getFastSetDictionary(): FastSetDictionary
     {
-        return new FastSetDictionary(__DIR__ . '/../../../dictionaries/' . $this->getLocale()->toString());
+        return new FastSetDictionary(__DIR__.'/../../../dictionaries/'.$this->getLocale()->toString());
     }
 
     /**

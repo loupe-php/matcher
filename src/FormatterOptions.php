@@ -48,7 +48,7 @@ class FormatterOptions
         $formatterOptions = new self();
 
         if (isset($options['crop_length'])) {
-            $formatterOptions = $formatterOptions->withCropLength((int) $options['crop_length']);
+            $formatterOptions = $formatterOptions->withCropLength($options['crop_length']);
         }
 
         if (isset($options['crop_marker'])) {
@@ -56,7 +56,7 @@ class FormatterOptions
         }
 
         if (isset($options['crop_max_fragments'])) {
-            $formatterOptions = $formatterOptions->withCropMaxFragments((int) $options['crop_max_fragments']);
+            $formatterOptions = $formatterOptions->withCropMaxFragments($options['crop_max_fragments']);
         }
 
         if (\array_key_exists('enable_crop', $options)) {
@@ -92,7 +92,7 @@ class FormatterOptions
         }
 
         if (isset($options['truncation_length'])) {
-            $formatterOptions = $formatterOptions->withTruncationLength((int) $options['truncation_length']);
+            $formatterOptions = $formatterOptions->withTruncationLength($options['truncation_length']);
         }
 
         if (isset($options['truncation_marker'])) {
@@ -161,14 +161,15 @@ class FormatterOptions
     {
         $clone = clone $this;
         $clone->cropLength = $cropLength;
-        return $clone;
 
+        return $clone;
     }
 
     public function withCropMarker(string $marker): self
     {
         $clone = clone $this;
         $clone->cropMarker = $marker;
+
         return $clone;
     }
 
@@ -176,6 +177,7 @@ class FormatterOptions
     {
         $clone = clone $this;
         $clone->cropMaxFragments = $cropMaxFragments;
+
         return $clone;
     }
 
@@ -191,6 +193,7 @@ class FormatterOptions
     {
         $clone = clone $this;
         $clone->shouldHighlight = false;
+
         return $clone;
     }
 
@@ -198,6 +201,7 @@ class FormatterOptions
     {
         $clone = clone $this;
         $clone->shouldPrioritizeMatches = false;
+
         return $clone;
     }
 
@@ -221,6 +225,7 @@ class FormatterOptions
     {
         $clone = clone $this;
         $clone->shouldHighlight = true;
+
         return $clone;
     }
 
@@ -228,6 +233,7 @@ class FormatterOptions
     {
         $clone = clone $this;
         $clone->shouldPrioritizeMatches = true;
+
         return $clone;
     }
 
@@ -243,6 +249,7 @@ class FormatterOptions
     {
         $clone = clone $this;
         $clone->highlightEndTag = $endTag;
+
         return $clone;
     }
 
@@ -250,6 +257,7 @@ class FormatterOptions
     {
         $clone = clone $this;
         $clone->highlightStartTag = $startTag;
+
         return $clone;
     }
 
@@ -257,6 +265,7 @@ class FormatterOptions
     {
         $clone = clone $this;
         $clone->truncationLength = $truncationLength;
+
         return $clone;
     }
 
@@ -264,6 +273,7 @@ class FormatterOptions
     {
         $clone = clone $this;
         $clone->truncationMarker = $truncationMarker;
+
         return $clone;
     }
 }

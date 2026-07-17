@@ -6,9 +6,10 @@ namespace Loupe\Matcher\Tests\Formatting;
 
 use Loupe\Matcher\Formatting\WindowPlanner;
 use Loupe\Matcher\Tokenizer\MatchSpan;
+use Loupe\Matcher\Tokenizer\Span;
 use PHPUnit\Framework\TestCase;
 
-class WindowPlannerTest extends TestCase
+final class WindowPlannerTest extends TestCase
 {
     public function testPrioritizationPrefersDistinctTermsOverRepetition(): void
     {
@@ -106,7 +107,7 @@ class WindowPlannerTest extends TestCase
 
         $this->assertNotEmpty($windows);
 
-        for ($i = 1; $i < \count($windows); $i++) {
+        for ($i = 1; $i < \count($windows); ++$i) {
             $this->assertGreaterThanOrEqual(
                 $windows[$i - 1]->getEndPosition(),
                 $windows[$i]->getStartPosition(),
@@ -117,7 +118,7 @@ class WindowPlannerTest extends TestCase
                     $windows[$i - 1]->getEndPosition(),
                     $i,
                     $windows[$i]->getStartPosition(),
-                    $windows[$i]->getEndPosition()
+                    $windows[$i]->getEndPosition(),
                 ),
             );
         }
@@ -190,8 +191,8 @@ class WindowPlannerTest extends TestCase
                     'Window [%d, %d] is %d chars, exceeds cropLength+snap budget',
                     $window->getStartPosition(),
                     $window->getEndPosition(),
-                    $window->getLength()
-                )
+                    $window->getLength(),
+                ),
             );
         }
     }
@@ -279,11 +280,12 @@ class WindowPlannerTest extends TestCase
     }
 
     /**
-     * @param string[] $needles
+     * @param array<string> $needles
      */
     private function assertStringContainsInOrder(string $haystack, array $needles): void
     {
         $pos = 0;
+
         foreach ($needles as $needle) {
             $found = mb_strpos($haystack, $needle, $pos, 'UTF-8');
             $this->assertNotFalse($found, "Expected '{$needle}' after position {$pos} in: {$haystack}");
@@ -292,18 +294,18 @@ class WindowPlannerTest extends TestCase
     }
 
     /**
-     * @param \Loupe\Matcher\Tokenizer\Span[] $windows
+     * @param array<Span> $windows
      */
     private function combinedWindowText(string $text, array $windows): string
     {
         return implode(' | ', array_map(
-            fn ($w) => mb_substr($text, $w->getStartPosition(), $w->getLength(), 'UTF-8'),
+            static fn ($w) => mb_substr($text, $w->getStartPosition(), $w->getLength(), 'UTF-8'),
             $windows,
         ));
     }
 
     /**
-     * @return MatchSpan[]
+     * @return array<MatchSpan>
      */
     private function findSpansForTerms(string $text, string ...$terms): array
     {
@@ -319,7 +321,7 @@ class WindowPlannerTest extends TestCase
             }
         }
 
-        usort($spans, fn ($a, $b) => $a->getStartPosition() <=> $b->getStartPosition());
+        usort($spans, static fn ($a, $b) => $a->getStartPosition() <=> $b->getStartPosition());
 
         return $spans;
     }

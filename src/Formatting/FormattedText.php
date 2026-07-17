@@ -13,16 +13,16 @@ use Loupe\Matcher\Tokenizer\MatchSpan;
 class FormattedText
 {
     /**
-     * @param MatchSpan[] $spans
+     * @param array<MatchSpan> $spans
      */
     public function __construct(
-        private string $text,
-        private array $spans = [],
+        private readonly string $text,
+        private readonly array $spans = [],
     ) {
     }
 
     /**
-     * @return MatchSpan[]
+     * @return array<MatchSpan>
      */
     public function getSpans(): array
     {

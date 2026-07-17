@@ -11,10 +11,8 @@ class InMemoryStopWords implements StopWordsInterface
     /**
      * @param array<string> $stopWords
      */
-    public function __construct(
-        private array $stopWords = []
-    ) {
-
+    public function __construct(private readonly array $stopWords = [])
+    {
     }
 
     public function isStopWord(Token $token): bool

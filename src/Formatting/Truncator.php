@@ -12,15 +12,15 @@ class Truncator implements Transformer
     private const WORD_BOUNDARIES = [' ', "\t", "\n", "\r"];
 
     public function __construct(
-        private int $truncationLength,
-        private string $truncationMarker,
-        private bool $prioritizeMatches = false,
+        private readonly int $truncationLength,
+        private readonly string $truncationMarker,
+        private readonly bool $prioritizeMatches = false,
     ) {
     }
 
     public function transform(FormattedText $input): FormattedText
     {
-        if ($this->truncationLength <= 0 || $input->getText() === '') {
+        if ($this->truncationLength <= 0 || '' === $input->getText()) {
             return $input;
         }
 
@@ -29,9 +29,9 @@ class Truncator implements Transformer
             return $input;
         }
 
-        if ($this->prioritizeMatches && $input->getSpans() !== []) {
+        if ($this->prioritizeMatches && [] !== $input->getSpans()) {
             $window = (new WindowPlanner())->planTruncationWindow($input->getText(), $input->getSpans(), $this->truncationLength);
-            if ($window !== null) {
+            if (null !== $window) {
                 return $this->renderWindow($input, $window);
             }
         }
@@ -48,6 +48,7 @@ class Truncator implements Transformer
 
         $body = mb_substr($input->getText(), 0, $cut, 'UTF-8');
         $spans = [];
+
         foreach ($input->getSpans() as $matchSpan) {
             if ($matchSpan->getStartPosition() >= $cut) {
                 continue;
@@ -56,7 +57,7 @@ class Truncator implements Transformer
             $spans[] = new MatchSpan($matchSpan->getStartPosition(), $end, $matchSpan->getTerms());
         }
 
-        return new FormattedText($body . $this->truncationMarker, $spans);
+        return new FormattedText($body.$this->truncationMarker, $spans);
     }
 
     private function renderWindow(FormattedText $input, Span $window): FormattedText
@@ -73,6 +74,7 @@ class Truncator implements Transformer
         $delta = mb_strlen($leadingMarker, 'UTF-8') - $windowStart;
 
         $rebasedSpans = [];
+
         foreach ($input->getSpans() as $matchSpan) {
             if ($matchSpan->getEndPosition() <= $windowStart || $matchSpan->getStartPosition() >= $windowEnd) {
                 continue;
@@ -82,7 +84,7 @@ class Truncator implements Transformer
             $rebasedSpans[] = new MatchSpan($clippedStart + $delta, $clippedEnd + $delta, $matchSpan->getTerms());
         }
 
-        return new FormattedText($leadingMarker . $body . $trailingMarker, $rebasedSpans);
+        return new FormattedText($leadingMarker.$body.$trailingMarker, $rebasedSpans);
     }
 
     private function snapEndBackward(string $text, int $position): int
@@ -92,8 +94,9 @@ class Truncator implements Transformer
             if (\in_array($char, self::WORD_BOUNDARIES, true)) {
                 return $position;
             }
-            $position--;
+            --$position;
         }
+
         return $position;
     }
 }

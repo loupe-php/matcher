@@ -8,10 +8,8 @@ use Loupe\Matcher\Tokenizer\Normalizer\NormalizerInterface;
 
 class GermanNormalizer implements NormalizerInterface
 {
-    public function __construct(
-        private NormalizerInterface $inner
-    ) {
-
+    public function __construct(private readonly NormalizerInterface $inner)
+    {
     }
 
     public function normalize(string $term): string

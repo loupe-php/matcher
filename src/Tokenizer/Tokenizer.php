@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Loupe\Matcher\Tokenizer;
 
-use IntlChar;
 use Loupe\Matcher\Locale;
 use Loupe\Matcher\Tokenizer\LocaleConfiguration\English;
 use Loupe\Matcher\Tokenizer\LocaleConfiguration\German;
@@ -14,13 +13,12 @@ use Loupe\Matcher\Tokenizer\Normalizer\NormalizerInterface;
 
 class Tokenizer implements TokenizerInterface
 {
-    private \IntlRuleBasedBreakIterator $breakIterator;
+    private readonly \IntlRuleBasedBreakIterator $breakIterator;
 
-    private NormalizerInterface $normalizer;
+    private readonly NormalizerInterface $normalizer;
 
-    public function __construct(
-        private ?LocaleConfigurationInterface $localeConfiguration = null
-    ) {
+    public function __construct(private readonly LocaleConfigurationInterface|null $localeConfiguration = null)
+    {
         $this->breakIterator = \IntlRuleBasedBreakIterator::createWordInstance($this->localeConfiguration?->getLocale()->toString()); // @phpstan-ignore-line - null is allowed
         $this->normalizer = $this->localeConfiguration?->getNormalizer() ?? new Normalizer();
     }
@@ -30,7 +28,7 @@ class Tokenizer implements TokenizerInterface
         return new self(self::getPreconfiguredLocaleConfigurationForLocale($locale));
     }
 
-    public static function getPreconfiguredLocaleConfigurationForLocale(Locale $locale): ?LocaleConfigurationInterface
+    public static function getPreconfiguredLocaleConfigurationForLocale(Locale $locale): LocaleConfigurationInterface|null
     {
         return match ($locale->getPrimaryLanguage()) {
             'de' => new German(),
@@ -52,13 +50,13 @@ class Tokenizer implements TokenizerInterface
         return false;
     }
 
-    public function tokenize(string $string, bool $withVariants = true, ?int $maxTokens = null): TokenCollection
+    public function tokenize(string $string, bool $withVariants = true, int|null $maxTokens = null): TokenCollection
     {
         $this->breakIterator->setText($string);
         $localeConfiguration = $this->localeConfiguration;
-        $enhanceTokens = $withVariants && $localeConfiguration !== null;
+        $enhanceTokens = $withVariants && null !== $localeConfiguration;
 
-        /** @var Token[] $tokenList */
+        /** @var array<Token> $tokenList */
         $tokenList = [];
         $id = 0;
         $position = 0;
@@ -73,13 +71,13 @@ class Tokenizer implements TokenizerInterface
             // Set negation if the previous token was not a word and we're not in a phrase
             if (!$phrase && $whitespace) {
                 $negated = false;
-                if ($term === '-') {
+                if ('-' === $term) {
                     $negated = true;
                 }
             }
 
             // Toggle phrases between quotes
-            if ($term === '"') {
+            if ('"' === $term) {
                 $phrase = !$phrase;
                 if (!$phrase) {
                     $negated = false;
@@ -91,32 +89,32 @@ class Tokenizer implements TokenizerInterface
             $whitespace = false;
 
             // Fast path for pure-ascii tokens: skips normalization and folding
-            $isAscii = $allAscii || !preg_match('/[^\x00-\x7F]/', $term);
-            $originalLength = $isAscii ? \strlen($term) : mb_strlen($term, 'UTF-8');
+            $isAscii = $allAscii || !preg_match('/[^\x00-\x7F]/', (string) $term);
+            $originalLength = $isAscii ? \strlen((string) $term) : mb_strlen((string) $term, 'UTF-8');
 
             if (!$word) {
                 // Non-word path: set whitespace flag for negation/quote logic, skip term work
-                $whitespace = $term === ' ' || IntlChar::isspace($term);
+                $whitespace = ' ' === $term || \IntlChar::isspace($term);
                 $position += $originalLength;
                 $originalPosition += $originalLength;
                 continue;
             }
 
             // $id is incremented per kept token, so it doubles as count
-            if ($maxTokens !== null && $id >= $maxTokens) {
+            if (null !== $maxTokens && $id >= $maxTokens) {
                 break;
             }
 
             if ($isAscii) {
                 // Fast path: ascii tokens can never be folded and length doesn't change
-                $term = strtolower($term);
+                $term = strtolower((string) $term);
                 $termLength = $originalLength;
                 $wasFolded = false;
             } else {
                 $originalTerm = $term;
                 $term = $this->normalizer->normalize($term);
                 $term = mb_strtolower($term, 'UTF-8');
-                $wasFolded = mb_strtolower($originalTerm, 'UTF-8') !== $term;
+                $wasFolded = mb_strtolower((string) $originalTerm, 'UTF-8') !== $term;
                 $termLength = !preg_match('/[^\x00-\x7F]/', $term) ? \strlen($term) : mb_strlen($term, 'UTF-8');
             }
 

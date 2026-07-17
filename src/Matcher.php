@@ -13,21 +13,21 @@ use Loupe\Matcher\Tokenizer\TokenizerInterface;
 
 class Matcher
 {
-    private StopWordsInterface $stopWords;
+    private readonly StopWordsInterface $stopWords;
 
     /**
      * @param StopWordsInterface|array<string> $stopWords
      */
     public function __construct(
-        private TokenizerInterface $tokenizer,
-        StopWordsInterface|array $stopWords = []
+        private readonly TokenizerInterface $tokenizer,
+        StopWordsInterface|array $stopWords = [],
     ) {
         $this->stopWords = $stopWords instanceof StopWordsInterface ? $stopWords : new InMemoryStopWords($stopWords);
     }
 
     public function calculateMatches(TokenCollection|string $text, TokenCollection|string $query): TokenCollection
     {
-        if ($text === '') {
+        if ('' === $text) {
             return new TokenCollection();
         }
 
@@ -35,6 +35,7 @@ class Matcher
         $queryTokens = $query instanceof TokenCollection ? $query : $this->tokenizer->tokenize($query);
 
         $matches = new TokenCollection();
+
         foreach ($textTokens->all() as $textToken) {
             if (!$this->stopWords->isStopWord($textToken) && $this->tokenizer->matches($textToken, $queryTokens)) {
                 $matches->add($textToken);
@@ -46,7 +47,8 @@ class Matcher
 
     /**
      * Merge adjacent matching tokens, including any surrounding stopwords.
-     * @return MatchSpan[]
+     *
+     * @return array<MatchSpan>
      */
     public function calculateMatchSpans(TokenCollection|string $text, TokenCollection|string $query, TokenCollection $matches): array
     {

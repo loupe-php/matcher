@@ -13,27 +13,25 @@ use Loupe\Matcher\Tokenizer\Tokenizer;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-class FormatterTest extends TestCase
+final class FormatterTest extends TestCase
 {
     private Matcher $matcher;
 
     private TokenCollection $queryTerms;
 
-    /**
-     * @var array<string>
-     */
-    private array $stopWords;
-
     protected function setUp(): void
     {
         $tokenizer = new Tokenizer();
 
-        $this->stopWords = ['a', 'of', 'the'];
-        $this->matcher = new Matcher($tokenizer, stopWords: $this->stopWords);
+        $stopWords = ['a', 'of', 'the'];
+        $this->matcher = new Matcher($tokenizer, stopWords: $stopWords);
         $this->queryTerms = $tokenizer->tokenize('test');
     }
 
-    public static function croppingProvider(): \Generator
+    /**
+     * @return iterable<string, array<mixed>>
+     */
+    public static function croppingProvider(): iterable
     {
         yield 'No cropping' => [
             'wonderful',
@@ -109,7 +107,10 @@ class FormatterTest extends TestCase
         ];
     }
 
-    public static function highlightingProvider(): \Generator
+    /**
+     * @return iterable<string, array<mixed>>
+     */
+    public static function highlightingProvider(): iterable
     {
         yield 'No highlighting' => [
             'soul',
@@ -192,7 +193,7 @@ class FormatterTest extends TestCase
         yield 'Highlighting with token variants' => [
             new TokenCollection(
                 [
-                    (new Token(0, 'my', 0, false, false)),
+                    new Token(0, 'my', 0, false, false),
                     (new Token(1, 'wonder', 3, false, false))->withVariants(['wonders']),
                     (new Token(2, 'soul', 10, false, false))->withVariants(['souls']),
                 ],
@@ -214,7 +215,10 @@ class FormatterTest extends TestCase
         ];
     }
 
-    public static function matchPrioritizationProvider(): \Generator
+    /**
+     * @return iterable<string, array<mixed>>
+     */
+    public static function matchPrioritizationProvider(): iterable
     {
         $weakMediumDenseText = <<<'TEXT'
             A lone test appears at the very start of this long document.
@@ -320,19 +324,14 @@ class FormatterTest extends TestCase
     }
 
     #[DataProvider('croppingProvider')]
-    public function testCropping(
-        string|TokenCollection $query,
-        string $text,
-        string $expectedResult,
-        bool $enableCrop = false,
-        int $cropLength = 50,
-        string $cropMarker = '…',
-    ): void {
-        $options = (new FormatterOptions());
+    public function testCropping(TokenCollection|string $query, string $text, string $expectedResult, bool $enableCrop = false, int $cropLength = 50, string $cropMarker = '…'): void
+    {
+        $options = new FormatterOptions();
         if ($enableCrop) {
             $options = $options->withEnableCrop()
                 ->withCropLength($cropLength)
-                ->withCropMarker($cropMarker);
+                ->withCropMarker($cropMarker)
+            ;
         } else {
             $options = $options->withDisableCrop();
         }
@@ -350,7 +349,8 @@ class FormatterTest extends TestCase
         $options = (new FormatterOptions())
             ->withEnableCrop()
             ->withEnableTruncation()
-            ->withEnableMatchPrioritization();
+            ->withEnableMatchPrioritization()
+        ;
 
         $formatter = new Formatter($this->matcher);
         $result = $formatter->format('A test sentence.', $this->queryTerms, $options);
@@ -450,7 +450,6 @@ class FormatterTest extends TestCase
         $result = $formatter->format('This is a test string and we use it to test the cropping and highlighting features combined.', $this->queryTerms, $options);
 
         $this->assertSame('This is a [test] string and we use…[test] the cropping and highlighting…', $result->getFormattedText());
-
     }
 
     public function testFormatWithHighlightAndTruncation(): void
@@ -494,19 +493,14 @@ class FormatterTest extends TestCase
     }
 
     #[DataProvider('highlightingProvider')]
-    public function testHighlighting(
-        string|TokenCollection $query,
-        string $text,
-        string $expectedResult,
-        bool $enableHighlight = false,
-        string $highlightStartTag = '<em>',
-        string $highlightEndTag = '</em>',
-    ): void {
-        $options = (new FormatterOptions());
+    public function testHighlighting(TokenCollection|string $query, string $text, string $expectedResult, bool $enableHighlight = false, string $highlightStartTag = '<em>', string $highlightEndTag = '</em>'): void
+    {
+        $options = new FormatterOptions();
         if ($enableHighlight) {
             $options = $options->withEnableHighlight()
                 ->withHighlightStartTag($highlightStartTag)
-                ->withHighlightEndTag($highlightEndTag);
+                ->withHighlightEndTag($highlightEndTag)
+            ;
         } else {
             $options = $options->withDisableHighlight();
         }
@@ -520,12 +514,8 @@ class FormatterTest extends TestCase
     }
 
     #[DataProvider('matchPrioritizationProvider')]
-    public function testMatchPrioritization(
-        string $query,
-        string $text,
-        string $expectedResult,
-        FormatterOptions $options,
-    ): void {
+    public function testMatchPrioritization(string $query, string $text, string $expectedResult, FormatterOptions $options): void
+    {
         $query = (new Tokenizer())->tokenize($query);
         $formatter = new Formatter($this->matcher);
         $result = $formatter->format($text, $query, $options);
@@ -534,19 +524,14 @@ class FormatterTest extends TestCase
     }
 
     #[DataProvider('truncationProvider')]
-    public function testTruncation(
-        string|TokenCollection $query,
-        string $text,
-        string $expectedResult,
-        bool $enableTruncation = false,
-        int $truncationLength = 250,
-        string $truncationMarker = '…',
-    ): void {
-        $options = (new FormatterOptions());
+    public function testTruncation(TokenCollection|string $query, string $text, string $expectedResult, bool $enableTruncation = false, int $truncationLength = 250, string $truncationMarker = '…'): void
+    {
+        $options = new FormatterOptions();
         if ($enableTruncation) {
             $options = $options->withEnableTruncation()
                 ->withTruncationLength($truncationLength)
-                ->withTruncationMarker($truncationMarker);
+                ->withTruncationMarker($truncationMarker)
+            ;
         } else {
             $options = $options->withDisableTruncation();
         }
@@ -559,7 +544,10 @@ class FormatterTest extends TestCase
         $this->assertSame($expectedResult, $result->getFormattedText());
     }
 
-    public static function truncationProvider(): \Generator
+    /**
+     * @return iterable<string, array<mixed>>
+     */
+    public static function truncationProvider(): iterable
     {
         yield 'No truncation' => [
             'soul',

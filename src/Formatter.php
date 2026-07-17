@@ -12,14 +12,13 @@ use Loupe\Matcher\Tokenizer\TokenCollection;
 
 class Formatter
 {
-    public function __construct(
-        private Matcher $matcher
-    ) {
+    public function __construct(private readonly Matcher $matcher)
+    {
     }
 
     public function format(string $text, TokenCollection|string $query, FormatterOptions $options, TokenCollection|null $matches = null): FormatterResult
     {
-        $matches = $matches ?? $this->matcher->calculateMatches($text, $query);
+        $matches ??= $this->matcher->calculateMatches($text, $query);
         $spans = $this->matcher->calculateMatchSpans($text, $query, $matches);
 
         $current = new FormattedText($text, $spans);

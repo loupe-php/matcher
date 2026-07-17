@@ -63,8 +63,8 @@ class German extends AbstractPreconfiguredLocale
             new DefaultTermValidator(
                 $dictionary,
                 self::MIN_DECOMPOSITION_TERM_LENGTH,
-                self::ALLOW_LIST
-            )
+                self::ALLOW_LIST,
+            ),
         );
 
         return new GermanDecompounderConfiguration($termPool, self::MIN_DECOMPOSITION_TERM_LENGTH);

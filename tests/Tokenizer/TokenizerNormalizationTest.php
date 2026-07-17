@@ -8,7 +8,7 @@ use Loupe\Matcher\Tokenizer\Tokenizer;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-class TokenizerNormalizationTest extends TestCase
+final class TokenizerNormalizationTest extends TestCase
 {
     /**
      * @return iterable<string, array{0: string, 1: array<string>}>
@@ -55,17 +55,18 @@ class TokenizerNormalizationTest extends TestCase
         $tokenizer = new Tokenizer();
         $this->assertSame(
             $expected,
-            $tokenizer->tokenize($input)->allTermsWithVariants()
+            $tokenizer->tokenize($input)->allTermsWithVariants(),
         );
     }
 
     public function testWasFoldedFlagForAsciiInput(): void
     {
         $tokenizer = new Tokenizer();
+
         foreach ($tokenizer->tokenize('Hello World 123')->all() as $token) {
             $this->assertFalse(
                 $token->wasFolded(),
-                \sprintf('Expected token %s to be not folded', $token->getTerm())
+                \sprintf('Expected token %s to be not folded', $token->getTerm()),
             );
         }
     }
@@ -83,10 +84,11 @@ class TokenizerNormalizationTest extends TestCase
         $tokenizer = new Tokenizer();
         $tokens = $tokenizer->tokenize('Straße naïve café')->all();
         $this->assertCount(3, $tokens);
+
         foreach ($tokens as $token) {
             $this->assertTrue(
                 $token->wasFolded(),
-                \sprintf('Expected token %s to be marked as folded', $token->getTerm())
+                \sprintf('Expected token %s to be marked as folded', $token->getTerm()),
             );
         }
     }

@@ -9,14 +9,14 @@ use Loupe\Matcher\Tokenizer\MatchSpan;
 class Highlighter implements Transformer
 {
     public function __construct(
-        private string $startTag,
-        private string $endTag,
+        private readonly string $startTag,
+        private readonly string $endTag,
     ) {
     }
 
     public function transform(FormattedText $input): FormattedText
     {
-        if ($input->getSpans() === [] || $this->startTag === '' || $this->endTag === '') {
+        if ([] === $input->getSpans() || '' === $this->startTag || '' === $this->endTag) {
             return $input;
         }
 

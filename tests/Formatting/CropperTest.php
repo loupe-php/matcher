@@ -8,9 +8,12 @@ use Loupe\Matcher\Formatting\Cropper;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-class CropperTest extends TestCase
+final class CropperTest extends TestCase
 {
-    public static function cropHighlightedTextProvider(): \Generator
+    /**
+     * @return iterable<string, array<mixed>>
+     */
+    public static function cropHighlightedTextProvider(): iterable
     {
         yield 'Cropping with too much context' => [
             'A wonderful serenity has <em>taken</em> possession of my entire soul, like these sweet mornings have <em>taken</em> all spring.',
