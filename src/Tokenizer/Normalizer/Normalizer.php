@@ -17,6 +17,11 @@ class Normalizer implements NormalizerInterface
 
     private function transliterateToAscii(string $term): string
     {
+        // The transliterator cannot fold CJK text. Avoid initializing and running ICU for every CJK word.
+        if (preg_match('/^[\p{Han}\p{Hiragana}\p{Katakana}\p{Hangul}]+$/u', $term)) {
+            return $term;
+        }
+
         $transliterator = $this->transliterator;
 
         if (null === $transliterator) {
