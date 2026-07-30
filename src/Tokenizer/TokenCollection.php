@@ -155,6 +155,11 @@ class TokenCollection implements \Countable
 
         foreach ($this->tokens as $token) {
             if ($token->isPartOfPhrase()) {
+                if (null !== $phrase && $token->startsPhrase()) {
+                    $groups[] = $phrase;
+                    $phrase = null;
+                }
+
                 $phrase ??= new Phrase([], $token->isNegated());
                 $phrase->add($token);
             } else {

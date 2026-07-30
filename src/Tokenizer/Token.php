@@ -12,6 +12,8 @@ class Token
 
     private int $originalStartPosition;
 
+    private bool $startsPhrase = false;
+
     /**
      * @var array<string>
      */
@@ -156,6 +158,20 @@ class Token
 
         $clone = clone $this;
         $clone->variants = array_unique(array_merge($this->variants, $variants));
+
+        return $clone;
+    }
+
+    public function startsPhrase(): bool
+    {
+        return $this->startsPhrase;
+    }
+
+    public function withPhraseStart(): self
+    {
+        $clone = clone $this;
+        $clone->isPartOfPhrase = true;
+        $clone->startsPhrase = true;
 
         return $clone;
     }

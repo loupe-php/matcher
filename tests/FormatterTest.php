@@ -213,6 +213,15 @@ final class FormatterTest extends TestCase
             '[',
             ']',
         ];
+
+        yield 'Highlighting with adjacent quoted phrases' => [
+            '"quick brown" "lazy dog"',
+            'The quick brown fox jumps over the lazy dog',
+            'The [quick brown] fox jumps over the [lazy dog]',
+            true,
+            '[',
+            ']',
+        ];
     }
 
     /**

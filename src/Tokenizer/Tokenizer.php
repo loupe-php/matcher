@@ -62,6 +62,7 @@ class Tokenizer implements TokenizerInterface
         $position = 0;
         $originalPosition = 0;
         $phrase = false;
+        $startsPhrase = false;
         $negated = false;
         $whitespace = true;
 
@@ -79,7 +80,10 @@ class Tokenizer implements TokenizerInterface
             // Toggle phrases between quotes
             if ('"' === $term) {
                 $phrase = !$phrase;
-                if (!$phrase) {
+                if ($phrase) {
+                    $startsPhrase = true;
+                } else {
+                    $startsPhrase = false;
                     $negated = false;
                 }
             }
@@ -129,6 +133,11 @@ class Tokenizer implements TokenizerInterface
                 $originalLength,
                 $termLength,
             );
+
+            if ($startsPhrase) {
+                $token = $token->withPhraseStart();
+                $startsPhrase = false;
+            }
 
             if ($enhanceTokens) {
                 $token = $localeConfiguration->enhanceToken($token);
