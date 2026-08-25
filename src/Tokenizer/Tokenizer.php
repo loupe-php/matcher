@@ -23,16 +23,16 @@ class Tokenizer implements TokenizerInterface
         $this->normalizer = $this->localeConfiguration?->getNormalizer() ?? new Normalizer();
     }
 
-    public static function createFromPreconfiguredLocaleConfiguration(Locale $locale): self
+    public static function createFromPreconfiguredLocaleConfiguration(Locale $locale, string|null $fastSetCacheDirectory = null): self
     {
-        return new self(self::getPreconfiguredLocaleConfigurationForLocale($locale));
+        return new self(self::getPreconfiguredLocaleConfigurationForLocale($locale, $fastSetCacheDirectory));
     }
 
-    public static function getPreconfiguredLocaleConfigurationForLocale(Locale $locale): LocaleConfigurationInterface|null
+    public static function getPreconfiguredLocaleConfigurationForLocale(Locale $locale, string|null $fastSetCacheDirectory = null): LocaleConfigurationInterface|null
     {
         return match ($locale->getPrimaryLanguage()) {
-            'de' => new German(),
-            'en' => new English(),
+            'de' => new German(fastSetCacheDirectory: $fastSetCacheDirectory),
+            'en' => new English(fastSetCacheDirectory: $fastSetCacheDirectory),
             default => null,
         };
     }

@@ -12,14 +12,16 @@ class FastSetDictionary implements DictionaryInterface
 
     private readonly FastSet $fastSet;
 
-    public function __construct(string $directory)
+    public function __construct(string $dictionaryDirectory, string|null $cacheDirectory = null)
     {
-        $this->fastSet = new FastSet($directory);
+        $cacheDirectory ??= $dictionaryDirectory;
+        $this->createCacheDirectory($cacheDirectory);
+        $this->fastSet = new FastSet($cacheDirectory);
 
         try {
             $this->fastSet->initialize();
         } catch (\Throwable) {
-            $this->fastSet->build($directory.'/'.self::DICTIONARY_FILE_NAME);
+            $this->fastSet->build($dictionaryDirectory.'/'.self::DICTIONARY_FILE_NAME);
             $this->fastSet->initialize();
         }
     }
@@ -27,5 +29,17 @@ class FastSetDictionary implements DictionaryInterface
     public function has(string $term): bool
     {
         return $this->fastSet->has($term);
+    }
+
+    private function createCacheDirectory(string $cacheDirectory): void
+    {
+        if (is_dir($cacheDirectory)) {
+            return;
+        }
+
+        // @phpstan-ignore filesystemcall.unsafe (Avoid requiring Symfony Filesystem for one operation.)
+        if (!@mkdir($cacheDirectory, 0777, true) && !is_dir($cacheDirectory)) {
+            throw new \RuntimeException(\sprintf('Cannot create FastSet cache directory "%s".', $cacheDirectory));
+        }
     }
 }
