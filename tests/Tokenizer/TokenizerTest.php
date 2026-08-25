@@ -10,6 +10,7 @@ use Loupe\Matcher\Tokenizer\Token;
 use Loupe\Matcher\Tokenizer\Tokenizer;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Filesystem\Filesystem;
 
 final class TokenizerTest extends TestCase
 {
@@ -36,6 +37,21 @@ final class TokenizerTest extends TestCase
             sort($withVariants, SORT_STRING);
 
             $this->assertSame($terms, $withVariants);
+        }
+    }
+
+    public function testCreatesLocaleSpecificFastSetCacheDirectory(): void
+    {
+        $cacheDirectory = sys_get_temp_dir().'/loupe-matcher-'.bin2hex(random_bytes(8));
+
+        try {
+            $tokenizer = Tokenizer::createFromPreconfiguredLocaleConfiguration(Locale::fromString('en'), $cacheDirectory);
+
+            $this->assertContains('tooth', $tokenizer->tokenize('toothbrush')->allTermsWithVariants());
+            $this->assertFileExists($cacheDirectory.'/en/hashes_xxh3.bin');
+            $this->assertFileExists($cacheDirectory.'/en/index_xxh3.bin');
+        } finally {
+            (new Filesystem())->remove($cacheDirectory);
         }
     }
 

@@ -73,6 +73,23 @@ with this library. There are currently the following:
 Checkout the [separate docs on decomposition](./docs/decomposition.md) if you want to improve the existing locale configurations
 or add support for a new one!
 
+#### FastSet dictionary cache
+
+The packaged dictionaries are compressed. On their first use, FastSet creates optimized index files. By default those
+files are written next to the packaged dictionary, which is usually inside `vendor/`. Pass a writable cache directory
+when creating a preconfigured locale to store them elsewhere:
+
+```php
+$tokenizer = Tokenizer::createFromPreconfiguredLocaleConfiguration(
+    Locale::fromString('de'),
+    '/var/cache/my-app/loupe-matcher',
+);
+```
+
+The locale is appended to the supplied directory, so German files in this example are stored in
+`/var/cache/my-app/loupe-matcher/de`. Locale-specific directories are created automatically. You can also pass the same
+value as the `$fastSetCacheDirectory` second argument to `new English()` or `new German()`.
+
 ### Matcher
 
 **Purpose:** Finds which tokens in your text match the search query.

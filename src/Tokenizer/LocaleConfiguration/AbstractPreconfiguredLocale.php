@@ -20,8 +20,10 @@ abstract class AbstractPreconfiguredLocale implements LocaleConfigurationInterfa
 {
     private readonly Decompounder $decompounder;
 
-    public function __construct(bool $keepIntermediateTerms = true)
-    {
+    public function __construct(
+        bool $keepIntermediateTerms = true,
+        private readonly string|null $fastSetCacheDirectory = null,
+    ) {
         $this->decompounder = new Decompounder($this->getDecompounderConfiguration(), $keepIntermediateTerms);
     }
 
@@ -44,7 +46,11 @@ abstract class AbstractPreconfiguredLocale implements LocaleConfigurationInterfa
 
     protected function getFastSetDictionary(): FastSetDictionary
     {
-        return new FastSetDictionary(__DIR__.'/../../../dictionaries/'.$this->getLocale()->toString());
+        $locale = $this->getLocale()->toString();
+        $dictionaryDirectory = __DIR__.'/../../../dictionaries/'.$locale;
+        $cacheDirectory = $this->fastSetCacheDirectory ? $this->fastSetCacheDirectory.'/'.$locale : null;
+
+        return new FastSetDictionary($dictionaryDirectory, $cacheDirectory);
     }
 
     /**
