@@ -10,11 +10,22 @@ class Decompounder
 
     private readonly TermPool $termPool;
 
+    /**
+     * @var array<string, array<string>>
+     */
+    private array $resultCache = [];
+
+    private int $resultCacheSize = 0;
+
+    private readonly int $maximumResultCacheEntries;
+
     public function __construct(
         private readonly ConfigurationInterface $configuration,
         private readonly bool $includeIntermediateTerms,
+        ResultCacheConfiguration|null $resultCacheConfiguration = null,
     ) {
         $this->termPool = $this->configuration->getTermPool();
+        $this->maximumResultCacheEntries = ($resultCacheConfiguration ?? new ResultCacheConfiguration())->getMaximumEntries();
     }
 
     /**
@@ -25,17 +36,70 @@ class Decompounder
      */
     public function decompoundTerm(string $term): array
     {
-        $term = $this->termPool->term($term);
-        if ($term->length <= $this->configuration->getMinimumDecompositionTermLength()) {
+        if (0 !== $this->maximumResultCacheEntries && isset($this->resultCache[$term])) {
+            return $this->resultCache[$term];
+        }
+
+        $this->termPool->clear();
+
+        try {
+            $variants = $this->decompoundUncachedTerm($term);
+        } finally {
+            // Intermediate substrings are useful only while recursively decomposing this complete token.
+            $this->termPool->clear();
+        }
+
+        $this->cacheResult($term, $variants);
+
+        return $variants;
+    }
+
+    public function clearResultCache(): void
+    {
+        $this->resultCache = [];
+        $this->resultCacheSize = 0;
+        $this->termPool->clear();
+    }
+
+    /**
+     * @return array<string>
+     */
+    private function decompoundUncachedTerm(string $term): array
+    {
+        $termInstance = $this->termPool->term($term);
+        if ($termInstance->length <= $this->configuration->getMinimumDecompositionTermLength()) {
             return [];
         }
 
-        $variants = $this->split($term);
+        $variants = $this->split($termInstance);
 
         // Keep a stable order
         sort($variants, SORT_STRING);
 
         return $variants;
+    }
+
+    /**
+     * @param array<string> $variants
+     */
+    private function cacheResult(string $term, array $variants): void
+    {
+        if (0 === $this->maximumResultCacheEntries) {
+            return;
+        }
+
+        // If full, evict oldest inserted key (FIFO).
+        // I have benched LRU but tracking access performs way worse.
+        if ($this->resultCacheSize >= $this->maximumResultCacheEntries) {
+            $first = array_key_first($this->resultCache);
+            if (null !== $first) {
+                unset($this->resultCache[$first]);
+                --$this->resultCacheSize;
+            }
+        }
+
+        $this->resultCache[$term] = $variants;
+        ++$this->resultCacheSize;
     }
 
     /**

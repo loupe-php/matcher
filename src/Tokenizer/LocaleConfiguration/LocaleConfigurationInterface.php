@@ -10,6 +10,8 @@ use Loupe\Matcher\Tokenizer\Token;
 
 interface LocaleConfigurationInterface
 {
+    public function clearCache(): void;
+
     /**
      * Use this method to add variants (e.g. decomposition) to the token.
      */

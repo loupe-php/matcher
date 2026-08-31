@@ -29,27 +29,21 @@ final class TermPoolTest extends TestCase
         $this->assertTrue($termPool->term('bar')->isValid);
     }
 
-    public function testWithCacheSize(): void
+    public function testClearRemovesCachedTerms(): void
     {
         $dictionary = $this->createMock(DictionaryInterface::class);
         $dictionary
-            ->expects($this->exactly(5))
+            ->expects($this->exactly(2))
             ->method('has')
             ->willReturn(true)
         ;
 
-        $termPool = new TermPool($this->getTermValidator($dictionary), 2);
+        $termPool = new TermPool($this->getTermValidator($dictionary));
 
-        $this->assertTrue($termPool->term('foo')->isValid);
-        $this->assertTrue($termPool->term('foo')->isValid);
-        $this->assertTrue($termPool->term('bar')->isValid);
-        $this->assertTrue($termPool->term('bar')->isValid);
-        $this->assertTrue($termPool->term('baz')->isValid);
-        $this->assertTrue($termPool->term('baz')->isValid);
-        $this->assertTrue($termPool->term('foo')->isValid);
-        $this->assertTrue($termPool->term('foo')->isValid);
-        $this->assertTrue($termPool->term('bar')->isValid);
-        $this->assertTrue($termPool->term('bar')->isValid);
+        $termPool->term('foo');
+        $termPool->term('foo');
+        $termPool->clear();
+        $termPool->term('foo');
     }
 
     private function getTermValidator(DictionaryInterface $dictionary): TermValidatorInterface

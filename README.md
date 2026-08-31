@@ -90,6 +90,26 @@ The locale is appended to the supplied directory, so German files in this exampl
 `/var/cache/my-app/loupe-matcher/de`. Locale-specific directories are created automatically. You can also pass the same
 value as the `$fastSetCacheDirectory` second argument to `new English()` or `new German()`.
 
+#### Decomposition result cache
+
+Decomposition results are cached per complete token with a default FIFO budget of 25,000 entries. Configure
+the budget with `ResultCacheConfiguration`. A budget of zero explicitly disables the cache, while negative
+budgets are rejected:
+
+```php
+use Loupe\Matcher\Tokenizer\Decompounder\ResultCacheConfiguration;
+use Loupe\Matcher\Tokenizer\LocaleConfiguration\English;
+use Loupe\Matcher\Tokenizer\Tokenizer;
+
+$cacheConfiguration = (new ResultCacheConfiguration())->withMaximumEntries(10_000);
+$tokenizer = new Tokenizer(new English(resultCacheConfiguration: $cacheConfiguration));
+
+$tokenizer->clearCache(); // Release retained decomposition results in long-running processes.
+
+$disabledCacheConfiguration = (new ResultCacheConfiguration())->withDisabled();
+$uncachedTokenizer = new Tokenizer(new English(resultCacheConfiguration: $disabledCacheConfiguration));
+```
+
 ### Matcher
 
 **Purpose:** Finds which tokens in your text match the search query.
