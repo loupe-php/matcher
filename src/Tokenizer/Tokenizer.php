@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Loupe\Matcher\Tokenizer;
 
 use Loupe\Matcher\Locale;
+use Loupe\Matcher\Tokenizer\Decompounder\ResultCacheConfiguration;
 use Loupe\Matcher\Tokenizer\LocaleConfiguration\English;
 use Loupe\Matcher\Tokenizer\LocaleConfiguration\German;
 use Loupe\Matcher\Tokenizer\LocaleConfiguration\LocaleConfigurationInterface;
@@ -23,18 +24,23 @@ class Tokenizer implements TokenizerInterface
         $this->normalizer = $this->localeConfiguration?->getNormalizer() ?? new Normalizer();
     }
 
-    public static function createFromPreconfiguredLocaleConfiguration(Locale $locale, string|null $fastSetCacheDirectory = null): self
+    public static function createFromPreconfiguredLocaleConfiguration(Locale $locale, string|null $fastSetCacheDirectory = null, ResultCacheConfiguration|null $resultCacheConfiguration = null): self
     {
-        return new self(self::getPreconfiguredLocaleConfigurationForLocale($locale, $fastSetCacheDirectory));
+        return new self(self::getPreconfiguredLocaleConfigurationForLocale($locale, $fastSetCacheDirectory, $resultCacheConfiguration));
     }
 
-    public static function getPreconfiguredLocaleConfigurationForLocale(Locale $locale, string|null $fastSetCacheDirectory = null): LocaleConfigurationInterface|null
+    public static function getPreconfiguredLocaleConfigurationForLocale(Locale $locale, string|null $fastSetCacheDirectory = null, ResultCacheConfiguration|null $resultCacheConfiguration = null): LocaleConfigurationInterface|null
     {
         return match ($locale->getPrimaryLanguage()) {
-            'de' => new German(fastSetCacheDirectory: $fastSetCacheDirectory),
-            'en' => new English(fastSetCacheDirectory: $fastSetCacheDirectory),
+            'de' => new German(fastSetCacheDirectory: $fastSetCacheDirectory, resultCacheConfiguration: $resultCacheConfiguration),
+            'en' => new English(fastSetCacheDirectory: $fastSetCacheDirectory, resultCacheConfiguration: $resultCacheConfiguration),
             default => null,
         };
+    }
+
+    public function clearCache(): void
+    {
+        $this->localeConfiguration?->clearCache();
     }
 
     public function matches(Token $token, TokenCollection $tokens): bool

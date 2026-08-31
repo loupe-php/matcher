@@ -13,12 +13,8 @@ final class TermPool
      */
     private array $pool = [];
 
-    private int $size = 0;
-
-    public function __construct(
-        private readonly TermValidatorInterface $termValidator,
-        private readonly int $maxCacheEntries = 0,
-    ) {
+    public function __construct(private readonly TermValidatorInterface $termValidator)
+    {
     }
 
     public function term(string $term): Term
@@ -27,26 +23,11 @@ final class TermPool
             return $this->pool[$term];
         }
 
-        // Cache size restriction disabled
-        if ($this->maxCacheEntries <= 0) {
-            return $this->pool[$term] = new Term($term, mb_strlen($term), $this->termValidator->isValid($term));
-        }
+        return $this->pool[$term] = new Term($term, mb_strlen($term), $this->termValidator->isValid($term));
+    }
 
-        $termInstance = new Term($term, mb_strlen($term), $this->termValidator->isValid($term));
-
-        // If full, evict oldest inserted key (FIFO)
-        // I have benched LRU but tracking access performs way worse.
-        if ($this->size >= $this->maxCacheEntries) {
-            $first = array_key_first($this->pool);
-            if (null !== $first) {
-                unset($this->pool[$first]);
-                --$this->size;
-            }
-        }
-
-        $this->pool[$term] = $termInstance;
-        ++$this->size;
-
-        return $termInstance;
+    public function clear(): void
+    {
+        $this->pool = [];
     }
 }

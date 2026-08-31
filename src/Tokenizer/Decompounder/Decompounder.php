@@ -10,11 +10,22 @@ class Decompounder
 
     private readonly TermPool $termPool;
 
+    /**
+     * @var array<string, array<string>>
+     */
+    private array $resultCache = [];
+
+    private int $resultCacheSize = 0;
+
+    private readonly int $maximumResultCacheEntries;
+
     public function __construct(
         private readonly ConfigurationInterface $configuration,
         private readonly bool $includeIntermediateTerms,
+        ResultCacheConfiguration|null $resultCacheConfiguration = null,
     ) {
         $this->termPool = $this->configuration->getTermPool();
+        $this->maximumResultCacheEntries = ($resultCacheConfiguration ?? new ResultCacheConfiguration())->getMaximumEntries();
     }
 
     /**
@@ -25,17 +36,73 @@ class Decompounder
      */
     public function decompoundTerm(string $term): array
     {
-        $term = $this->termPool->term($term);
-        if ($term->length <= $this->configuration->getMinimumDecompositionTermLength()) {
+        if (0 !== $this->maximumResultCacheEntries && isset($this->resultCache[$term])) {
+            $variants = $this->resultCache[$term];
+            unset($this->resultCache[$term]);
+            $this->resultCache[$term] = $variants;
+
+            return $variants;
+        }
+
+        $this->termPool->clear();
+
+        try {
+            $variants = $this->decompoundUncachedTerm($term);
+        } finally {
+            // Intermediate substrings are useful only while recursively decomposing this complete token.
+            $this->termPool->clear();
+        }
+
+        $this->cacheResult($term, $variants);
+
+        return $variants;
+    }
+
+    public function clearResultCache(): void
+    {
+        $this->resultCache = [];
+        $this->resultCacheSize = 0;
+        $this->termPool->clear();
+    }
+
+    /**
+     * @return array<string>
+     */
+    private function decompoundUncachedTerm(string $term): array
+    {
+        $termInstance = $this->termPool->term($term);
+        if ($termInstance->length <= $this->configuration->getMinimumDecompositionTermLength()) {
             return [];
         }
 
-        $variants = $this->split($term);
+        $variants = $this->split($termInstance);
 
         // Keep a stable order
         sort($variants, SORT_STRING);
 
         return $variants;
+    }
+
+    /**
+     * @param array<string> $variants
+     */
+    private function cacheResult(string $term, array $variants): void
+    {
+        if (0 === $this->maximumResultCacheEntries) {
+            return;
+        }
+
+        // PHP arrays preserve insertion order, so moving hits to the end provides LRU without separate tracking.
+        if ($this->resultCacheSize >= $this->maximumResultCacheEntries) {
+            $first = array_key_first($this->resultCache);
+            if (null !== $first) {
+                unset($this->resultCache[$first]);
+                --$this->resultCacheSize;
+            }
+        }
+
+        $this->resultCache[$term] = $variants;
+        ++$this->resultCacheSize;
     }
 
     /**
@@ -74,18 +141,8 @@ class Decompounder
                 $bestTerms = []; // We found a new best: remove the ones found so far
             }
 
-            foreach ($leftLeaves as $leafTerm) {
+            foreach ($this->candidateTerms($candidate, $leftLeaves, $rightLeaves) as $leafTerm) {
                 $bestTerms[$leafTerm->term] = $leafTerm;
-            }
-
-            foreach ($rightLeaves as $leafTerm) {
-                $bestTerms[$leafTerm->term] = $leafTerm;
-            }
-
-            // If configured, keep intermediate dictionary-valid terms that are part of the chosen decomposition tree.
-            if ($this->includeIntermediateTerms) {
-                $bestTerms[$left->term] = $left;
-                $bestTerms[$right->term] = $right;
             }
         }
 
@@ -98,6 +155,29 @@ class Decompounder
         }
 
         return $leafCache[$term->term] = array_values($bestTerms);
+    }
+
+    /**
+     * @param array<Term> $leftLeaves
+     * @param array<Term> $rightLeaves
+     *
+     * @return array<string, Term>
+     */
+    private function candidateTerms(BoundaryCandidate $candidate, array $leftLeaves, array $rightLeaves): array
+    {
+        $terms = [];
+
+        foreach (array_merge($leftLeaves, $rightLeaves) as $leafTerm) {
+            $terms[$leafTerm->term] = $leafTerm;
+        }
+
+        // If configured, keep intermediate dictionary-valid terms that are part of the chosen decomposition tree.
+        if ($this->includeIntermediateTerms) {
+            $terms[$candidate->left->term] = $candidate->left;
+            $terms[$candidate->right->term] = $candidate->right;
+        }
+
+        return $terms;
     }
 
     /**

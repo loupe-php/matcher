@@ -10,6 +10,7 @@ use Loupe\Matcher\Tokenizer\Decompounder\Dictionary\DictionaryInterface;
 use Loupe\Matcher\Tokenizer\Decompounder\Dictionary\FastSetDictionary;
 use Loupe\Matcher\Tokenizer\Decompounder\Dictionary\VariantDictionary;
 use Loupe\Matcher\Tokenizer\Decompounder\Dictionary\VariantExpanderInterface;
+use Loupe\Matcher\Tokenizer\Decompounder\ResultCacheConfiguration;
 use Loupe\Matcher\Tokenizer\Decompounder\TermPool;
 use Loupe\Matcher\Tokenizer\Decompounder\TermValidator\TermValidatorInterface;
 use Loupe\Matcher\Tokenizer\Normalizer\Normalizer;
@@ -23,8 +24,18 @@ abstract class AbstractPreconfiguredLocale implements LocaleConfigurationInterfa
     public function __construct(
         bool $keepIntermediateTerms = true,
         private readonly string|null $fastSetCacheDirectory = null,
+        ResultCacheConfiguration|null $resultCacheConfiguration = null,
     ) {
-        $this->decompounder = new Decompounder($this->getDecompounderConfiguration(), $keepIntermediateTerms);
+        $this->decompounder = new Decompounder(
+            $this->getDecompounderConfiguration(),
+            $keepIntermediateTerms,
+            $resultCacheConfiguration,
+        );
+    }
+
+    public function clearCache(): void
+    {
+        $this->decompounder->clearResultCache();
     }
 
     public function enhanceToken(Token $token): Token
@@ -53,13 +64,9 @@ abstract class AbstractPreconfiguredLocale implements LocaleConfigurationInterfa
         return new FastSetDictionary($dictionaryDirectory, $cacheDirectory);
     }
 
-    /**
-     * Defaults to 100k cache entries. This should be a fair balance for fast lookups for a lot of terms
-     * while ensuring memory is low.
-     */
-    protected function getTermPool(TermValidatorInterface $termValidator, int $maxCacheEntries = 100_000): TermPool
+    protected function getTermPool(TermValidatorInterface $termValidator): TermPool
     {
-        return new TermPool($termValidator, $maxCacheEntries);
+        return new TermPool($termValidator);
     }
 
     protected function wrapDictionaryWithVariantDictionary(DictionaryInterface $dictionary, VariantExpanderInterface $variantExpander): DictionaryInterface
