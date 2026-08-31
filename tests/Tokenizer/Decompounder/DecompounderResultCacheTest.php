@@ -40,19 +40,18 @@ final class DecompounderResultCacheTest extends TestCase
         $this->assertGreaterThan($callsAfterFirstTerm, $validator->getCallCount());
     }
 
-    public function testCacheUsesFifoEviction(): void
+    public function testCacheUsesLruEviction(): void
     {
         [$decompounder, $validator] = $this->createDecompounder(new ResultCacheConfiguration(2));
 
         $decompounder->decompoundTerm('filmmaking');
         $decompounder->decompoundTerm('beautiful');
-        $callsAfterInitialTerms = $validator->getCallCount();
-
-        $decompounder->decompoundTerm('filmmaking'); // A hit must not promote this entry.
-        $this->assertSame($callsAfterInitialTerms, $validator->getCallCount());
+        $decompounder->decompoundTerm('filmmaking');
         $decompounder->decompoundTerm('wonderful');
         $callsAfterEviction = $validator->getCallCount();
         $decompounder->decompoundTerm('filmmaking');
+        $this->assertSame($callsAfterEviction, $validator->getCallCount());
+        $decompounder->decompoundTerm('beautiful');
 
         $this->assertGreaterThan($callsAfterEviction, $validator->getCallCount());
     }

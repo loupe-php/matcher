@@ -92,7 +92,7 @@ value as the `$fastSetCacheDirectory` second argument to `new English()` or `new
 
 #### Decomposition result cache
 
-Decomposition results are cached per complete token with a default FIFO budget of 25,000 entries. Configure
+Decomposition results are cached per complete token with a default LRU budget of 25,000 entries. Configure
 the budget with `ResultCacheConfiguration`. A budget of zero explicitly disables the cache, while negative
 budgets are rejected:
 
@@ -109,6 +109,10 @@ $tokenizer->clearCache(); // Release retained decomposition results in long-runn
 $disabledCacheConfiguration = (new ResultCacheConfiguration())->withDisabled();
 $uncachedTokenizer = new Tokenizer(new English(resultCacheConfiguration: $disabledCacheConfiguration));
 ```
+
+Run `composer bench-movies` to measure English tokenization across the 31,944 movie corpus. The first run downloads
+`movies.json` into the ignored `var/` directory so the benchmark data is never committed. This dedicated benchmark makes
+cache changes comparable without slowing down the regular `composer bench` suite.
 
 ### Matcher
 

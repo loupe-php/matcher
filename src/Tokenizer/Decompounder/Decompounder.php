@@ -37,7 +37,11 @@ class Decompounder
     public function decompoundTerm(string $term): array
     {
         if (0 !== $this->maximumResultCacheEntries && isset($this->resultCache[$term])) {
-            return $this->resultCache[$term];
+            $variants = $this->resultCache[$term];
+            unset($this->resultCache[$term]);
+            $this->resultCache[$term] = $variants;
+
+            return $variants;
         }
 
         $this->termPool->clear();
@@ -88,8 +92,7 @@ class Decompounder
             return;
         }
 
-        // If full, evict oldest inserted key (FIFO).
-        // I have benched LRU but tracking access performs way worse.
+        // PHP arrays preserve insertion order, so moving hits to the end provides LRU without separate tracking.
         if ($this->resultCacheSize >= $this->maximumResultCacheEntries) {
             $first = array_key_first($this->resultCache);
             if (null !== $first) {
@@ -138,18 +141,8 @@ class Decompounder
                 $bestTerms = []; // We found a new best: remove the ones found so far
             }
 
-            foreach ($leftLeaves as $leafTerm) {
+            foreach ($this->candidateTerms($candidate, $leftLeaves, $rightLeaves) as $leafTerm) {
                 $bestTerms[$leafTerm->term] = $leafTerm;
-            }
-
-            foreach ($rightLeaves as $leafTerm) {
-                $bestTerms[$leafTerm->term] = $leafTerm;
-            }
-
-            // If configured, keep intermediate dictionary-valid terms that are part of the chosen decomposition tree.
-            if ($this->includeIntermediateTerms) {
-                $bestTerms[$left->term] = $left;
-                $bestTerms[$right->term] = $right;
             }
         }
 
@@ -162,6 +155,29 @@ class Decompounder
         }
 
         return $leafCache[$term->term] = array_values($bestTerms);
+    }
+
+    /**
+     * @param array<Term> $leftLeaves
+     * @param array<Term> $rightLeaves
+     *
+     * @return array<string, Term>
+     */
+    private function candidateTerms(BoundaryCandidate $candidate, array $leftLeaves, array $rightLeaves): array
+    {
+        $terms = [];
+
+        foreach (array_merge($leftLeaves, $rightLeaves) as $leafTerm) {
+            $terms[$leafTerm->term] = $leafTerm;
+        }
+
+        // If configured, keep intermediate dictionary-valid terms that are part of the chosen decomposition tree.
+        if ($this->includeIntermediateTerms) {
+            $terms[$candidate->left->term] = $candidate->left;
+            $terms[$candidate->right->term] = $candidate->right;
+        }
+
+        return $terms;
     }
 
     /**

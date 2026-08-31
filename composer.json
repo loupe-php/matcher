@@ -42,7 +42,8 @@
     },
     "scripts": {
         "tests": "@php vendor/bin/phpunit",
-        "bench": "@php vendor/bin/phpbench run --report=tokenizer",
+        "bench": "@php vendor/bin/phpbench run tests/Benchmark/MatcherBench.php tests/Benchmark/TokenizerBench.php --report=tokenizer",
+        "bench-movies": "@php vendor/bin/phpbench run tests/Benchmark/MovieTokenizerBench.php --report=aggregate",
         "cs-fixer": "@php vendor/terminal42/code-quality-tools/tools/ecs/vendor/bin/ecs check build src tests --config vendor/terminal42/code-quality-tools/tools/ecs/config.php --fix --ansi",
         "rector": "@php vendor/terminal42/code-quality-tools/tools/rector/vendor/bin/rector process build src tests --config vendor/terminal42/code-quality-tools/tools/rector/config.php --ansi",
         "phpstan": "@php vendor/terminal42/code-quality-tools/tools/phpstan/vendor/bin/phpstan analyze build src tests --configuration vendor/terminal42/code-quality-tools/tools/phpstan/config.php --ansi",
