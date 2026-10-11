@@ -58,7 +58,7 @@ final class MatcherTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{0: list<Token>, 1: list<Token>, 2: list<array{int, int, list<string>}>}>
+     * @return iterable<string, array{list<Token>, list<Token>, list<array{int, int, list<string>}>}>
      */
     public static function suppliedMatchMembershipProvider(): iterable
     {

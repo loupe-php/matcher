@@ -100,9 +100,6 @@ class Matcher
     }
 
     /**
-     * Index matches by term and normalized start position to avoid scanning all matches for
-     * every text token. Nesting the keys keeps distinct term/position pairs from colliding.
-     *
      * @return array<array-key, array<int, true>>
      */
     private function indexMatchesByTermAndPosition(TokenCollection $matches): array

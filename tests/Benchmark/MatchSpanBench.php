@@ -16,13 +16,6 @@ use PhpBench\Attributes\ParamProviders;
 use PhpBench\Attributes\Revs;
 use PhpBench\Attributes\Warmup;
 
-/**
- * Span calculation across text sizes and match densities.
- *
- * Dense texts consist only of matching words, so the number of matches grows with the text.
- * Sparse texts contain one match every 50 words, and texts without matches measure the
- * fixed cost of span calculation when nothing needs highlighting.
- */
 #[Revs(5)]
 #[Iterations(5)]
 #[Warmup(1)]
@@ -65,9 +58,6 @@ class MatchSpanBench
         $this->matches = $this->matcher->calculateMatches($this->textTokens, $this->queryTokens);
     }
 
-    /**
-     * Span calculation with pre-tokenized inputs and pre-computed matches — span logic only.
-     */
     #[BeforeMethods('setUp')]
     #[ParamProviders('provideDensityAndSize')]
     public function benchCalculateMatchSpansPreTokenized(): void
@@ -75,9 +65,6 @@ class MatchSpanBench
         $this->matcher->calculateMatchSpans($this->textTokens, $this->queryTokens, $this->matches);
     }
 
-    /**
-     * Highlighting with supplied matches — includes tokenization and highlighting.
-     */
     #[BeforeMethods('setUp')]
     #[ParamProviders('provideDensityAndSize')]
     public function benchFormatHighlightWithSuppliedMatches(): void
