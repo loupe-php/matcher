@@ -477,6 +477,53 @@ final class FormatterTest extends TestCase
         $this->assertSame('This is a [test]…', $result->getFormattedText());
     }
 
+    /**
+     * @return iterable<string, array{string, string, FormatterOptions, string}>
+     */
+    public static function suppliedMatchesProvider(): iterable
+    {
+        $highlight = (new FormatterOptions())
+            ->withEnableHighlight()
+            ->withHighlightStartTag('[')
+            ->withHighlightEndTag(']')
+        ;
+
+        yield 'highlight with stop words' => [
+            'souls of the world',
+            'A meeting of souls and the world of souls.',
+            $highlight,
+            'A meeting [of souls] and [the world of souls].',
+        ];
+
+        yield 'highlight folded text' => [
+            'straße',
+            'Die Straße und die STRASSE, ﬁfteen Straßen.',
+            $highlight,
+            'Die [Straße] und die [STRASSE], ﬁfteen Straßen.',
+        ];
+
+        yield 'highlight and crop' => [
+            'taken',
+            'A wonderful serenity has taken possession of my entire soul, like these sweet mornings have taken all spring.',
+            $highlight->withEnableCrop()->withCropLength(35),
+            '…wonderful serenity has [taken] possession of my…sweet mornings have [taken] all spring.',
+        ];
+    }
+
+    #[DataProvider('suppliedMatchesProvider')]
+    public function testFormatWithSuppliedMatchesEqualsCalculatedMatches(string $query, string $text, FormatterOptions $options, string $expectedResult): void
+    {
+        $formatter = new Formatter($this->matcher);
+        $calculated = $formatter->format($text, $query, $options);
+
+        $matches = $calculated->getMatches()->all();
+        $reordered = new TokenCollection([...array_reverse($matches), ...$matches]);
+        $supplied = $formatter->format($text, $query, $options, $reordered);
+
+        $this->assertSame($expectedResult, $calculated->getFormattedText());
+        $this->assertSame($expectedResult, $supplied->getFormattedText());
+    }
+
     public function testFormatWithoutHighlightOrCrop(): void
     {
         $options = new FormatterOptions();
