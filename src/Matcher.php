@@ -54,6 +54,7 @@ class Matcher
     {
         $textTokens = $text instanceof TokenCollection ? $text : $this->tokenizer->tokenize($text);
         $queryTokens = $query instanceof TokenCollection ? $query : $this->tokenizer->tokenize($query);
+        $matchIndex = $this->indexMatchesByTermAndPosition($matches);
 
         $spans = [];
         $currentSpan = null;
@@ -61,7 +62,7 @@ class Matcher
         $currentSpanHasMatch = false;
 
         foreach ($textTokens->all() as $textToken) {
-            $isMatch = $this->isMatch($textToken, $matches);
+            $isMatch = $this->isMatch($textToken, $matchIndex);
             $isStopword = $this->isRelevantStopWord($textToken, $queryTokens);
             $isRelevant = $isMatch || $isStopword;
 
@@ -98,10 +99,30 @@ class Matcher
         return $spans;
     }
 
-    private function isMatch(Token $token, TokenCollection $matches): bool
+    /**
+     * Index matches by term and normalized start position to avoid scanning all matches for
+     * every text token. Nesting the keys keeps distinct term/position pairs from colliding.
+     *
+     * @return array<array-key, array<int, true>>
+     */
+    private function indexMatchesByTermAndPosition(TokenCollection $matches): array
+    {
+        $index = [];
+
+        foreach ($matches->all() as $match) {
+            $index[$match->getTerm()][$match->getStartPosition()] = true;
+        }
+
+        return $index;
+    }
+
+    /**
+     * @param array<array-key, array<int, true>> $matchIndex
+     */
+    private function isMatch(Token $token, array $matchIndex): bool
     {
         // Must be in the matches at exactly the same position
-        return !$this->stopWords->isStopWord($token) && $matches->contains($token, checkPosition: true);
+        return !$this->stopWords->isStopWord($token) && isset($matchIndex[$token->getTerm()][$token->getStartPosition()]);
     }
 
     private function isRelevantStopWord(Token $token, TokenCollection $query): bool
