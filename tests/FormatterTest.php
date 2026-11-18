@@ -6,6 +6,7 @@ namespace Loupe\Matcher\Tests;
 
 use Loupe\Matcher\Formatter;
 use Loupe\Matcher\FormatterOptions;
+use Loupe\Matcher\Locale;
 use Loupe\Matcher\Matcher;
 use Loupe\Matcher\Tokenizer\Token;
 use Loupe\Matcher\Tokenizer\TokenCollection;
@@ -349,6 +350,28 @@ final class FormatterTest extends TestCase
 
         $formatter = new Formatter($this->matcher);
         $result = $formatter->format($text, $query, $options);
+
+        $this->assertSame($expectedResult, $result->getFormattedText());
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: string, 2: string}>
+     */
+    public static function frenchElisionHighlightProvider(): iterable
+    {
+        yield 'bare query, elided text' => ['acompte', 'Comment fonctionnent l’acompte ?', 'Comment fonctionnent <em>l’acompte</em> ?'];
+        yield 'elided query, bare text' => ["l'acompte", 'Un acompte de 30 %.', 'Un <em>acompte</em> de 30 %.'];
+        yield 'elided query, other apostrophe' => ["l'acompte", 'Versez l’acompte.', 'Versez <em>l’acompte</em>.'];
+    }
+
+    #[DataProvider('frenchElisionHighlightProvider')]
+    public function testFrenchElisionHighlight(string $query, string $text, string $expectedResult): void
+    {
+        $tokenizer = Tokenizer::createFromPreconfiguredLocaleConfiguration(Locale::fromString('fr'));
+        $formatter = new Formatter(new Matcher($tokenizer));
+        $options = (new FormatterOptions())->withDisableCrop()->withEnableHighlight();
+
+        $result = $formatter->format($text, $tokenizer->tokenize($query, false), $options);
 
         $this->assertSame($expectedResult, $result->getFormattedText());
     }

@@ -7,13 +7,17 @@ namespace Loupe\Matcher\Tokenizer;
 use Loupe\Matcher\Locale;
 use Loupe\Matcher\Tokenizer\Decompounder\ResultCacheConfiguration;
 use Loupe\Matcher\Tokenizer\LocaleConfiguration\English;
+use Loupe\Matcher\Tokenizer\LocaleConfiguration\French;
 use Loupe\Matcher\Tokenizer\LocaleConfiguration\German;
 use Loupe\Matcher\Tokenizer\LocaleConfiguration\LocaleConfigurationInterface;
+use Loupe\Matcher\Tokenizer\Normalizer\AsciiNormalizerInterface;
 use Loupe\Matcher\Tokenizer\Normalizer\Normalizer;
 use Loupe\Matcher\Tokenizer\Normalizer\NormalizerInterface;
 
 class Tokenizer implements TokenizerInterface
 {
+    private readonly bool $asciiFastPath;
+
     private readonly \IntlRuleBasedBreakIterator $breakIterator;
 
     private readonly NormalizerInterface $normalizer;
@@ -22,6 +26,7 @@ class Tokenizer implements TokenizerInterface
     {
         $this->breakIterator = \IntlRuleBasedBreakIterator::createWordInstance($this->localeConfiguration?->getLocale()->toString()); // @phpstan-ignore-line - null is allowed
         $this->normalizer = $this->localeConfiguration?->getNormalizer() ?? new Normalizer();
+        $this->asciiFastPath = !$this->normalizer instanceof AsciiNormalizerInterface;
     }
 
     public static function createFromPreconfiguredLocaleConfiguration(Locale $locale, string|null $fastSetCacheDirectory = null, ResultCacheConfiguration|null $resultCacheConfiguration = null): self
@@ -34,6 +39,7 @@ class Tokenizer implements TokenizerInterface
         return match ($locale->getPrimaryLanguage()) {
             'de' => new German(fastSetCacheDirectory: $fastSetCacheDirectory, resultCacheConfiguration: $resultCacheConfiguration),
             'en' => new English(fastSetCacheDirectory: $fastSetCacheDirectory, resultCacheConfiguration: $resultCacheConfiguration),
+            'fr' => new French(),
             default => null,
         };
     }
@@ -115,7 +121,7 @@ class Tokenizer implements TokenizerInterface
                 break;
             }
 
-            if ($isAscii) {
+            if ($isAscii && $this->asciiFastPath) {
                 // Fast path: ascii tokens can never be folded and length doesn't change
                 $term = strtolower((string) $term);
                 $termLength = $originalLength;
