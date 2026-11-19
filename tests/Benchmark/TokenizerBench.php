@@ -42,7 +42,12 @@ class TokenizerBench
     #[Groups(['control'])]
     public function benchControlBreakIterator(): void
     {
-        $bi = \IntlRuleBasedBreakIterator::createWordInstance(); // @phpstan-ignore-line - null is allowed
+        $bi = \IntlRuleBasedBreakIterator::createWordInstance(); // ICU can return null if iterator creation fails
+
+        if (null === $bi) {
+            throw new \RuntimeException('Unable to create the ICU word break iterator');
+        }
+
         $bi->setText($this->text);
 
         foreach ($bi->getPartsIterator() as $_) {
