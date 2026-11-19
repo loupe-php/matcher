@@ -18,6 +18,7 @@ final class WindowPlannerTest extends TestCase
             Filler that contains no matches and only serves to push clusters far apart from each other.
             At the very end epsilon zeta eta appear together with full term diversity.
             TEXT;
+
         $spans = $this->findSpansForTerms($text, 'delta', 'epsilon', 'zeta', 'eta');
 
         $windows = (new WindowPlanner())->planCropWindows(
@@ -29,6 +30,7 @@ final class WindowPlannerTest extends TestCase
         );
 
         $this->assertCount(1, $windows);
+
         $combined = $this->combinedWindowText($text, $windows);
 
         // 3 distinct terms (epsilon+zeta+eta) beats 3 repetitions of 1 term (delta×3)
@@ -49,6 +51,7 @@ final class WindowPlannerTest extends TestCase
             Filler that contains no matches and only serves to push clusters far apart from each other.
             Fourth onyx here with one match.
             TEXT;
+
         $spans = $this->findSpansForTerms($text, 'ruby', 'jade', 'opal', 'onyx');
 
         $this->assertCount(10, $spans);
@@ -62,6 +65,7 @@ final class WindowPlannerTest extends TestCase
         );
 
         $this->assertCount(3, $windows);
+
         $combined = $this->combinedWindowText($text, $windows);
 
         // Weakest cluster (onyx, 1 match) dropped
@@ -80,6 +84,7 @@ final class WindowPlannerTest extends TestCase
             More filler that contains no matches and only serves to push clusters far apart from each other.
             At the very end gamma gamma gamma cluster tightly together as the densest group.
             TEXT;
+
         $spans = $this->findSpansForTerms($text, 'alpha', 'beta', 'gamma');
 
         $windows = (new WindowPlanner())->planCropWindows(
@@ -139,6 +144,7 @@ final class WindowPlannerTest extends TestCase
 
         // Asked for 3 fragments, but only 1 match exists → 1 window
         $this->assertCount(1, $windows);
+
         $combined = $this->combinedWindowText($text, $windows);
         $this->assertStringContainsString('alpha', $combined);
     }
@@ -162,6 +168,7 @@ final class WindowPlannerTest extends TestCase
         );
 
         $this->assertCount(1, $windows);
+
         $combined = $this->combinedWindowText($text, $windows);
 
         // All 4 terms captured in a single window
@@ -206,6 +213,7 @@ final class WindowPlannerTest extends TestCase
             More filler that contains no matches and only serves to push clusters far apart from each other.
             At the very end gamma gamma gamma cluster tightly together as the densest group.
             TEXT;
+
         $spans = $this->findSpansForTerms($text, 'alpha', 'beta', 'gamma');
 
         $windows = (new WindowPlanner())->planCropWindows(
@@ -216,6 +224,7 @@ final class WindowPlannerTest extends TestCase
         );
 
         $this->assertCount(2, $windows);
+
         $combined = $this->combinedWindowText($text, $windows);
 
         // First two in document order: weak (alpha) + medium (beta). Dense (gamma) dropped.
@@ -233,6 +242,7 @@ final class WindowPlannerTest extends TestCase
             More filler that contains no matches and only serves to push clusters far apart from each other.
             At the very end gamma gamma gamma cluster tightly together as the densest group.
             TEXT;
+
         $spans = $this->findSpansForTerms($text, 'alpha', 'beta', 'gamma');
 
         $windows = (new WindowPlanner())->planCropWindows(
@@ -244,6 +254,7 @@ final class WindowPlannerTest extends TestCase
         );
 
         $this->assertCount(2, $windows);
+
         $combined = $this->combinedWindowText($text, $windows);
 
         // Best two by score: dense (gamma, 3 matches) + medium (beta, 2 matches). Weak (alpha) dropped.
@@ -260,6 +271,7 @@ final class WindowPlannerTest extends TestCase
             More filler that contains no matches and only serves to push clusters far apart from each other.
             At the very end gamma gamma gamma cluster tightly together as the densest group.
             TEXT;
+
         $spans = $this->findSpansForTerms($text, 'alpha', 'beta', 'gamma');
 
         $windows = (new WindowPlanner())->planCropWindows(
@@ -271,6 +283,7 @@ final class WindowPlannerTest extends TestCase
         );
 
         $this->assertCount(1, $windows);
+
         $combined = $this->combinedWindowText($text, $windows);
 
         // The dense cluster (gamma, 3 matches) at the end wins
@@ -289,6 +302,7 @@ final class WindowPlannerTest extends TestCase
         foreach ($needles as $needle) {
             $found = mb_strpos($haystack, $needle, $pos, 'UTF-8');
             $this->assertNotFalse($found, "Expected '{$needle}' after position {$pos} in: {$haystack}");
+
             $pos = $found + mb_strlen($needle, 'UTF-8');
         }
     }
@@ -298,10 +312,13 @@ final class WindowPlannerTest extends TestCase
      */
     private function combinedWindowText(string $text, array $windows): string
     {
-        return implode(' | ', array_map(
-            static fn ($w) => mb_substr($text, $w->getStartPosition(), $w->getLength(), 'UTF-8'),
-            $windows,
-        ));
+        return implode(
+            ' | ',
+            array_map(
+                static fn ($w) => mb_substr($text, $w->getStartPosition(), $w->getLength(), 'UTF-8'),
+                $windows,
+            ),
+        );
     }
 
     /**

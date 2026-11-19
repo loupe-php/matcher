@@ -17,11 +17,13 @@ final class DecompounderResultCacheTest extends TestCase
         [$decompounder, $validator] = $this->createDecompounder();
 
         $this->assertSame(['film', 'making'], $decompounder->decompoundTerm('filmmaking'));
+
         $callsAfterCompound = $validator->getCallCount();
         $this->assertSame(['film', 'making'], $decompounder->decompoundTerm('filmmaking'));
         $this->assertSame($callsAfterCompound, $validator->getCallCount());
 
         $this->assertSame([], $decompounder->decompoundTerm('beautiful'));
+
         $callsAfterInvalidTerm = $validator->getCallCount();
         $this->assertSame([], $decompounder->decompoundTerm('beautiful'));
         $this->assertSame($callsAfterInvalidTerm, $validator->getCallCount());
@@ -48,9 +50,11 @@ final class DecompounderResultCacheTest extends TestCase
         $decompounder->decompoundTerm('beautiful');
         $decompounder->decompoundTerm('filmmaking');
         $decompounder->decompoundTerm('wonderful');
+
         $callsAfterEviction = $validator->getCallCount();
         $decompounder->decompoundTerm('filmmaking');
         $this->assertSame($callsAfterEviction, $validator->getCallCount());
+
         $decompounder->decompoundTerm('beautiful');
 
         $this->assertGreaterThan($callsAfterEviction, $validator->getCallCount());
@@ -62,6 +66,7 @@ final class DecompounderResultCacheTest extends TestCase
 
         $decompounder->decompoundTerm('filmmaking');
         $callsAfterFirstTerm = $validator->getCallCount();
+
         $decompounder->clearResultCache();
         $decompounder->decompoundTerm('filmmaking');
 

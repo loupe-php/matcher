@@ -59,6 +59,7 @@ final class FormatterResultTest extends TestCase
         $query = 'größten Süße';
 
         $tokenizer = new Tokenizer();
+
         $matcher = new Matcher($tokenizer);
         $matches = $matcher->calculateMatches($text, $query);
 

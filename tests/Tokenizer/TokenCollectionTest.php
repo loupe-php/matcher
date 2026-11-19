@@ -37,6 +37,7 @@ final class TokenCollectionTest extends TestCase
                 static fn (Token $token): string => $token->getTerm(),
                 $group->all(),
             );
+
             $actualNegated[] = $group->isNegated();
         }
 

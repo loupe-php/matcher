@@ -53,6 +53,7 @@ class Truncator implements Transformer
             if ($matchSpan->getStartPosition() >= $cut) {
                 continue;
             }
+
             $end = min($matchSpan->getEndPosition(), $cut);
             $spans[] = new MatchSpan($matchSpan->getStartPosition(), $end, $matchSpan->getTerms());
         }
@@ -79,6 +80,7 @@ class Truncator implements Transformer
             if ($matchSpan->getEndPosition() <= $windowStart || $matchSpan->getStartPosition() >= $windowEnd) {
                 continue;
             }
+
             $clippedStart = max($matchSpan->getStartPosition(), $windowStart);
             $clippedEnd = min($matchSpan->getEndPosition(), $windowEnd);
             $rebasedSpans[] = new MatchSpan($clippedStart + $delta, $clippedEnd + $delta, $matchSpan->getTerms());

@@ -195,6 +195,7 @@ final class MatcherTest extends TestCase
         $query = 'kanone steigerung';
 
         $tokenizer = Tokenizer::createFromPreconfiguredLocaleConfiguration(Locale::fromString('de'));
+
         $matcher = new Matcher($tokenizer);
         $matches = $matcher->calculateMatches($text, $query);
         $spans = $matcher->calculateMatchSpans($text, $query, $matches);
@@ -216,6 +217,7 @@ final class MatcherTest extends TestCase
         $query = 'Gespräch Nacht';
 
         $tokenizer = Tokenizer::createFromPreconfiguredLocaleConfiguration(Locale::fromString('de'));
+
         $matcher = new Matcher($tokenizer);
         $matches = $matcher->calculateMatches($text, $query);
         $spans = $matcher->calculateMatchSpans($text, $query, $matches);
@@ -232,6 +234,7 @@ final class MatcherTest extends TestCase
         $matches = $this->matcher->calculateMatches($text, $query);
 
         $this->assertCount(3, $matches->all());
+
         $words = array_map(static fn ($t) => $t->getTerm(), $matches->all());
 
         $this->assertContains('quick', $words);
@@ -291,6 +294,7 @@ final class MatcherTest extends TestCase
         $matches = $this->matcher->calculateMatches($text, $query);
 
         $this->assertCount(3, $matches->all());
+
         $words = array_map(static fn ($t) => $t->getTerm(), $matches->all());
 
         $this->assertNotContains('the', $words);

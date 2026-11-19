@@ -16,6 +16,7 @@ class FastSetDictionary implements DictionaryInterface
     {
         $cacheDirectory ??= $dictionaryDirectory;
         $this->createCacheDirectory($cacheDirectory);
+
         $this->fastSet = new FastSet($cacheDirectory);
 
         try {

@@ -53,6 +53,7 @@ final class TokenizerNormalizationTest extends TestCase
     public function testFolding(string $input, array $expected): void
     {
         $tokenizer = new Tokenizer();
+
         $this->assertSame(
             $expected,
             $tokenizer->tokenize($input)->allTermsWithVariants(),
@@ -75,6 +76,7 @@ final class TokenizerNormalizationTest extends TestCase
     {
         $tokenizer = new Tokenizer();
         $token = $tokenizer->tokenize('Test')->all()[0];
+
         $this->assertSame('test', $token->getTerm());
         $this->assertFalse($token->wasFolded());
     }
@@ -83,6 +85,7 @@ final class TokenizerNormalizationTest extends TestCase
     {
         $tokenizer = new Tokenizer();
         $tokens = $tokenizer->tokenize('Straße naïve café')->all();
+
         $this->assertCount(3, $tokens);
 
         foreach ($tokens as $token) {

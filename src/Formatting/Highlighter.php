@@ -34,14 +34,17 @@ class Highlighter implements Transformer
             $result .= $this->startTag;
             $result .= mb_substr($text, $span->getStartPosition(), $span->getLength(), 'UTF-8');
             $result .= $this->endTag;
+
             $end = $span->getEndPosition();
 
             $offset += $startTagLength;
+
             $rebasedSpans[] = new MatchSpan(
                 $span->getStartPosition() + $offset,
                 $span->getEndPosition() + $offset,
                 $span->getTerms(),
             );
+
             $offset += $endTagLength;
         }
 

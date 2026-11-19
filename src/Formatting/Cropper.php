@@ -119,7 +119,9 @@ class Cropper implements Transformer
                 ) {
                     continue;
                 }
+
                 $delta = $offsetInOutput - $window->getStartPosition();
+
                 $outputSpans[] = new MatchSpan(
                     $matchSpan->getStartPosition() + $delta,
                     $matchSpan->getEndPosition() + $delta,

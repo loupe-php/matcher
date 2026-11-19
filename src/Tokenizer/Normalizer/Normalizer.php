@@ -29,6 +29,7 @@ class Normalizer implements NormalizerInterface
             if (!$transliterator instanceof \Transliterator) {
                 return $term;
             }
+
             $this->transliterator = $transliterator;
         }
 

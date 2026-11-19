@@ -29,6 +29,7 @@ class UpdateDictionariesCommand
             }
 
             $this->info($io, $builder->getLocale(), 'Building directory now.');
+
             $builder->buildDirectory(
                 $io,
                 __DIR__.'/../../dictionaries/'.$builder->getLocale()->toString(),

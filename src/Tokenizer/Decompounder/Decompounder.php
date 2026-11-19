@@ -39,6 +39,7 @@ class Decompounder
         if (0 !== $this->maximumResultCacheEntries && isset($this->resultCache[$term])) {
             $variants = $this->resultCache[$term];
             unset($this->resultCache[$term]);
+
             $this->resultCache[$term] = $variants;
 
             return $variants;

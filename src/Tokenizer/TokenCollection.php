@@ -167,6 +167,7 @@ class TokenCollection implements \Countable
                     $groups[] = $phrase;
                     $phrase = null;
                 }
+
                 $groups[] = $token;
             }
         }

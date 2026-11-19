@@ -515,8 +515,8 @@ final class FormatterTest extends TestCase
     {
         $formatter = new Formatter($this->matcher);
         $calculated = $formatter->format($text, $query, $options);
-
         $matches = $calculated->getMatches()->all();
+
         $reordered = new TokenCollection([...array_reverse($matches), ...$matches]);
         $supplied = $formatter->format($text, $query, $options, $reordered);
 
@@ -573,6 +573,7 @@ final class FormatterTest extends TestCase
     public function testMatchPrioritization(string $query, string $text, string $expectedResult, FormatterOptions $options): void
     {
         $query = (new Tokenizer())->tokenize($query);
+
         $formatter = new Formatter($this->matcher);
         $result = $formatter->format($text, $query, $options);
 

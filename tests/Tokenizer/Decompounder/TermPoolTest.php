@@ -39,7 +39,6 @@ final class TermPoolTest extends TestCase
         ;
 
         $termPool = new TermPool($this->getTermValidator($dictionary));
-
         $termPool->term('foo');
         $termPool->term('foo');
         $termPool->clear();

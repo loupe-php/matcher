@@ -78,6 +78,7 @@ final class TokenizerTest extends TestCase
     public function testIcelandicSpecialCharacters(): void
     {
         $tokenizer = new Tokenizer();
+
         // ð (eth) and þ (thorn) are special characters that should normalize to d and th
         $this->assertSame(
             [
@@ -326,6 +327,7 @@ final class TokenizerTest extends TestCase
     public function testPolishLNormalization(): void
     {
         $tokenizer = new Tokenizer();
+
         // Ł/ł should normalize to l
         $this->assertSame(
             [
@@ -343,6 +345,7 @@ final class TokenizerTest extends TestCase
     public function testSlovakDiacriticsNormalization(): void
     {
         $tokenizer = new Tokenizer();
+
         // Slovak diacritics: č, š, ž, ň, ľ, ť, ď, á, é, í, ó, ú, ý, ô should normalize to c, s, z, n, l, t, d, a, e, i, o, u, y, o
         $this->assertSame(
             [
@@ -362,6 +365,7 @@ final class TokenizerTest extends TestCase
     public function testSwedishDiacriticsNormalization(): void
     {
         $tokenizer = new Tokenizer();
+
         // å/ä/ö should normalize to a/a/o
         $this->assertSame(
             [
@@ -379,6 +383,7 @@ final class TokenizerTest extends TestCase
     public function testTokenizeWithPhrases(): void
     {
         $tokenizer = new Tokenizer();
+
         $this->assertSame(
             [
                 'hallo',

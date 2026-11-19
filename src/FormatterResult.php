@@ -30,10 +30,13 @@ class FormatterResult
      */
     public function getMatchesArray(): array
     {
-        return array_map(static fn (Token $token) => [
-            'start' => $token->getOriginalStartPosition(),
-            'length' => $token->getOriginalLength(),
-        ], $this->matches->all());
+        return array_map(
+            static fn (Token $token) => [
+                'start' => $token->getOriginalStartPosition(),
+                'length' => $token->getOriginalLength(),
+            ],
+            $this->matches->all(),
+        );
     }
 
     public function hasMatches(): bool

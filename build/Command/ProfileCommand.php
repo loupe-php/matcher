@@ -17,7 +17,9 @@ class ProfileCommand
     public function __invoke(SymfonyStyle $io, #[Argument] string $locale): int
     {
         $memoryBefore = memory_get_usage();
+
         Tokenizer::createFromPreconfiguredLocaleConfiguration(Locale::fromString($locale));
+
         $memoryAfter = memory_get_usage();
 
         $io->success(\sprintf('Loading this dictionary required %.2F MiB.', ($memoryAfter - $memoryBefore) / 1024 / 1024));

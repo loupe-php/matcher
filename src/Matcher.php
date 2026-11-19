@@ -75,6 +75,7 @@ class Matcher
                 if ($currentSpan && $currentSpanHasMatch) {
                     $spans[] = $currentSpan->withTerms($currentSpanTerms);
                 }
+
                 $currentSpan = null;
                 $currentSpanTerms = [];
                 $currentSpanHasMatch = false;

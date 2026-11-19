@@ -122,8 +122,10 @@ class Tokenizer implements TokenizerInterface
                 $wasFolded = false;
             } else {
                 $originalTerm = $term;
+
                 $term = $this->normalizer->normalize($term);
                 $term = mb_strtolower($term, 'UTF-8');
+
                 $wasFolded = mb_strtolower((string) $originalTerm, 'UTF-8') !== $term;
                 $termLength = !preg_match('/[^\x00-\x7F]/', $term) ? \strlen($term) : mb_strlen($term, 'UTF-8');
             }

@@ -75,6 +75,7 @@ abstract class AbstractKaikkiDictionaryBuilder extends AbstractFastSetDictionary
 
         if (!$filesystem->exists($rawDumpPath)) {
             $io->info('Local raw dump file does not exist, will download now which can take a while.');
+
             $this->downloadRawDump($io, $rawDumpPath);
         }
 
@@ -95,6 +96,7 @@ abstract class AbstractKaikkiDictionaryBuilder extends AbstractFastSetDictionary
                 $terms[] = $term;
             }
         }
+
         $io->progressFinish();
 
         gzclose($gz);
@@ -227,6 +229,7 @@ abstract class AbstractKaikkiDictionaryBuilder extends AbstractFastSetDictionary
         }
 
         $progress = $io->createProgressBar();
+
         $client = HttpClient::create();
 
         $response = $client->request(

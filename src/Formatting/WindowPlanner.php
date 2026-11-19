@@ -71,6 +71,7 @@ class WindowPlanner
         foreach ($matchSpans as $matchSpan) {
             $spanStart = $matchSpan->getStartPosition();
             $spanLength = $matchSpan->getLength();
+
             $candidateStarts[] = $spanStart;
             $candidateStarts[] = $spanStart - (int) floor(($windowLength - $spanLength) / 2);
         }
@@ -191,6 +192,7 @@ class WindowPlanner
         foreach ($matchSpans as $span) {
             // Centered: window centered on the match span
             $positions[] = $span->getStartPosition() - (int) floor(($windowLength - $span->getLength()) / 2);
+
             // Start-aligned: window starts at the match span
             $positions[] = $span->getStartPosition();
         }
@@ -217,6 +219,7 @@ class WindowPlanner
             if (isset($seen[$key])) {
                 continue;
             }
+
             $seen[$key] = true;
 
             $windows[] = new Span($start, $end);
@@ -272,6 +275,7 @@ class WindowPlanner
         foreach ($candidates as $window) {
             $score = $this->scoreWindow($window, $matchSpans);
             $centering = $this->centeringScore($window, $matchSpans);
+
             $scored[] = [
                 'window' => $window,
                 'score' => $score,
@@ -288,6 +292,7 @@ class WindowPlanner
                     if (0 !== $cmp) {
                         return $cmp;
                     }
+
                     $cmp = $b['centering'] <=> $a['centering'];
                     if (0 !== $cmp) {
                         return $cmp;

@@ -59,6 +59,7 @@ class German extends AbstractPreconfiguredLocale
     {
         $dictionary = $this->getFastSetDictionary();
         $dictionary = $this->wrapDictionaryWithVariantDictionary($dictionary, new GermanVariantExpander());
+
         $termPool = $this->getTermPool(
             new DefaultTermValidator(
                 $dictionary,
