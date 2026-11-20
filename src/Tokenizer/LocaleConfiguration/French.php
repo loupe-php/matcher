@@ -12,13 +12,21 @@ use Loupe\Matcher\Tokenizer\Token;
 
 class French implements LocaleConfigurationInterface
 {
+    private const COMPOUNDS = [
+        'autocollant' => ['auto', 'collant'],
+        'tirebouchon' => ['tire', 'bouchon'],
+        'tournevis' => ['tourne', 'vis'],
+    ];
+
     public function clearCache(): void
     {
     }
 
     public function enhanceToken(Token $token): Token
     {
-        return $token;
+        $variants = self::COMPOUNDS[$token->getTerm()] ?? [];
+
+        return [] === $variants ? $token : $token->withAddedVariants($variants);
     }
 
     public function getLocale(): Locale

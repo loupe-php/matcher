@@ -87,6 +87,22 @@ final class TokenizerTest extends TestCase
         $this->assertSame($expected, $tokenizer->tokenize($input, false)->allTermsWithVariants());
     }
 
+    public function testFrenchCompoundVariants(): void
+    {
+        $tokenizer = Tokenizer::createFromPreconfiguredLocaleConfiguration(Locale::fromString('fr'));
+        $text = 'L’AUTOCOLLANT tirebouchon tournevis imperméable';
+
+        $this->assertSame(
+            ['autocollant', 'auto', 'collant', 'tirebouchon', 'tire', 'bouchon', 'tournevis', 'tourne', 'vis', 'impermeable'],
+            $tokenizer->tokenize($text)->allTermsWithVariants(),
+        );
+
+        $this->assertSame(
+            ['autocollant', 'tirebouchon', 'tournevis', 'impermeable'],
+            $tokenizer->tokenize($text, false)->allTermsWithVariants(),
+        );
+    }
+
     public function testFrenchElisionKeepsTheWholeWordAsOriginalSpan(): void
     {
         $tokenizer = Tokenizer::createFromPreconfiguredLocaleConfiguration(Locale::fromString('fr'));
