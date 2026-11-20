@@ -11,9 +11,23 @@ use Loupe\Matcher\Tokenizer\Decompounder\TermValidator\DefaultTermValidator;
 use Loupe\Matcher\Tokenizer\LocaleConfiguration\French\FrenchNormalizer;
 use Loupe\Matcher\Tokenizer\Normalizer\Normalizer;
 use Loupe\Matcher\Tokenizer\Normalizer\NormalizerInterface;
+use Loupe\Matcher\Tokenizer\Token;
 
 class French extends AbstractPreconfiguredLocale
 {
+    private const MIN_DICTIONARY_TERM_LENGTH = 4;
+
+    public function enhanceToken(Token $token): Token
+    {
+        // A split needs at least one dictionary term, or two copies of the short term "vis".
+        $term = $token->getTerm();
+        if ('visvis' !== $term && !preg_match('/^[a-z]{7,}$/D', $term)) {
+            return $token;
+        }
+
+        return parent::enhanceToken($token);
+    }
+
     public function getLocale(): Locale
     {
         return Locale::fromString('fr');
@@ -27,7 +41,7 @@ class French extends AbstractPreconfiguredLocale
     protected function getDecompounderConfiguration(): ConfigurationInterface
     {
         return new DefaultConfiguration(
-            $this->getTermPool(new DefaultTermValidator($this->getFastSetDictionary(), 4, ['vis' => true])),
+            $this->getTermPool(new DefaultTermValidator($this->getFastSetDictionary(), self::MIN_DICTIONARY_TERM_LENGTH, ['vis' => true])),
             3,
         );
     }
