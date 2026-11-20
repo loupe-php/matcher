@@ -19,7 +19,7 @@ class French extends AbstractPreconfiguredLocale
 
     public function enhanceToken(Token $token): Token
     {
-        // A split needs at least one dictionary term, or two copies of the short term "vis".
+        // Decompound only sufficiently long terms, except for the short compound "visvis".
         $term = $token->getTerm();
         if ('visvis' !== $term && !preg_match('/^[a-z]{7,}$/D', $term)) {
             return $token;
@@ -40,8 +40,14 @@ class French extends AbstractPreconfiguredLocale
 
     protected function getDecompounderConfiguration(): ConfigurationInterface
     {
+        $termValidator = new DefaultTermValidator(
+            $this->getFastSetDictionary(),
+            self::MIN_DICTIONARY_TERM_LENGTH,
+            ['vis' => true],
+        );
+
         return new DefaultConfiguration(
-            $this->getTermPool(new DefaultTermValidator($this->getFastSetDictionary(), self::MIN_DICTIONARY_TERM_LENGTH, ['vis' => true])),
+            $this->getTermPool($termValidator),
             3,
         );
     }

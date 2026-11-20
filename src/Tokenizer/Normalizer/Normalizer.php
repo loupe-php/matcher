@@ -37,8 +37,8 @@ class Normalizer implements NormalizerInterface
             $this->transliterator = $transliterator;
         }
 
-        $result = $transliterator->transliterate($term);
+        $normalizedTerm = $transliterator->transliterate($term);
 
-        return false !== $result ? $result : $term;
+        return false !== $normalizedTerm ? $normalizedTerm : $term;
     }
 }
