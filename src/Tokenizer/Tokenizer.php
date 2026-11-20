@@ -39,7 +39,7 @@ class Tokenizer implements TokenizerInterface
         return match ($locale->getPrimaryLanguage()) {
             'de' => new German(fastSetCacheDirectory: $fastSetCacheDirectory, resultCacheConfiguration: $resultCacheConfiguration),
             'en' => new English(fastSetCacheDirectory: $fastSetCacheDirectory, resultCacheConfiguration: $resultCacheConfiguration),
-            'fr' => new French(),
+            'fr' => new French(fastSetCacheDirectory: $fastSetCacheDirectory, resultCacheConfiguration: $resultCacheConfiguration),
             default => null,
         };
     }

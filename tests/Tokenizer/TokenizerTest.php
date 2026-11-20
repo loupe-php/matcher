@@ -17,6 +17,7 @@ final class TokenizerTest extends TestCase
 {
     #[TestWith(['de'])]
     #[TestWith(['en'])]
+    #[TestWith(['fr'])]
     public function testDecomposition(string $locale): void
     {
         $tokenizer = Tokenizer::createFromPreconfiguredLocaleConfiguration(Locale::fromString($locale));
@@ -93,7 +94,7 @@ final class TokenizerTest extends TestCase
         $text = 'L’AUTOCOLLANT tirebouchon tournevis imperméable';
 
         $this->assertSame(
-            ['autocollant', 'auto', 'collant', 'tirebouchon', 'tire', 'bouchon', 'tournevis', 'tourne', 'vis', 'impermeable'],
+            ['autocollant', 'auto', 'collant', 'tirebouchon', 'bouchon', 'tire', 'tournevis', 'tourne', 'vis', 'impermeable'],
             $tokenizer->tokenize($text)->allTermsWithVariants(),
         );
 
