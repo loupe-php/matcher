@@ -69,6 +69,7 @@ with this library. There are currently the following:
 
 - English: Handles decomposition (`toothbrush` -> `tooth`, `brush`)
 - German: Handles normalization of German umlauts as well as `ß` and also decomposition (`Zeitungspapier` -> `zeitung`, `papier`)
+- French: Handles elisions (`l’acompte`, `l'acompte` -> `acompte`; `jusqu’à` -> `a`) and decomposes compounds with a dictionary generated from Kaikki’s French Wiktionary data (`tirebouchon` -> `tire`, `bouchon`)
 
 Checkout the [separate docs on decomposition](./docs/decomposition.md) if you want to improve the existing locale configurations
 or add support for a new one!

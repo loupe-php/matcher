@@ -8,6 +8,7 @@ use Loupe\Matcher\Locale;
 use Loupe\Matcher\Tokenizer\LocaleConfiguration\German;
 use Loupe\Matcher\Tokenizer\Token;
 use Loupe\Matcher\Tokenizer\Tokenizer;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Filesystem\Filesystem;
@@ -16,6 +17,7 @@ final class TokenizerTest extends TestCase
 {
     #[TestWith(['de'])]
     #[TestWith(['en'])]
+    #[TestWith(['fr'])]
     public function testDecomposition(string $locale): void
     {
         $tokenizer = Tokenizer::createFromPreconfiguredLocaleConfiguration(Locale::fromString($locale));
@@ -53,6 +55,73 @@ final class TokenizerTest extends TestCase
         } finally {
             (new Filesystem())->remove($cacheDirectory);
         }
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: array<string>}>
+     */
+    public static function frenchElisionCases(): iterable
+    {
+        yield 'typographic apostrophe' => ['Comment fonctionnent l’acompte ?', ['comment', 'fonctionnent', 'acompte']];
+        yield 'straight apostrophe' => ["Versez l'acompte", ['versez', 'acompte']];
+        yield 'upper case' => ['L’ACOMPTE', ['acompte']];
+        yield 'accented word' => ['Partir d’Été', ['partir', 'ete']];
+        yield 'every particle' => [
+            "c'est d'eau j'ai l'an m'y n'en s'il t'aime qu'elle jusqu'à lorsqu'on puisqu'ici quoiqu'avant",
+            ['est', 'eau', 'ai', 'an', 'y', 'en', 'il', 'aime', 'elle', 'a', 'on', 'ici', 'avant'],
+        ];
+        yield 'particle ending a longer word' => ["aujourd'hui", ["aujourd'hui"]];
+        yield 'word that is not a particle' => ["presqu'île", ["presqu'ile"]];
+    }
+
+    /**
+     * @param array<string> $expected
+     */
+    #[DataProvider('frenchElisionCases')]
+    public function testFrenchElision(string $input, array $expected): void
+    {
+        $tokenizer = Tokenizer::createFromPreconfiguredLocaleConfiguration(Locale::fromString('fr'));
+
+        $this->assertSame($expected, $tokenizer->tokenize($input)->allTermsWithVariants());
+
+        // Queries are tokenized without variants: they must lose the particle too.
+        $this->assertSame($expected, $tokenizer->tokenize($input, false)->allTermsWithVariants());
+    }
+
+    public function testFrenchCompoundVariants(): void
+    {
+        $tokenizer = Tokenizer::createFromPreconfiguredLocaleConfiguration(Locale::fromString('fr'));
+        $text = 'L’AUTOCOLLANT tirebouchon tournevis imperméable';
+
+        $this->assertSame(
+            ['autocollant', 'auto', 'collant', 'tirebouchon', 'bouchon', 'tire', 'tournevis', 'tourne', 'vis', 'impermeable'],
+            $tokenizer->tokenize($text)->allTermsWithVariants(),
+        );
+
+        $this->assertSame(
+            ['autocollant', 'tirebouchon', 'tournevis', 'impermeable'],
+            $tokenizer->tokenize($text, false)->allTermsWithVariants(),
+        );
+    }
+
+    public function testFrenchElisionKeepsTheWholeWordAsOriginalSpan(): void
+    {
+        $tokenizer = Tokenizer::createFromPreconfiguredLocaleConfiguration(Locale::fromString('fr'));
+        $token = $tokenizer->tokenize('Payer l’acompte')->all()[1];
+
+        $this->assertSame('acompte', $token->getTerm());
+        $this->assertSame(6, $token->getOriginalStartPosition());
+        $this->assertSame(9, $token->getOriginalLength());
+    }
+
+    #[TestWith([null])]
+    #[TestWith(['en'])]
+    #[TestWith(['de'])]
+    public function testOtherLocalesKeepApostrophes(string|null $locale): void
+    {
+        $tokenizer = null === $locale ? new Tokenizer() : Tokenizer::createFromPreconfiguredLocaleConfiguration(Locale::fromString($locale));
+
+        $this->assertSame(["l'acompte", "don't"], $tokenizer->tokenize("l'acompte don't", false)->allTermsWithVariants());
     }
 
     public function testGermanEszettNormalization(): void

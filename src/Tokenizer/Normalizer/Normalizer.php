@@ -10,6 +10,10 @@ class Normalizer implements NormalizerInterface
 
     public function normalize(string $term): string
     {
+        if (!preg_match('/[^\x00-\x7F]/', $term)) {
+            return strtolower($term);
+        }
+
         $term = $this->transliterateToAscii($term);
 
         return mb_strtolower($term, 'UTF-8');
@@ -33,8 +37,8 @@ class Normalizer implements NormalizerInterface
             $this->transliterator = $transliterator;
         }
 
-        $result = $transliterator->transliterate($term);
+        $normalizedTerm = $transliterator->transliterate($term);
 
-        return false !== $result ? $result : $term;
+        return false !== $normalizedTerm ? $normalizedTerm : $term;
     }
 }
